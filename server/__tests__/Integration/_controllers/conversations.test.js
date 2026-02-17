@@ -122,9 +122,7 @@ jest.mock('../../../redisClient', () => {
   const mockRedis = RedisMock.createClient(); // ❌ No `new` needed
 
   // Mock Redis behavior
-  mockRedis.get = jest
-    .fn()
-    .mockImplementation((key, callback) => callback(null, null)); // Always return null
+  mockRedis.get = jest.fn().mockImplementation((key, callback) => callback(null, null)); // Always return null
   mockRedis.set = jest.fn().mockResolvedValue('OK');
   mockRedis.del = jest.fn().mockResolvedValue(1);
   mockRedis.auth = jest.fn().mockResolvedValue('OK');
@@ -155,11 +153,8 @@ describe('conversations tests', () => {
 
   describe('POST /', () => {
     it('should create a new conversation with valid participants', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       const response = await request(app)
         .post('/api/v1/conversations')
@@ -180,11 +175,8 @@ describe('conversations tests', () => {
     });
 
     it('should return 400 if participant does not exist', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       const response = await request(app)
         .post('/api/v1/conversations')
@@ -204,11 +196,8 @@ describe('conversations tests', () => {
 
   describe('POST /messages', () => {
     it('should create a new message in an existing conversation', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       const response = await request(app)
         .post('/api/v1/conversations/messages')
@@ -232,11 +221,8 @@ describe('conversations tests', () => {
     });
 
     it('should return 403 if user is not part of conversation', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       const response = await request(app)
         .post('/api/v1/conversations/messages')
@@ -251,17 +237,12 @@ describe('conversations tests', () => {
         });
 
       expect(response.status).toBe(403);
-      expect(response.body.message).toBe(
-        'You are not a participant in this conversation.'
-      );
+      expect(response.body.message).toBe('You are not a participant in this conversation.');
     });
 
     it('should handle empty message content', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       const response = await request(app)
         .post('/api/v1/conversations/messages')
@@ -280,11 +261,8 @@ describe('conversations tests', () => {
     });
 
     it('should handle very long messages', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       const longMessage = 'a'.repeat(5000); // Adjust length based on your DB limits
 
@@ -308,11 +286,8 @@ describe('conversations tests', () => {
 
   describe('GET /', () => {
     it('should get all conversations for user', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       const response = await request(app)
         .get('/api/v1/conversations')
@@ -328,11 +303,8 @@ describe('conversations tests', () => {
 
     // needs investigating,
     it.skip('should return conversations in correct chronological order', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       // First create two conversations with messages at different times
       const conv1 = await request(app)
@@ -391,7 +363,6 @@ describe('conversations tests', () => {
           `idToken=${subscribedUserIdToken};`,
           `refreshToken=${subscribedUserRefreshToken};`,
         ]);
-      console.log('response.body', response.body);
 
       expect(response.status).toBe(200);
       expect(Array.isArray(response.body)).toBe(true);
@@ -402,11 +373,8 @@ describe('conversations tests', () => {
     });
 
     it('should return correct participant information for each conversation', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       const response = await request(app)
         .get('/api/v1/conversations')
@@ -424,18 +392,15 @@ describe('conversations tests', () => {
             firstName: expect.any(String),
             lastName: expect.any(String),
           }),
-        ])
+        ]),
       );
     });
   });
 
   describe('GET /:id/messages', () => {
     it('should get messages for a specific conversation', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       const response = await request(app)
         .get('/api/v1/conversations/1/messages')
@@ -450,11 +415,8 @@ describe('conversations tests', () => {
     });
 
     it('should return 403 when accessing unauthorized conversation', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       const response = await request(app)
         .get('/api/v1/conversations/999/messages')
@@ -465,16 +427,11 @@ describe('conversations tests', () => {
         ]);
 
       expect(response.status).toBe(403);
-      expect(response.body.message).toBe(
-        'You are not a participant in this conversation.'
-      );
+      expect(response.body.message).toBe('You are not a participant in this conversation.');
     });
     it('should return messages in correct chronological order', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       // First create messages in a conversation
       await request(app)
@@ -516,11 +473,8 @@ describe('conversations tests', () => {
     });
 
     it('should handle conversations with no messages', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       // Create a new empty conversation
       const newConv = await request(app)
@@ -548,11 +502,8 @@ describe('conversations tests', () => {
     });
 
     it('should include necessary participant info with messages', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       const response = await request(app)
         .get('/api/v1/conversations/1/messages')
@@ -579,11 +530,8 @@ describe('conversations tests', () => {
 
   describe('DELETE /:id', () => {
     it('should delete a conversation', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       const response = await request(app)
         .delete('/api/v1/conversations/1')
@@ -603,11 +551,8 @@ describe('conversations tests', () => {
 
   describe('GET /unread-count', () => {
     it('should get unread message count', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       const response = await request(app)
         .get('/api/v1/conversations/unread-count')
@@ -626,11 +571,8 @@ describe('conversations tests', () => {
 
   describe('PUT /mark-read', () => {
     it('should mark messages as read', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       const response = await request(app)
         .put('/api/v1/conversations/mark-read')
@@ -651,11 +593,8 @@ describe('conversations tests', () => {
     });
 
     it('should return 400 when no messages are marked as read', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       const response = await request(app)
         .put('/api/v1/conversations/mark-read')
@@ -673,11 +612,8 @@ describe('conversations tests', () => {
     });
 
     it('should only mark messages from other users as read', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       // First create two messages - one from self, one from other user
       await request(app)
@@ -725,17 +661,12 @@ describe('conversations tests', () => {
         ]);
 
       // Self messages shouldn't affect unread count
-      expect(afterMarkRead.body.unreadCount).toBeLessThan(
-        beforeMarkRead.body.unreadCount
-      );
+      expect(afterMarkRead.body.unreadCount).toBeLessThan(beforeMarkRead.body.unreadCount);
     });
 
     it('should handle marking already-read messages', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       // Mark messages as read first time
       await request(app)
@@ -768,11 +699,8 @@ describe('conversations tests', () => {
 
   describe('POST / - conversation creation', () => {
     it('should include sender in participants if not provided', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       const response = await request(app)
         .post('/api/v1/conversations')
@@ -802,11 +730,8 @@ describe('conversations tests', () => {
     });
 
     it('should prevent creating a conversation with no other participants', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       const response = await request(app)
         .post('/api/v1/conversations')
@@ -820,17 +745,12 @@ describe('conversations tests', () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.message).toContain(
-        'Missing conversation participants.'
-      );
+      expect(response.body.message).toContain('Missing conversation participants.');
     });
 
     it('should handle duplicate participants in the request', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       const response = await request(app)
         .post('/api/v1/conversations')
@@ -858,11 +778,8 @@ describe('conversations tests', () => {
 
   describe('Edge cases and error handling', () => {
     it('should handle malformed conversation IDs', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       // Test with non-numeric ID
       const response = await request(app)
@@ -881,11 +798,8 @@ describe('conversations tests', () => {
     });
 
     it('should maintain message state if transaction fails', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       // Get initial state
       const initialState = await request(app)
@@ -923,11 +837,8 @@ describe('conversations tests', () => {
 
     // Note: Testing concurrent operations in Jest can be tricky
     it('should handle concurrent message sends', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       // Send multiple messages concurrently
       const promises = Array(5)
@@ -943,7 +854,7 @@ describe('conversations tests', () => {
             .send({
               conversationId: 1,
               content: `Concurrent message ${i}`,
-            })
+            }),
         );
 
       const results = await Promise.all(promises);
@@ -963,19 +874,14 @@ describe('conversations tests', () => {
           `refreshToken=${subscribedUserRefreshToken};`,
         ]);
 
-      expect(
-        messages.body.filter((m) => m.content.includes('Concurrent message'))
-      ).toHaveLength(5);
+      expect(messages.body.filter((m) => m.content.includes('Concurrent message'))).toHaveLength(5);
     });
   });
 
   describe('Performance tests', () => {
     it('should efficiently handle conversations with many messages', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       // Create a large number of messages in a conversation
       const NUM_MESSAGES = 49;
@@ -1014,11 +920,8 @@ describe('conversations tests', () => {
     });
 
     it('should efficiently handle users with many conversations', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       // Create multiple conversations
       const NUM_CONVERSATIONS = 20;
@@ -1077,11 +980,8 @@ describe('conversations tests', () => {
 
     // New tests that integrate with the actual message endpoints:
     it('should store messages in encrypted form and retrieve them correctly', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       const testMessage = 'Test message for encryption';
 
@@ -1112,19 +1012,14 @@ describe('conversations tests', () => {
       expect(getResponse.status).toBe(200);
 
       // Verify the returned message matches original
-      const returnedMessage = getResponse.body.find(
-        (m) => m.content === testMessage
-      );
+      const returnedMessage = getResponse.body.find((m) => m.content === testMessage);
       expect(returnedMessage).toBeDefined();
       expect(returnedMessage.content).toBe(testMessage);
     });
 
     it('should handle encryption of special characters and unicode', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       const specialMessage = 'Special chars: !@#$%^&*()_+ and emoji: 🌟💫';
 
@@ -1145,11 +1040,8 @@ describe('conversations tests', () => {
     });
 
     it('should maintain encryption through conversation updates', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       // Create a series of messages to test persistence
       const messages = [
@@ -1190,11 +1082,8 @@ describe('conversations tests', () => {
 
   describe('Websockets', () => {
     it('should emit "new message" event when a message is sent', async () => {
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       const emitSpy = jest.spyOn(io, 'emit');
 
@@ -1224,7 +1113,7 @@ describe('conversations tests', () => {
           conversationId: expect.any(Number),
           senderSub: expect.any(String),
           content: expect.any(String),
-        })
+        }),
       );
 
       emitSpy.mockRestore();

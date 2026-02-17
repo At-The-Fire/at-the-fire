@@ -77,6 +77,7 @@ module.exports = app.post(
     try {
       switch (event.type) {
         case 'customer.created': //^======================== 1  BOTH TRIAL & REGULAR
+          // eslint-disable-next-line no-console
           console.log('event.type=====================', event.type);
 
           if (dataObject) {
@@ -108,6 +109,7 @@ module.exports = app.post(
           break;
 
         case 'charge.succeeded':
+          // eslint-disable-next-line no-console
           console.log('event.type=====================', event.type);
 
           if (dataObject) {
@@ -147,6 +149,7 @@ module.exports = app.post(
           break;
 
         case 'invoice.created': //^======================== 2 BOTH TRIAL & REGULAR
+          // eslint-disable-next-line no-console
           console.log('event.type=====================', event.type);
 
           if (dataObject) {
@@ -176,7 +179,7 @@ module.exports = app.post(
                 subscriptionId,
                 customerId,
                 startDate,
-                endDate
+                endDate,
               );
               await StripeCustomer.updateByCustomerId(customerId, {
                 name: customerName,
@@ -191,6 +194,7 @@ module.exports = app.post(
           break;
 
         case 'invoice.payment_succeeded': //^ ======================== 3 BOTH TRIAL & REGULAR
+          // eslint-disable-next-line no-console
           console.log('event.type=====================', event.type);
 
           if (dataObject) {
@@ -216,7 +220,7 @@ module.exports = app.post(
                 invoiceStatus,
                 subscription_id,
                 amount_due,
-                amount_paid
+                amount_paid,
               );
 
               // Skip processing for trial period invoices
@@ -238,7 +242,7 @@ module.exports = app.post(
                     subscriptionData.subscriptionEndDate,
                     subscriptionData.subscriptionStartDate,
                     subscriptionData.subscriptionEndDate,
-                    isTrial ? 'trialing' : ''
+                    isTrial ? 'trialing' : '',
                   );
 
                   await StripeCustomer.updateCustomerConfirmedStatus(dataObject['customer'], true);
@@ -267,6 +271,7 @@ module.exports = app.post(
           break;
 
         case 'customer.subscription.created': //^========================  4 BOTH TRIAL & REGULAR
+          // eslint-disable-next-line no-console
           console.log('event.type=====================', event.type);
 
           if (dataObject['status'] === 'trialing') {
@@ -288,7 +293,7 @@ module.exports = app.post(
                 dataObject['current_period_end'],
                 dataObject['trial_start'],
                 dataObject['trial_end'],
-                'trialing'
+                'trialing',
               );
               await StripeCustomer.updateCustomerConfirmedStatus(dataObject['customer'], true);
             } catch (error) {
@@ -298,6 +303,7 @@ module.exports = app.post(
           break;
 
         case 'customer.subscription.updated':
+          // eslint-disable-next-line no-console
           console.log('event.type=====================', event.type);
           // handle cancellation
           if (dataObject['status'] === 'canceled') {
@@ -314,13 +320,13 @@ module.exports = app.post(
                   canceled_at,
                   comment,
                   feedback,
-                  reason
+                  reason,
                 );
               } catch (e) {
                 // eslint-disable-next-line no-console
                 console.log(
                   'error canceling subscription in customer.subscription.updated event',
-                  e
+                  e,
                 );
               }
             }
@@ -354,7 +360,7 @@ module.exports = app.post(
                 // eslint-disable-next-line no-console
                 console.log(
                   'Subscription found for customer, updating subscription:',
-                  subscriptionData.customerId
+                  subscriptionData.customerId,
                 );
 
                 await Subscriptions.upsertSubscription(
@@ -366,7 +372,7 @@ module.exports = app.post(
                   subscriptionData.subscriptionEndDate,
                   null, // no trial_start for active subscription
                   null, // no trial_end for active subscription
-                  'active'
+                  'active',
                 );
               } else {
                 // Insert new subscription
@@ -381,7 +387,7 @@ module.exports = app.post(
                   subscriptionData.subscriptionEndDate,
                   null, // no trial_start for active subscription
                   null, // no trial_end for active subscription
-                  'active'
+                  'active',
                 );
               }
             } catch (error) {
@@ -393,6 +399,7 @@ module.exports = app.post(
           break;
 
         case 'customer.subscription.deleted':
+          // eslint-disable-next-line no-console
           console.log('event.type=====================', event.type);
           // handle isActive, this is on the click of the 2nd "cancel plan" button
           if (dataObject) {
@@ -403,7 +410,7 @@ module.exports = app.post(
               // eslint-disable-next-line no-console
               console.log(
                 'error setting subscription to inactive in customer.subscription.deleted event',
-                e
+                e,
               );
             }
           }
@@ -411,6 +418,7 @@ module.exports = app.post(
           break;
 
         case 'payment_intent.payment_failed':
+          // eslint-disable-next-line no-console
           console.log('event.type=====================', event.type);
 
           if (dataObject) {
@@ -434,13 +442,13 @@ module.exports = app.post(
                 failureCode,
                 transactionAmt,
                 timestamp,
-                invoiceId
+                invoiceId,
               );
             } catch (e) {
               // eslint-disable-next-line no-console
               console.log(
                 'error inserting failed transaction in payment_intent.payment_failed event',
-                e
+                e,
               );
             }
           }
@@ -452,5 +460,5 @@ module.exports = app.post(
       console.error('Unexpected error processing webhook:', e);
       response.sendStatus(500);
     }
-  }
+  },
 );

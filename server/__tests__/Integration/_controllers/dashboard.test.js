@@ -471,7 +471,6 @@ describe('posts/ post details/ S3 routes', () => {
     const checkAndRecordSpy = jest
       .spyOn(RealAWSUser, 'checkAndRecordImageUploads')
       .mockImplementation(async (customerId, imageCount) => {
-        console.log('Real method called with:', customerId, imageCount);
         if (imageCount > 50) {
           throw new Error('Daily upload limit of 50 images exceeded');
         }

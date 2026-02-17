@@ -1,16 +1,11 @@
-const {
-  encrypt,
-  decrypt,
-  isEncrypted,
-} = require('../../../lib/services/encryption.js');
+const { encrypt, decrypt, isEncrypted } = require('../../../lib/services/encryption.js');
 const dotenv = require('dotenv');
 
 // Load environment variables before all tests
 beforeAll(() => {
   dotenv.config();
   // Ensure we have an encryption key for testing
-  process.env.ENCRYPTION_KEY =
-    process.env.ENCRYPTION_KEY || 'test-encryption-key-123';
+  process.env.ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'test-encryption-key-123';
 });
 
 describe('Encryption Functions', () => {
@@ -185,10 +180,8 @@ describe('Encryption Functions', () => {
 
       const finalMemory = process.memoryUsage().heapUsed;
       const memoryIncrease = (finalMemory - initialMemory) / 1024 / 1024;
-
-      console.log(
-        `Memory change after operations: ${memoryIncrease.toFixed(2)}MB`
-      );
+      // eslint-disable-next-line
+      console.log(`Memory change after operations: ${memoryIncrease.toFixed(2)}MB`);
 
       // Test that memory usage stabilizes
       // We expect some memory overhead, but it shouldn't be extreme
@@ -207,12 +200,9 @@ describe('Encryption Functions', () => {
       }
 
       const secondRoundFinal = process.memoryUsage().heapUsed;
-      const secondRoundIncrease =
-        (secondRoundFinal - secondRoundInitial) / 1024 / 1024;
-
-      console.log(
-        `Memory change after second round: ${secondRoundIncrease.toFixed(2)}MB`
-      );
+      const secondRoundIncrease = (secondRoundFinal - secondRoundInitial) / 1024 / 1024;
+      // eslint-disable-next-line
+      console.log(`Memory change after second round: ${secondRoundIncrease.toFixed(2)}MB`);
 
       // The second round shouldn't increase memory usage significantly
       // compared to the first round (allowing for some variation)

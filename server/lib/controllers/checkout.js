@@ -17,10 +17,12 @@ function validatePriceId(submittedPriceId) {
 
 module.exports = Router().post('/', async (req, res) => {
   try {
+    // eslint-disable-next-line
     console.log('req.body >>>>>>>>>>>>>>>>>>>>>>>>>>>', req.body);
 
     const { billingEmail, firstName, lastName, priceId, customerId } = req.body;
 
+    // eslint-disable-next-line
     console.log('customerId fresh from the request body:', customerId);
 
     if (!billingEmail || !firstName || !lastName || !priceId) {
@@ -33,26 +35,33 @@ module.exports = Router().post('/', async (req, res) => {
     } catch (validationError) {
       return res.status(400).json({ code: 400, message: validationError.message });
     }
+    // eslint-disable-next-line
     console.log('customerId that is getting set to existingCustomer', customerId);
 
     let existingCustomer = customerId;
+    // eslint-disable-next-line
     console.log('existingCustomer is now: ', existingCustomer);
 
     let session;
 
     try {
       // Check if the customer exists in Stripe
+      // eslint-disable-next-line
       console.log('Checking if the customer exists in Stripe with this customerId: ', customerId);
+      // eslint-disable-next-line
       console.log('Which is set in existingCustomer:: ', existingCustomer);
 
       if (!existingCustomer) {
+        // eslint-disable-next-line
         console.log('No existing customer (!existingCustomer)');
 
         const customers = await stripe.customers.list({ email: billingEmail });
+        // eslint-disable-next-line
         console.log('customers from stripe api call ', customers);
 
         if (customers?.data?.length > 0) {
           existingCustomer = customers.data[0].id;
+          // eslint-disable-next-line
           console.log('setting existing customer to: ', existingCustomer);
         }
       }
@@ -63,12 +72,14 @@ module.exports = Router().post('/', async (req, res) => {
         subscription = await getSubscriptionByCustomerId({
           customerId: existingCustomer,
         });
+        // eslint-disable-next-line
         console.log('there is an existingCustomer now fetching this subscription: ', subscription);
       }
 
       // if (subscription && subscription.id && subscription.isActive) {
       if (subscription && subscription.id) {
         // Update the existing active subscription
+        // eslint-disable-next-line
         console.log('subscription exists, it has an id, and isActive is true');
 
         await stripe.subscriptions.update(subscription.id, {
