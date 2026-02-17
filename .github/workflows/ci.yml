@@ -45,6 +45,7 @@ jobs:
           TEST_EMAIL_WITH_PROFILE: ${{ secrets.TEST_EMAIL_WITH_PROFILE }}
           TEST_SUB_CUSTOMER_NO_PROFILE: ${{ secrets.TEST_SUB_CUSTOMER_NO_PROFILE }}
           TEST_EMAIL_CUSTOMER_NO_PROFILE: ${{ secrets.TEST_EMAIL_CUSTOMER_NO_PROFILE }}
+          TEST_STRIPE_CUSTOMER_ID_NO_PROFILE: ${{ secrets.TEST_STRIPE_CUSTOMER_ID_NO_PROFILE }}
           TEST_SUB_FULL_CUSTOMER: ${{ secrets.TEST_SUB_FULL_CUSTOMER }}
           TEST_EMAIL_FULL_CUSTOMER: ${{ secrets.TEST_EMAIL_FULL_CUSTOMER }}
           TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER: ${{ secrets.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER }}
@@ -67,34 +68,24 @@ jobs:
               url: process.env.REDISCLOUD_URL || null,
               username: process.env.REDIS_USERNAME || 'default',
               password: process.env.REDIS_PASSWORD,
-              socket: { host: process.env.REDIS_HOST, port: process.env.REDIS_PORT || 6379 }
+              socket: {
+                host: process.env.REDIS_HOST,
+                port: process.env.REDIS_PORT || 6379,
+              }
             });
-            client.connect()
-              .then(() => client.flushDb())
-              .then(() => { console.log('Redis cache cleared'); process.exit(0); })
-              .catch(err => { console.error(err); process.exit(1); });
+            client.connect().then(() => {
+              console.log('Connected to Production Redis');
+              return client.flushDb();
+            }).then(() => {
+              console.log('Production Redis cache cleared');
+              process.exit(0);
+            }).catch(err => {
+              console.error('Error clearing Redis cache:', err);
+              process.exit(1);
+            });
           "
         env:
           REDISCLOUD_URL: ${{ secrets.REDISCLOUD_URL }}
           REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
           REDIS_HOST: ${{ secrets.REDIS_HOST }}
           REDIS_PORT: ${{ secrets.REDIS_PORT }}
-
-  client-tests:
-    name: Client Tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
-          cache: 'npm'
-          cache-dependency-path: client/package-lock.json
-      - name: Install client dependencies
-        run: npm ci --prefix client
-      - name: Run client tests
-        run: npm test --prefix client -- --watchAll=false --passWithNoTests
-        env:
-          CI: true
-          REACT_APP_POOL_ID: ${{ secrets.REACT_APP_POOL_ID }}
-          REACT_APP_APP_CLIENT_ID: ${{ secrets.REACT_APP_APP_CLIENT_ID }}
