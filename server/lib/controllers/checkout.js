@@ -43,6 +43,7 @@ module.exports = Router().post('/', async (req, res) => {
     console.log('existingCustomer is now: ', existingCustomer);
 
     let session;
+    let createdNewCustomer = false;
 
     try {
       // Check if the customer exists in Stripe
