@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd:*)",
+      "Bash(test:*)",
+      "Bash(for:*)",
+      "Bash(do)",
+      "Bash(if [ -f \"/c/Users/kevin/Documents/Work and Projects/At The Fire/Repos/at-the-fire/$file\" ])",
+      "Bash(then)",
+      "Bash(echo:*)",
+      "Bash(fi:*)",
+      "Bash(done)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(node -e:*)",
+      "Bash(node --version:*)",
+      "Bash(python3:*)",
+      "Bash(git rm:*)",
+      "Bash(npm install:*)"
+    ]
+  }
+}
