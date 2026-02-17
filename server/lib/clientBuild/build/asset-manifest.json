@@ -1,0 +1,32 @@
+{
+  "files": {
+    "main.css": "/static/css/main.37aad4c0.css",
+    "main.js": "/static/js/main.b1d79531.js",
+    "static/js/453.f5531bd0.chunk.js": "/static/js/453.f5531bd0.chunk.js",
+    "static/media/logs.png": "/static/media/logs.509f798b76d839f054ae.png",
+    "static/media/products-ex-dt.png": "/static/media/products-ex-dt.5f2b3c37f5363457a6bb.png",
+    "static/media/analysis-ex-dt.png": "/static/media/analysis-ex-dt.1a53abaadb7f64f1b1d9.png",
+    "static/media/calendar-ex-dt.png": "/static/media/calendar-ex-dt.103564f744415fa67517.png",
+    "static/media/inventory-tracking-ex-dt.png": "/static/media/inventory-tracking-ex-dt.7c71c3ab2f0e81edbf2d.png",
+    "static/media/products-ex-m.png": "/static/media/products-ex-m.12c04ea6fba93aa9dd6d.png",
+    "static/media/analysis-ex-m-1.png": "/static/media/analysis-ex-m-1.ff908ee120ec3acbd7cb.png",
+    "static/media/calendar-ex-m-2.png": "/static/media/calendar-ex-m-2.3869377b2d6344adc000.png",
+    "static/media/calendar-ex-m-1.png": "/static/media/calendar-ex-m-1.da596b5707b115aaec28.png",
+    "static/media/inventory-tracking-ex-m.png": "/static/media/inventory-tracking-ex-m.57bf7368e8aca4261755.png",
+    "static/media/analysis-ex-m-2.png": "/static/media/analysis-ex-m-2.7ff001e00f2f002f92e9.png",
+    "static/media/logo-icon-6.png": "/static/media/logo-icon-6.21185a89885ab38094f4.png",
+    "static/media/instagram.png": "/static/media/instagram.a41981b79ab2db8f46a1.png",
+    "static/media/Venmo_Logo_Blue.png": "/static/media/Venmo_Logo_Blue.5e70fe7f6d46850eb526.png",
+    "static/media/facebook.png": "/static/media/facebook.6d5d8ef76453a279a193.png",
+    "static/media/glasspass_logo.PNG": "/static/media/glasspass_logo.3628626bc322e75bfb38.PNG",
+    "static/media/tiktok.png": "/static/media/tiktok.eed6e3727f90d2dc4f7e.png",
+    "index.html": "/index.html",
+    "main.37aad4c0.css.map": "/static/css/main.37aad4c0.css.map",
+    "main.b1d79531.js.map": "/static/js/main.b1d79531.js.map",
+    "453.f5531bd0.chunk.js.map": "/static/js/453.f5531bd0.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.37aad4c0.css",
+    "static/js/main.b1d79531.js"
+  ]
+}

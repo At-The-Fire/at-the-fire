@@ -1,0 +1,161 @@
+.reenie-beanie-regular {
+  font-family: 'Reenie Beanie', cursive;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.welcome-brand-font-1 {
+  margin: 0 0 0 0;
+  color: #1f8e3d;
+  font-size: 6rem;
+  text-align: center;
+  position: relative;
+  top: -50px;
+}
+.welcome-brand-font-2 {
+  margin: 0 0 0 0;
+  color: #1f8e3d;
+  font-size: 10rem;
+  z-index: 1;
+  text-align: center;
+  display: block;
+  line-height: 1.5rem;
+  position: relative;
+  top: -50px;
+}
+
+.contact-link {
+  text-decoration: none;
+}
+.contact-link:active,
+:visited {
+  color: rgb(0, 146, 22);
+}
+
+.about-card-avatar-name-wrapper {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  /* margin-left: 20px; */
+}
+
+.welcome-text {
+  font-size: 3rem;
+  text-align: center;
+  animation: fadeIn 2s ease-in-out 4s forwards;
+}
+
+.card-animation {
+  animation: cardfadeIn 3s ease-in-out;
+}
+
+@keyframes cardfadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(55px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -100%;
+  }
+  50% {
+    background-position: 100%;
+  }
+  100% {
+    background-position: -100%;
+  }
+}
+
+.shimmer-text {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0) 25%,
+    rgba(0, 255, 8, 0.5) 50%,
+    rgba(255, 255, 255, 0) 75%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  background-size: 800%;
+  animation: shimmer 25s ease-in-out forwards infinite;
+  color: transparent;
+  background-clip: text;
+  -webkit-background-clip: text;
+  /* animation-delay: 5s; */
+}
+
+.tech-stack {
+  /* background-clip: text; */
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  padding: 4px 12px;
+  text-shadow: 0 0 15px green;
+}
+
+.tech-stack:hover {
+  background-color: green;
+  color: white;
+  background-clip: none;
+}
+.tech-stack:active {
+  background-color: transparent;
+  color: green;
+  background-clip: none;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200%;
+  }
+  100% {
+    background-position: -200%;
+  }
+}
+
+/* 
+
+media rules begin ======================================
+
+*/
+
+@media (min-width: 768px) {
+  .welcome-brand-font-1 {
+    margin: 0 0 0 0;
+    color: #1f8e3d;
+    font-size: 8rem;
+    text-align: center;
+    position: relative;
+    top: -50px;
+    font-family: 'Reenie Beanie', cursive;
+  }
+
+  .welcome-brand-font-2 {
+    margin: 0 0 0 0;
+    color: #1f8e3d;
+    font-size: 12rem;
+    z-index: 1;
+    text-align: center;
+    display: block;
+    line-height: 1.5rem;
+    position: relative;
+    top: -50px;
+    font-family: 'Reenie Beanie', cursive;
+  }
+}

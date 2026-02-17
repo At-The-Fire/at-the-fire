@@ -1,0 +1,48 @@
+.gallery-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+.gallery-container {
+  height: 100%;
+  /* padding-top: 80px; */
+  padding-bottom: 16px;
+  position: relative;
+  top: -10px;
+}
+
+.error-message {
+  margin-top: 300px;
+  color: red;
+
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  text-align: center;
+  border: 2px solid red;
+  border-radius: 4px;
+  padding: 16px;
+  width: 50%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.loading-placeholder {
+  background: linear-gradient(135deg, #2c2c2c 0%, #3e3e3e 50%, #2c2c2c 100%);
+  background-size: 400% 100%;
+  animation: shimmer 2s infinite ease-in-out;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}

@@ -1,0 +1,72 @@
+{
+  "name": "at-the-fire-dev",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
+    "@mui/icons-material": "^5.11.16",
+    "@mui/lab": "^5.0.0-alpha.151",
+    "@mui/material": "^5.14.20",
+    "@mui/x-date-pickers": "^6.18.4",
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "amazon-cognito-identity-js": "^6.3.1",
+    "browser-image-compression": "^2.0.2",
+    "chart.js": "^4.4.1",
+    "chartjs-plugin-annotation": "^3.0.1",
+    "date-fns": "^2.30.0",
+    "jwt-decode": "^4.0.0",
+    "lucide-react": "^0.471.0",
+    "prop-types": "^15.8.1",
+    "react": "^18.2.0",
+    "react-chartjs-2": "^5.2.0",
+    "react-dom": "^18.2.0",
+    "react-dropzone": "^14.2.3",
+    "react-modal": "^3.16.1",
+    "react-router-dom": "^6.30.3",
+    "react-scripts": "5.0.1",
+    "react-swipeable": "^7.0.1",
+    "react-toastify": "^10.0.5",
+    "socket.io-client": "^4.8.1",
+    "web-vitals": "^2.1.4",
+    "zustand": "^4.5.5"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "overrides": {
+    "postcss": "^8.4.31"
+  },
+  "devDependencies": {
+    "@babel/preset-react": "^7.22.5",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-react": "^7.27.1",
+    "eslint-plugin-react-hooks": "^4.3.0",
+    "prettier": "^2.5.0"
+  }
+}

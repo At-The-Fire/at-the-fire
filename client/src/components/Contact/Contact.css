@@ -1,0 +1,27 @@
+.feedback-button::before {
+  content: '🔥';
+  margin-right: 8px;
+  opacity: 0;
+  transition: all 0.2s ease-in-out;
+}
+
+.feedback-button::after {
+  content: '🔥';
+  opacity: 0;
+  margin-left: 8px;
+  transition: all 0.2s ease-in-out;
+}
+
+.feedback-button:hover::before {
+  content: '🔥';
+  opacity: 1;
+  margin-right: 8px;
+  transition: all 0.2s ease-in-out;
+}
+
+.feedback-button:hover::after {
+  content: '🔥';
+  opacity: 1;
+  margin-left: 8px;
+  transition: all 0.2s ease-in-out;
+}

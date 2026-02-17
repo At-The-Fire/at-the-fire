@@ -1,0 +1,112 @@
+.admin-container-2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  box-sizing: border-box;
+  height: 'calc(100dvh - 200px)';
+
+  transform: translate(0%, -3%);
+  padding: 0;
+}
+
+.admin-panel-2 {
+  display: none;
+  box-sizing: border-box;
+  min-width: 350px;
+}
+
+.list-container2 {
+  display: flex;
+  flex-direction: column;
+  grid-template-rows: repeat(auto-fill, minmax(50px, auto));
+  justify-items: flex-start;
+  align-items: flex-start;
+  margin: 15px auto 0 auto;
+  padding: 0 0rem;
+  letter-spacing: 1.5px;
+  position: relative;
+  width: 100%;
+  overflow-y: auto;
+}
+
+.quota-tracking-form {
+  background-color: rgb(31, 31, 31);
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid black;
+  display: grid;
+  grid-template-rows: 0.25fr 1fr auto;
+}
+
+.tab1-wrapper,
+.tab2-wrapper,
+.tab3-wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 70%;
+  gap: 20px;
+}
+.tab1-wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 70%;
+}
+
+@media (min-width: 768px) {
+  .list-container2 {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 35px repeat(auto-fill, 20px);
+    flex-wrap: wrap;
+    justify-items: flex-start;
+    align-items: flex-start;
+    margin: 0px auto 0 auto;
+    padding: 0 0rem;
+    gap: 5px;
+  }
+}
+@media (min-width: 900px) {
+  .product-grid-container {
+    grid-row-start: 1;
+    grid-row-end: 3;
+    grid-column: 2;
+    height: '50dvh';
+  }
+
+  .admin-container-2 {
+    grid-template-columns: 350px 1fr;
+    grid-template-rows: 100px 1fr;
+    gap: 10px;
+    height: 100%;
+  }
+
+  .admin-panel-2 {
+    display: block;
+    height: 90px;
+  }
+
+  .highlight-price {
+    border: 1px solid yellow;
+  }
+  .form-container-2 {
+    border: 1px solid;
+    margin: 10px 0 0 10px;
+  }
+  .sold-radio-group-2 {
+    border: solid 1px rgb(69, 69, 69) !important;
+    width: 60%;
+    border-radius: 5px !important;
+    align-items: center;
+    padding: 30px 0 0 0;
+    border-radius: 10px;
+    min-width: 300px;
+    grid-row: 3/5;
+    grid-column: 2;
+    font-size: 0.5rem;
+  }
+
+  .quota-tracking-form {
+    grid-template-rows: 60px 1fr auto;
+  }
+}

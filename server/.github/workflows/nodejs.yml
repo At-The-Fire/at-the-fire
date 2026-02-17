@@ -1,0 +1,88 @@
+name: Jest Tests
+
+on:
+  push:
+    branches:
+      - main # Runs only when pushing to main
+  pull_request:
+    branches:
+      - main # Runs only when a PR is created or updated targeting main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: node:latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: my_test_user
+          POSTGRES_PASSWORD: my_test_password
+      redis:
+        image: redis:latest
+        ports:
+          - 6379:6379
+    steps:
+      - uses: actions/checkout@v2
+      - run: npm ci --dev
+      - run: npx eslint .
+      - run: npm test -- --detectOpenHandles --forceExit
+        env:
+          CI: true
+          DATABASE_URL: postgres://my_test_user:my_test_password@postgres:5432/my_test_user
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          SALT_ROUNDS: ${{ secrets.SALT_ROUNDS }}
+          COOKIE_NAME: ${{ secrets.COOKIE_NAME }}
+          TEST_SUB: ${{secrets.TEST_SUB}}
+          TEST_EMAIL: ${{secrets.TEST_EMAIL}}
+          TEST_CUSTOMER_ID: ${{secrets.TEST_CUSTOMER_ID}}
+          TEST_SUB_NO_PROFILE: ${{secrets.TEST_SUB_NO_PROFILE}}
+          TEST_EMAIL_NO_PROFILE: ${{secrets.TEST_EMAIL_NO_PROFILE}}
+          TEST_SUB_WITH_PROFILE: ${{secrets.TEST_SUB_WITH_PROFILE}}
+          TEST_EMAIL_WITH_PROFILE: ${{secrets.TEST_EMAIL_WITH_PROFILE}}
+          TEST_SUB_CUSTOMER_NO_PROFILE: ${{secrets.TEST_SUB_CUSTOMER_NO_PROFILE}}
+          TEST_EMAIL_CUSTOMER_NO_PROFILE: ${{secrets.TEST_EMAIL_CUSTOMER_NO_PROFILE}}
+          TEST_STRIPE_CUSTOMER_ID_NO_PROFILE: ${{secrets.TEST_STRIPE_CUSTOMER_ID_NO_PROFILE}}
+          TEST_SUB_FULL_CUSTOMER: ${{secrets.TEST_SUB_FULL_CUSTOMER}}
+          TEST_EMAIL_FULL_CUSTOMER: ${{secrets.TEST_EMAIL_FULL_CUSTOMER}}
+          TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER: ${{secrets.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER}}
+          TEST_SUB_INCOMPLETE_PROFILE: ${{secrets.TEST_SUB_INCOMPLETE_PROFILE}}
+          TEST_STRIPE_CUSTOMER_ID_PARTIAL_PROFILE: ${{secrets.TEST_STRIPE_CUSTOMER_ID_PARTIAL_PROFILE}}
+          ENCRYPTION_KEY: ${{secrets.ENCRYPTION_KEY}}
+          REDIS_HOST: redis
+          REDIS_PORT: 6379
+          REDIS_PASSWORD: ''
+          REDISCLOUD_URL: 'redis://redis:6379'
+          CLOUDFRONT_DOMAIN: ${{secrets.CLOUDFRONT_DOMAIN}}
+          STRIPE_PRIVATE_KEY: ${{secrets.STRIPE_PRIVATE_KEY}}
+      - name: Clear Production Redis Cache
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          npm install redis
+          node -e "
+            const redis = require('redis');
+            const client = redis.createClient({
+              url: process.env.REDISCLOUD_URL || null,
+              username: process.env.REDIS_USERNAME || 'default',
+              password: process.env.REDIS_PASSWORD,
+              socket: {
+                host: process.env.REDIS_HOST,
+                port: process.env.REDIS_PORT || 6379,
+              }
+            });
+            client.connect().then(() => {
+              console.log('Connected to Production Redis');
+              return client.flushDb();
+            }).then(() => {
+              console.log('Production Redis cache cleared');
+              process.exit(0);
+            }).catch(err => {
+              console.error('Error clearing Redis cache:', err);
+              process.exit(1);
+            });
+          "
+env:
+  REDISCLOUD_URL: ${{secrets.REDISCLOUD_URL}}
+  REDIS_PASSWORD: ${{secrets.REDIS_PASSWORD}}
+  REDIS_HOST: ${{secrets.REDIS_HOST}}
+  REDIS_PORT: ${{secrets.REDIS_PORT}}

@@ -1,0 +1,26 @@
+.profile-gallery-container {
+  height: 100%;
+  padding-top: 80px;
+  padding-bottom: 16px;
+}
+.animated-ellipsis {
+  animation: loading 1.4s infinite ease-in-out;
+}
+
+@keyframes loading {
+  0%,
+  80%,
+  100% {
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+.animated-ellipsis:nth-child(1) {
+  animation-delay: -0.32s;
+}
+.animated-ellipsis:nth-child(2) {
+  animation-delay: -0.16s;
+}

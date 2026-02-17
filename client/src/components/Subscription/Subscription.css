@@ -1,0 +1,79 @@
+.subscribe-wrapper {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  align-items: flex-start;
+}
+
+.subscribe-container {
+  padding-top: 80px;
+  display: flex !important;
+  height: 100%;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: flex-start;
+  padding-bottom: 16px !important;
+}
+.example-images-wrapper {
+  display: flex !important;
+  flex-direction: row !important;
+}
+.example-images {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+/* Keyframes for the slide-in animation */
+@keyframes slideInFromRight {
+  0% {
+    opacity: 0;
+    transform: translateX(10%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Keyframes for the slide-in animation */
+@keyframes slideInFromRight {
+  0% {
+    opacity: 0;
+    transform: translateX(10%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Base style for each MUI ListItem */
+.MuiListItem-root {
+  opacity: 0; /* Start hidden */
+  animation: slideInFromRight 2s ease-in-out forwards;
+}
+
+/* Delay each ListItem's animation by 2s consecutively */
+.MuiListItem-root:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.MuiListItem-root:nth-child(2) {
+  animation-delay: 2s;
+}
+
+.MuiListItem-root:nth-child(3) {
+  animation-delay: 4s;
+}
+
+.MuiListItem-root:nth-child(4) {
+  animation-delay: 6s;
+}
+
+.MuiListItem-root:nth-child(5) {
+  animation-delay: 8s;
+}
+.MuiListItem-root:nth-child(6) {
+  animation-delay: 10s;
+}

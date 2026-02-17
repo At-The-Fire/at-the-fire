@@ -1,0 +1,29 @@
+.App {
+  text-align: center;
+  height: calc('100dvh-90px');
+  width: 100dvw;
+}
+
+.theme-icon {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  margin: 16px 3px 5px 16px;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.MuiCircularProgress-root {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50% !important;
+  background: #1f8e3d;
+}
+
+.Toastify__toast-theme--colored.Toastify__toast--warning {
+  color: black;
+}
+.Toastify__close-button {
+  color: black;
+}

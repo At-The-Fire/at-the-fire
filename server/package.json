@@ -1,0 +1,67 @@
+{
+  "name": "backend-express-template",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "test": "jest --verbose --runInBand --testLocationInResults --setupFiles dotenv/config --passWithNoTests",
+    "test:watch": "npm run test -- --watch",
+    "start": "node -r dotenv/config server.js",
+    "start:watch": "nodemon -r dotenv/config server.js",
+    "setup-db": "node -r dotenv/config setup-db.js",
+    "setup-heroku": "heroku run npm run setup-db"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "reporters": [
+      "default",
+      [
+        "error-affirmations",
+        {
+          "mode": "minimal"
+        }
+      ]
+    ]
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/core": "^7.18.2",
+    "@babel/eslint-parser": "^7.18.2",
+    "@babel/eslint-plugin": "^7.17.7",
+    "@babel/plugin-syntax-class-properties": "^7.12.13",
+    "@types/jest": "^28.1.1",
+    "@types/pg": "^8.6.5",
+    "error-affirmations": "^1.2.7",
+    "eslint": "^8.17.0",
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.11",
+    "prettier": "^2.6.2",
+    "redis-mock": "^0.56.3",
+    "supertest": "^7.0.0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.723.0",
+    "@aws-sdk/client-s3": "^3.717.0",
+    "amazon-cognito-identity-js": "^6.2.0",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "cross-env": "^7.0.3",
+    "crypto-js": "^4.1.1",
+    "dotenv": "^16.0.1",
+    "express": "^4.18.1",
+    "express-rate-limit": "^7.4.1",
+    "helmet": "^8.0.0",
+    "json2csv": "^6.0.0-alpha.2",
+    "jsonwebtoken": "^9.0.3",
+    "jwks-rsa": "^3.0.1",
+    "multer": "^1.4.5-lts.1",
+    "pg": "^8.7.3",
+    "redis": "^4.7.0",
+    "socket.io": "^4.8.1",
+    "stripe": "^12.7.0",
+    "validator": "^13.11.0"
+  }
+}
