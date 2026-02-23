@@ -188,6 +188,19 @@ app.use(
   require('./controllers/atfOperations')
 );
 
+// Auction routes (Phase 1)
+app.use('/api/v1/auctions', [jsonParser], require('./controllers/auctions'));
+app.use('/api/v1/bids', [jsonParser], require('./controllers/bids'));
+app.use(
+  '/api/v1/auction-notifications',
+  [jsonParser, authenticateAWS],
+  require('./controllers/auctionNotifications')
+);
+
+// Shopping cart routes (Phase 2)
+app.use('/api/v1/cart', [jsonParser, authenticateAWS], require('./controllers/cart'));
+app.use('/api/v1/purchases', [jsonParser, authenticateAWS], require('./controllers/purchases'));
+
 // Stripe webhook
 app.use('/api/v1/webhook', require('./controllers/webhook'));
 
