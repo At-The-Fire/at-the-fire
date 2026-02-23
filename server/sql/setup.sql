@@ -23,6 +23,11 @@ DROP TABLE IF EXISTS conversations CASCADE;
 DROP TABLE IF EXISTS conversation_participants CASCADE;
 DROP TABLE IF EXISTS messages CASCADE;
 DROP TABLE IF EXISTS conversation_visibility CASCADE;
+DROP TABLE IF EXISTS auctions CASCADE;
+DROP TABLE IF EXISTS bids CASCADE;
+DROP TABLE IF EXISTS auction_results CASCADE;
+DROP TABLE IF EXISTS auction_notifications CASCADE;
+DROP TABLE IF EXISTS purchases CASCADE;
 
 CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
 
@@ -111,9 +116,10 @@ CREATE TABLE gallery_posts (
   customer_id VARCHAR(255),
   public_id VARCHAR,
   num_imgs BIGINT,
-  FOREIGN KEY (customer_id) REFERENCES stripe_customers(customer_id) ON DELETE CASCADE , 
+  FOREIGN KEY (customer_id) REFERENCES stripe_customers(customer_id) ON DELETE CASCADE ,
   sold BOOLEAN DEFAULT FALSE,
-  date_sold VARCHAR
+  date_sold VARCHAR,
+  quantity INTEGER DEFAULT 1
 );
 
 CREATE TABLE posts_imgs (
@@ -265,8 +271,70 @@ CREATE TABLE conversation_visibility (
     PRIMARY KEY (conversation_id, user_sub)
 );
 
+-- E-commerce tables: Auctions, Bids, Purchases (Phase 0 - Shopping Cart Setup)
 
+-- Auctions: standalone post type, NOT linked to gallery_posts
+CREATE TABLE auctions (
+  id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  seller_sub    VARCHAR NOT NULL REFERENCES cognito_users(sub) ON DELETE CASCADE,
+  title         VARCHAR(255) NOT NULL,
+  description   TEXT,
+  image_urls    TEXT[] NOT NULL DEFAULT '{}',
+  start_price   NUMERIC NOT NULL,
+  buy_now_price NUMERIC,
+  current_bid   NUMERIC,
+  start_time    TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  end_time      TIMESTAMPTZ NOT NULL,
+  is_active     BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 
+-- Bids
+CREATE TABLE bids (
+  id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  auction_id  BIGINT NOT NULL REFERENCES auctions(id) ON DELETE CASCADE,
+  bidder_sub  VARCHAR NOT NULL REFERENCES cognito_users(sub) ON DELETE CASCADE,
+  bid_amount  NUMERIC NOT NULL CHECK (bid_amount > 0),
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Auction results: winner, payment, shipping lifecycle
+CREATE TABLE auction_results (
+  id              SERIAL PRIMARY KEY,
+  auction_id      BIGINT UNIQUE REFERENCES auctions(id),
+  winner_sub      VARCHAR REFERENCES cognito_users(sub),
+  final_bid       NUMERIC,
+  closed_at       TIMESTAMPTZ DEFAULT NOW(),
+  closed_reason   TEXT NOT NULL,
+  is_paid         BOOLEAN DEFAULT FALSE,
+  tracking_number TEXT
+);
+
+-- Auction in-app notifications (outbid, won)
+CREATE TABLE auction_notifications (
+  id          BIGSERIAL PRIMARY KEY,
+  user_sub    VARCHAR NOT NULL REFERENCES cognito_users(sub) ON DELETE CASCADE,
+  auction_id  BIGINT NOT NULL REFERENCES auctions(id) ON DELETE CASCADE,
+  type        TEXT NOT NULL CHECK (type IN ('outbid', 'won')),
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  is_read     BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+-- Purchases: payment processing records for both direct-sale and auction payments
+CREATE TABLE purchases (
+  id                      BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  buyer_sub               VARCHAR NOT NULL REFERENCES cognito_users(sub),
+  seller_customer_id      VARCHAR NOT NULL REFERENCES stripe_customers(customer_id),
+  item_type               VARCHAR NOT NULL CHECK (item_type IN ('gallery_post', 'auction')),
+  item_id                 BIGINT NOT NULL,
+  quantity                INT NOT NULL DEFAULT 1,
+  amount_paid             NUMERIC NOT NULL,
+  processor_transaction_id VARCHAR,
+  status                  VARCHAR NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'refunded')),
+  created_at              TIMESTAMPTZ DEFAULT NOW()
+);
 
 --  adding users for testing --
 -- User with no profile data
