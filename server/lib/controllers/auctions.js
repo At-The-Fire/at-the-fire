@@ -125,7 +125,7 @@ module.exports = Router()
       }
 
       // Set sellerSub from authenticated user
-      auctionDetails.sellerSub = req.user.sub;
+      auctionDetails.sellerSub = req.userAWSSub;
 
       const auction = await Auction.insert(auctionDetails);
 
