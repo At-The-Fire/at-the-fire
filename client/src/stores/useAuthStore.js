@@ -3,6 +3,7 @@ import { createCookies, deleteCookies } from '../services/cookieAPI';
 import { toast } from 'react-toastify';
 import { AmazonCognitoIdentity, userPool } from '../services/userPool.js';
 import usePostStore from './usePostStore.js';
+import { websocketService } from '../services/websocketService.js';
 
 const BASE_URL = process.env.REACT_APP_BASE_URL;
 
@@ -23,6 +24,7 @@ export const useAuthStore = create((set, get) => ({
   stripeName: '',
   tokenExpiryTime: null,
   user: null,
+  sub: null,
   signingOut: false,
   isRefreshing: false,
   isConfirmed: false,
@@ -206,6 +208,7 @@ export const useAuthStore = create((set, get) => ({
       set({
         error: null,
         user: null,
+        sub: null,
         isAuthenticated: false,
         signingOut: false,
         customerId: null,
@@ -448,12 +451,14 @@ export const useAuthStore = create((set, get) => ({
           accessToken: session.accessToken.jwtToken,
           admin: customerData?.data?.admin,
           user: cognitoUser.getUsername(),
+          sub: session.getIdToken().payload.sub,
           email: session.getIdToken().payload.email,
           tokenExpiryTime: session.getIdToken().getExpiration(),
           isAuthenticated: true,
           customerId: customerData?.data?.customerId || null,
           isConfirmed: customerData?.data?.confirmed || null,
         });
+        websocketService.connect();
       } else {
         set({
           accessToken: '',
