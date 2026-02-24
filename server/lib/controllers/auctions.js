@@ -84,8 +84,10 @@ module.exports = Router()
           const fileName = file.originalname;
           const uniqueId = `${timestamp}_${random1}${random2}_${fileName}`;
 
+          // check which server prod or dev
+          const bucketSuffix = process.env.APP_ENV === 'development' ? '-dev' : '';
           // Define the file path in your S3 bucket
-          const key = `at-the-fire/auction-images/${uniqueId}`;
+          const key = `at-the-fire${bucketSuffix}/auction-images/${uniqueId}`;
 
           // Wrap async operations in IIFE
           (async () => {
@@ -100,9 +102,15 @@ module.exports = Router()
 
               await s3Client.send(command);
 
+              // Use S3 URL in dev, CloudFront in prod
+              const secure_url =
+                process.env.APP_ENV === 'development'
+                  ? `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`
+                  : `https://${process.env.CLOUDFRONT_DOMAIN}/${key}`;
+
               const result = {
                 public_id: uniqueId,
-                secure_url: `https://${process.env.CLOUDFRONT_DOMAIN}/${key}`,
+                secure_url,
                 format: file.mimetype.split('/')[1],
                 original_filename: file.originalname,
               };
