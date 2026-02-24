@@ -9,5 +9,12 @@ npm-debug.log*
 /client/build/
 /server/lib/clientBuild/build/
 
+# Claude Code local settings
+
+
+# (Optional) ignore a root-level settings.local.json if present
+/settings.local.json
+
 #^ TEMP for building shopping cart:
 /docs/
+.claude/settings.local.json
