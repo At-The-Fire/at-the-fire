@@ -31,7 +31,7 @@ import { useProfileContext } from '../../context/ProfileContext.js';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useAuthStore } from '../../stores/useAuthStore.js';
-import { getUserAuctions } from '../../services/fetch-auctions.js';
+import { getSellerAuctions } from '../../services/fetch-auctions.js';
 const logo = require('../../assets/logo-icon-6.png');
 
 export default function Dashboard({ products, setProducts, customerId }) {
@@ -207,7 +207,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
   useEffect(() => {
     if (dashboardView !== 'auctions' || !user) return;
     setAuctionsLoading(true);
-    getUserAuctions(user)
+    getSellerAuctions(user)
       .then((data) => {
         const all = Array.isArray(data) ? data : [];
         setSellerAuctions(all);
@@ -275,14 +275,25 @@ export default function Dashboard({ products, setProducts, customerId }) {
         <FlamePipe />
       </Box>
     )) || (
-      <Box>
+      <Box sx={{ paddingTop: 0 }}>
         {/* Posts / Auctions view toggle */}
-        <Box sx={{ display: 'flex', justifyContent: 'center', pt: 2, pb: 1 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            position: 'relative',
+            top: '-50px',
+            // border: '2px solid red',
+          }}
+        >
           <ToggleButtonGroup
             value={dashboardView}
             exclusive
             onChange={(_, val) => val && setDashboardView(val)}
             size="small"
+            sx={{
+              marginTop: '22px',
+            }}
           >
             <ToggleButton value="posts">Posts</ToggleButton>
             <ToggleButton value="auctions">Auctions</ToggleButton>
@@ -291,8 +302,17 @@ export default function Dashboard({ products, setProducts, customerId }) {
 
         {/* Auctions view */}
         {dashboardView === 'auctions' && (
-          <Box sx={{ p: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Box sx={{ margin: 0, p: 0, position: 'relative', top: '-30px' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                mb: 2,
+                // margin: 'auto',
+                // maxWidth: '65%',
+              }}
+            >
               <Typography variant="h6">My Auctions</Typography>
               <Button variant="contained" size="small" onClick={() => navigate('/dashboard/auctions/new')}>
                 New Auction
@@ -376,7 +396,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
                 borderColor: (theme) => theme.palette.primary.dark,
                 padding: 0,
                 display: isMobile ? '' : 'grid',
-                transform: 'translate(0px, -2.5%)',
+                transform: 'translate(0px, -5%)',
               }}
             >
               <aside className="admin-panel ">
