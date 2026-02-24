@@ -118,6 +118,41 @@ describe('Auction Model', () => {
     });
   });
 
+  describe('getBySeller', () => {
+    it('returns all auctions for a seller as Auction instances', async () => {
+      const mockRows = [
+        {
+          id: 1,
+          title: 'Fire Bowl',
+          seller_sub: 'sub_seller',
+          image_urls: [],
+          start_price: '100.00',
+          buy_now_price: null,
+          current_bid: null,
+          start_time: new Date(),
+          end_time: new Date(),
+          is_active: true,
+          created_at: new Date(),
+          updated_at: new Date(),
+        },
+      ];
+      pool.query.mockResolvedValueOnce({ rows: mockRows });
+
+      const results = await Auction.getBySeller('sub_seller');
+
+      expect(results).toHaveLength(1);
+      expect(results[0]).toBeInstanceOf(Auction);
+      expect(results[0].sellerSub).toBe('sub_seller');
+      expect(pool.query).toHaveBeenCalledWith(expect.any(String), ['sub_seller']);
+    });
+
+    it('returns empty array when seller has no auctions', async () => {
+      pool.query.mockResolvedValueOnce({ rows: [] });
+      const results = await Auction.getBySeller('sub_nobody');
+      expect(results).toEqual([]);
+    });
+  });
+
   describe('getById', () => {
     it('returns an auction by id', async () => {
       const mockRow = {

@@ -93,6 +93,14 @@ module.exports = class Auction {
     return rows.map((row) => new Auction(row));
   }
 
+  static async getBySeller(sellerSub) {
+    const { rows } = await pool.query(
+      `SELECT * FROM auctions WHERE seller_sub = $1 ORDER BY end_time DESC`,
+      [sellerSub],
+    );
+    return rows.map((row) => new Auction(row));
+  }
+
   static async getById(id) {
     const { rows } = await pool.query(
       `

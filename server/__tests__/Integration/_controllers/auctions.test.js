@@ -117,6 +117,23 @@ describe('Auction routes', () => {
     });
   });
 
+  describe('GET /api/v1/auctions/seller/:sub', () => {
+    it('returns auctions created by the seller', async () => {
+      const res = await request(app).get(`/api/v1/auctions/seller/${mockUser.sub}`);
+
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body)).toBe(true);
+      expect(res.body).toHaveLength(1);
+      expect(res.body[0].sellerSub).toBe(mockUser.sub);
+    });
+
+    it('returns empty array when seller has no auctions', async () => {
+      const res = await request(app).get(`/api/v1/auctions/seller/sub_nobody`);
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual([]);
+    });
+  });
+
   describe('GET /api/v1/auctions/:id', () => {
     it('should return a specific auction (authenticated)', async () => {
       const response = await request(app).get(`/api/v1/auctions/${testAuctionId}`);

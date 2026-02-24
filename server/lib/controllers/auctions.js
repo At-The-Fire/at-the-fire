@@ -30,6 +30,16 @@ module.exports = Router()
     }
   })
 
+  // GET seller's own auctions (authenticated) ///////////////////////////////////////////
+  .get('/seller/:sub', [authenticateAWS], async (req, res, next) => {
+    try {
+      const auctions = await Auction.getBySeller(req.params.sub);
+      res.json(auctions);
+    } catch (e) {
+      next(e);
+    }
+  })
+
   // GET auction by id (authenticated) ///////////////////////////////////////////
   .get('/:id', [authenticateAWS], async (req, res, next) => {
     try {
