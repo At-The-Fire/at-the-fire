@@ -48,6 +48,14 @@ export async function getUserAuctions(userId) {
   }
 }
 
+export async function getSellerAuctions(sellerSub) {
+  const resp = await fetch(`${BASE_URL}/api/v1/auctions/seller/${sellerSub}`, {
+    credentials: 'include',
+  });
+  if (!resp.ok) throw new Error(await resp.text());
+  return resp.json();
+}
+
 export async function getAuctionDetail(id) {
   try {
     const resp = await fetch(`${BASE_URL}/api/v1/auctions/${id}`, {
