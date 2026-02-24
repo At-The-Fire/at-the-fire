@@ -24,6 +24,8 @@ import { useAuthStore } from '../../stores/useAuthStore.js';
 import { useNotificationStore } from '../../stores/useNotificationStore.js';
 import './ResponsiveAppBar.css';
 import { useMessagingSocket } from '../../hooks/useMessagingSocket.js'; //! often looks unused due to commenting out socket for local dev DO NOT DELETE
+import CartIcon from '../Cart/CartIcon.js';
+import CartDrawer from '../Cart/CartDrawer.js';
 
 const StyledInputBase = styled(InputBase)(({ theme }) => ({
   color: 'inherit',
@@ -43,6 +45,7 @@ export default function ResponsiveAppBar() {
   const [searchExpanded, setSearchExpanded] = useState(false); // State to toggle the search bar expansion
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [anchorElUser, setAnchorElUser] = useState(null);
+  const [cartOpen, setCartOpen] = useState(false);
 
   const { isFeedView } = useQuery();
 
@@ -84,8 +87,8 @@ export default function ResponsiveAppBar() {
       : [];
 
   const pages = user
-    ? [isFeedView ? 'Gallery' : 'Feed', 'Sign Up', 'Sign In', 'About', 'Contact']
-    : ['Sign Up', 'Sign In', 'About', 'Contact'];
+    ? [isFeedView ? 'Gallery' : 'Feed', 'Auctions', 'Sign Up', 'Sign In', 'About', 'Contact']
+    : ['Auctions', 'Sign Up', 'Sign In', 'About', 'Contact'];
   // Handles expanding and collapsing search input on mobile
   const handleSearchToggle = () => {
     setSearchExpanded(!searchExpanded);
@@ -107,118 +110,103 @@ export default function ResponsiveAppBar() {
   };
 
   return (
-    <AppBar position="fixed" sx={{ maxHeight: '68.5px', top: '0px' }}>
-      {isDevelopmentEnvironment && (
-        <Box
-          sx={{
-            backgroundColor: isLocal ? 'yellow' : 'orange',
-            color: 'black',
-            padding: 1,
-            position: 'absolute',
-            left: isMobile ? '30%' : '40%',
-          }}
-        >
-          {`DEV: ${isLocal ? 'LOCAL' : 'DEPLOY'}`}
-        </Box>
-      )}
-      <Container maxWidth="xl">
-        <Toolbar disableGutters>
-          <MobileNavMenu
-            {...{
-              setAnchorElNav,
-              setAnchorElUser,
-              anchorElNav,
-              pages,
-              type: window.location.pathname.split('/')[1],
-            }}
-          />
-          <DesktopNavMenu
-            {...{
-              setAnchorElNav,
-              setAnchorElUser,
-              pages,
-              type: window.location.pathname.split('/')[1],
-            }}
-          />
-
+    <>
+      <AppBar position="fixed" sx={{ maxHeight: '68.5px', top: '0px' }}>
+        {isDevelopmentEnvironment && (
           <Box
             sx={{
-              flexGrow: isAuthenticated ? 1 : 0,
-              display: 'flex',
-              justifyContent: 'flex-end',
-              alignItems: 'center',
-              gap: (theme) => theme.spacing(1),
-              padding: (theme) => theme.spacing(1),
+              backgroundColor: isLocal ? 'yellow' : 'orange',
+              color: 'black',
+              padding: 1,
+              position: 'absolute',
+              left: isMobile ? '30%' : '40%',
             }}
           >
-            {/* Show search icon and functionality only on mobile (xs and sm screens) */}
-            {!window.location.pathname.split('/')[1] && (
-              <Box
-                sx={{
-                  display: 'flex',
-                  border: '1px solid',
-                  borderColor: 'green',
-                  paddingLeft: searchExpanded ? '18px' : '0px',
-                  borderRadius: '10px',
-                  left: searchExpanded ? '56px;' : ' 0px',
-                  backgroundColor: '#202020',
-                  zIndex: 9,
-                  right: isMobile ? '0px' : '60px',
-                }}
-              >
-                {!searchExpanded ? (
-                  <IconButton onClick={handleSearchToggle} aria-label="search">
-                    <SearchIcon />
-                  </IconButton>
-                ) : (
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <StyledInputBase
-                      className={searchExpanded ? 'expanded' : ''}
-                      placeholder="Search…"
-                      inputProps={{ 'aria-label': 'search' }}
-                      defaultValue={query}
-                      onChange={(e) => handleInputChange(e)}
-                    />
-                    <IconButton onClick={handleSearchToggle} aria-label="close search">
-                      <CloseIcon />
+            {`DEV: ${isLocal ? 'LOCAL' : 'DEPLOY'}`}
+          </Box>
+        )}
+        <Container maxWidth="xl">
+          <Toolbar disableGutters>
+            <MobileNavMenu
+              {...{
+                setAnchorElNav,
+                setAnchorElUser,
+                anchorElNav,
+                pages,
+                type: window.location.pathname.split('/')[1],
+              }}
+            />
+            <DesktopNavMenu
+              {...{
+                setAnchorElNav,
+                setAnchorElUser,
+                pages,
+                type: window.location.pathname.split('/')[1],
+              }}
+            />
+
+            <Box
+              sx={{
+                flexGrow: isAuthenticated ? 1 : 0,
+                display: 'flex',
+                justifyContent: 'flex-end',
+                alignItems: 'center',
+                gap: (theme) => theme.spacing(1),
+                padding: (theme) => theme.spacing(1),
+              }}
+            >
+              {/* Show search icon and functionality only on mobile (xs and sm screens) */}
+              {!window.location.pathname.split('/')[1] && (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    border: '1px solid',
+                    borderColor: 'green',
+                    paddingLeft: searchExpanded ? '18px' : '0px',
+                    borderRadius: '10px',
+                    left: searchExpanded ? '56px;' : ' 0px',
+                    backgroundColor: '#202020',
+                    zIndex: 9,
+                    right: isMobile ? '0px' : '60px',
+                  }}
+                >
+                  {!searchExpanded ? (
+                    <IconButton onClick={handleSearchToggle} aria-label="search">
+                      <SearchIcon />
                     </IconButton>
-                  </Box>
-                )}
-              </Box>
-            )}
-
-            {!loadingCustomerId ? (
-              customerId && isAuthenticated && isConfirmed ? (
-                <Box sx={{ display: 'grid' }}>
-                  <Button
-                    onClick={handleHomeDashboard}
-                    style={{
-                      margin: '0 10px',
-                      color: 'white',
-                      display: isTablet && searchExpanded ? 'none' : 'flex',
-                      padding: '0',
-                    }}
-                    variant="outlined"
-                  >
-                    {admin ? '🔥   Admin    🔥' : 'Workspace'}
-                  </Button>
-
-                  <Typography
-                    sx={{
-                      fontSize: '.8rem',
-                      color: (theme) => theme.palette.primary.light,
-                      display: isTablet && searchExpanded ? 'none' : 'flex',
-                    }}
-                  >
-                    {` ${!isMobile ? email : ''}`}
-                  </Typography>
+                  ) : (
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <StyledInputBase
+                        className={searchExpanded ? 'expanded' : ''}
+                        placeholder="Search…"
+                        inputProps={{ 'aria-label': 'search' }}
+                        defaultValue={query}
+                        onChange={(e) => handleInputChange(e)}
+                      />
+                      <IconButton onClick={handleSearchToggle} aria-label="close search">
+                        <CloseIcon />
+                      </IconButton>
+                    </Box>
+                  )}
                 </Box>
-              ) : (
-                <Box>
-                  <Button onClick={handleSubscriptionNav} style={{ margin: '0 20px', color: 'white' }}>
-                    Subscription
-                  </Button>
-                  {isAuthenticated && (
+              )}
+
+              {!loadingCustomerId ? (
+                customerId && isAuthenticated && isConfirmed ? (
+                  <Box sx={{ display: 'grid' }}>
+                    <Button
+                      onClick={handleHomeDashboard}
+                      style={{
+                        margin: '0 10px',
+                        color: 'white',
+                        display: isTablet && searchExpanded ? 'none' : 'flex',
+                        padding: '0',
+                      }}
+                      variant="outlined"
+                    >
+                      {admin ? '🔥   Admin    🔥' : 'Workspace'}
+                    </Button>
+
                     <Typography
                       sx={{
                         fontSize: '.8rem',
@@ -228,30 +216,49 @@ export default function ResponsiveAppBar() {
                     >
                       {` ${!isMobile ? email : ''}`}
                     </Typography>
-                  )}
-                </Box>
-              )
-            ) : null}
-            <Box
-              sx={{
-                display: isMobile && searchExpanded ? 'none' : 'flex',
-              }}
-            >
-              {' '}
-              {isAuthenticated && (
-                <UserMenu
-                  {...{
-                    setAnchorElNav,
-                    setAnchorElUser,
-                    anchorElUser,
-                    userMenuItems,
-                  }}
-                />
-              )}
+                  </Box>
+                ) : (
+                  <Box>
+                    <Button onClick={handleSubscriptionNav} style={{ margin: '0 20px', color: 'white' }}>
+                      Subscription
+                    </Button>
+                    {isAuthenticated && (
+                      <Typography
+                        sx={{
+                          fontSize: '.8rem',
+                          color: (theme) => theme.palette.primary.light,
+                          display: isTablet && searchExpanded ? 'none' : 'flex',
+                        }}
+                      >
+                        {` ${!isMobile ? email : ''}`}
+                      </Typography>
+                    )}
+                  </Box>
+                )
+              ) : null}
+              <Box
+                sx={{
+                  display: isMobile && searchExpanded ? 'none' : 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                {isAuthenticated && <CartIcon onClick={() => setCartOpen(true)} />}{' '}
+                {isAuthenticated && (
+                  <UserMenu
+                    {...{
+                      setAnchorElNav,
+                      setAnchorElUser,
+                      anchorElUser,
+                      userMenuItems,
+                    }}
+                  />
+                )}
+              </Box>
             </Box>
-          </Box>
-        </Toolbar>
-      </Container>
-    </AppBar>
+          </Toolbar>
+        </Container>
+      </AppBar>
+      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
+    </>
   );
 }
