@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Box, Grid, Typography, Paper, Avatar, useMediaQuery } from '@mui/material';
+import { Box, Button, Grid, Typography, Paper, Avatar, useMediaQuery } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import userDefaultImage from './../../assets/user.png'; // Fix the path as needed
 import { useTheme } from '@emotion/react';
 import LikeButton from '../Likes/LikeButton.js';
+import { useCartStore } from '../../stores/useCartStore.js';
+import { toast } from 'react-toastify';
 
 export default function GalleryCard({ item }) {
   //
@@ -23,6 +25,20 @@ export default function GalleryCard({ item }) {
   // Handle card click navigation
   const handleCardClick = async (postId) => {
     navigate(`/gallery/${postId}`);
+  };
+
+  const handleAddToCart = (e) => {
+    e.stopPropagation();
+    useCartStore.getState().addItem({
+      postId: item.id,
+      title: item.title,
+      price: Number(item.price),
+      quantity: 1,
+      maxQuantity: item.quantity || 1,
+      imageUrl: item.image_url,
+      sellerCustomerId: item.customer_id,
+    });
+    toast.success(`"${item.title}" added to cart`, { theme: 'colored', autoClose: 2000 });
   };
 
   // Observer to handle lazy-loading images
@@ -203,6 +219,19 @@ export default function GalleryCard({ item }) {
               }
             </Box>
           </Box>
+          {!item.sold && item.price > 0 && (
+            <Box onClick={(e) => e.stopPropagation()} sx={{ px: 1, pb: 1 }}>
+              <Button
+                size="small"
+                variant="outlined"
+                fullWidth
+                onClick={handleAddToCart}
+                sx={{ fontSize: '.65rem', py: 0.25 }}
+              >
+                Add to Cart
+              </Button>
+            </Box>
+          )}
         </Paper>
       </Box>
     </Grid>

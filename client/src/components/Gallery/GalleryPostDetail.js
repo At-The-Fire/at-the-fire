@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Avatar, Box, Button, Typography, Modal, IconButton, useMediaQuery } from '@mui/material';
+import { Avatar, Box, Button, MenuItem, Select, Typography, Modal, IconButton, useMediaQuery } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import { useCartStore } from '../../stores/useCartStore.js';
+import { toast } from 'react-toastify';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import { useGalleryPost } from '../../hooks/useGalleryPost.js';
@@ -19,6 +21,7 @@ export default function GalleryPostDetail() {
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [modalIsOpen, setModalIsOpen] = useState(false);
+  const [cartQty, setCartQty] = useState(1);
 
   const navigate = useNavigate();
 
@@ -38,6 +41,19 @@ export default function GalleryPostDetail() {
       checkTokenExpiry();
     }
   }, [isAuthenticated, error, authenticateUser, signingOut, checkTokenExpiry]);
+
+  const handleAddToCart = () => {
+    useCartStore.getState().addItem({
+      postId: postDetail.id,
+      title: postDetail.title,
+      price: Number(postDetail.price),
+      quantity: cartQty,
+      maxQuantity: postDetail.quantity || 1,
+      imageUrl: imageUrls[0],
+      sellerCustomerId: postDetail.customer_id,
+    });
+    toast.success(`"${postDetail.title}" added to cart`, { theme: 'colored', autoClose: 2000 });
+  };
 
   // functions
 
@@ -374,6 +390,23 @@ export default function GalleryPostDetail() {
             </Typography>
           </Box>
         </Box>
+        {!postDetail.sold && postDetail.price > 0 && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, ml: '1.5rem', mt: 1, mb: 1 }}>
+            <Select
+              size="small"
+              value={cartQty}
+              onChange={(e) => setCartQty(e.target.value)}
+              sx={{ minWidth: 70 }}
+            >
+              {Array.from({ length: postDetail.quantity || 1 }, (_, i) => i + 1).map((n) => (
+                <MenuItem key={n} value={n}>{n}</MenuItem>
+              ))}
+            </Select>
+            <Button variant="contained" size="small" onClick={handleAddToCart}>
+              Add to Cart
+            </Button>
+          </Box>
+        )}
         <Typography sx={{ marginLeft: '1.5rem', textAlign: 'left' }}>
           {postDetail.description}
         </Typography>
