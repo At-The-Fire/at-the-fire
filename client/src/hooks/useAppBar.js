@@ -63,6 +63,9 @@ export default function useAppBar({ setAnchorElNav, setAnchorElUser }) {
       case 'Contact':
         closeNavHelper('contact');
         break;
+      case 'Auctions':
+        closeNavHelper('auctions');
+        break;
       default:
         setAnchorElNav(null);
         break;
