@@ -454,6 +454,12 @@ module.exports = app.post(
           }
 
           break;
+
+        // Phase 2/3: Payment processor webhook events for direct sales and auctions
+        // case 'payment.completed': // processor-specific event name TBD
+        //   // Purchase.updateStatus(purchaseId, 'completed')
+        //   // Purchase.updateTransactionId(purchaseId, transactionId)
+        //   break;
       }
       response.sendStatus(200);
     } catch (e) {
