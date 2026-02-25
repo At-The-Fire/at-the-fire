@@ -175,7 +175,10 @@ export async function cancelAuction(id) {
     method: 'PUT',
     credentials: 'include',
   });
-  if (!resp.ok) throw new Error(await resp.text());
+  if (!resp.ok) {
+    const body = await resp.json().catch(() => ({}));
+    throw new Error(body.error || body.message || 'Request failed');
+  }
   return resp.json();
 }
 
