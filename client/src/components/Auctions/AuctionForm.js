@@ -160,8 +160,8 @@ export default function AuctionForm() {
   }
 
   return (
-    <Box className="form-wrapper">
-      <form className="new-post-form" onSubmit={handleSubmit}>
+    <Box className="auction-form-wrapper">
+      <form className="auction-form" onSubmit={handleSubmit}>
         <h1 id="form-title-header">{id ? 'Edit Auction' : 'New Auction'}</h1>
         <Box className="desk-title-input" sx={{ position: 'relative', top: '-8px' }}>
           <TextField
@@ -183,7 +183,7 @@ export default function AuctionForm() {
             inputProps={{ maxLength: 400 }}
             value={description || ''}
             onChange={(e) => setDescription(e.target.value)}
-            className="description"
+            className="auction-description"
           />
         </Box>
         <Box className="desk-price-input-wrapper">
