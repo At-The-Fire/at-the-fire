@@ -10,7 +10,7 @@ class WebSocketService {
   }
 
   connect() {
-    if (this.socket && this.isConnected) {
+    if (this.socket) {
       return this.socket;
     }
 
