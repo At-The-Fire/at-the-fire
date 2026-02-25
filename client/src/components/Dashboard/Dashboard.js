@@ -55,6 +55,14 @@ export default function Dashboard({ products, setProducts, customerId }) {
   const [dashboardView, setDashboardView] = useState('posts');
   const [sellerAuctions, setSellerAuctions] = useState([]);
   const [auctionsLoading, setAuctionsLoading] = useState(false);
+  const [auctionFilter, setAuctionFilter] = useState('all');
+
+  // auction filter
+  const filteredAuctions = sellerAuctions.filter((a) => {
+    if (auctionFilter === 'active') return a.isActive;
+    if (auctionFilter === 'closed') return !a.isActive;
+    return true;
+  });
 
   // pagination
   const postsFilteredByCategory = posts.filter((post) => !selectedCategory || post.category === selectedCategory);
@@ -223,35 +231,87 @@ export default function Dashboard({ products, setProducts, customerId }) {
     if (auctionsLoading) {
       return <Typography>Loading auctions...</Typography>;
     }
-    if (sellerAuctions.length === 0) {
-      return <Typography sx={{ color: 'text.secondary' }}>No auctions yet.</Typography>;
+    if (filteredAuctions.length === 0) {
+      return (
+        <Typography sx={{ color: 'text.secondary' }}>
+          {sellerAuctions.length === 0 ? 'No auctions yet.' : 'No auctions match this filter.'}
+        </Typography>
+      );
     }
-    return sellerAuctions.map((auction) => (
+    return filteredAuctions.map((auction) => (
       <Box
         key={auction.id}
         sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
+          width: '100%',
+          display: 'grid',
+          gridTemplateColumns: { xs: '60px 1fr auto', sm: '100px 1fr auto', md: '100px 1fr 160px auto' },
           alignItems: 'center',
-          p: 1.5,
-          mb: 1,
+          minHeight: { xs: '60px', sm: '100px' },
           border: '1px solid',
           borderColor: 'divider',
-          borderRadius: 1,
+          mb: '4px',
+          backgroundColor: 'rgba(255,255,255,0.07)',
+          overflow: 'hidden',
         }}
       >
-        <Box>
-          <Typography variant="body1" fontWeight={600}>
+        {/* Thumbnail */}
+        {auction.imageUrls?.[0] ? (
+          <Box
+            component="img"
+            src={auction.imageUrls[0]}
+            alt={auction.title}
+            sx={{
+              width: { xs: '60px', sm: '100px' },
+              height: { xs: '60px', sm: '100px' },
+              objectFit: 'cover',
+              objectPosition: 'center',
+              display: 'block',
+            }}
+          />
+        ) : (
+          <Box
+            sx={{
+              width: { xs: '60px', sm: '100px' },
+              height: { xs: '60px', sm: '100px' },
+              backgroundColor: 'rgba(255,255,255,0.05)',
+            }}
+          />
+        )}
+
+        {/* Title + status + bid */}
+        <Box sx={{ px: 1.5, overflow: 'hidden' }}>
+          <Typography
+            fontWeight={700}
+            sx={{
+              fontSize: { xs: '.8rem', sm: '.9rem' },
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: { xs: 'nowrap', sm: 'normal' },
+            }}
+          >
             {auction.title}
           </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            {auction.isActive ? '🟢 Active' : '⚫ Closed'} &nbsp;|&nbsp; Current bid: $
-            {auction.currentBid || auction.startPrice}
+          <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: { xs: '.7rem', sm: '.8rem' } }}>
+            {auction.isActive ? '🟢 Active' : '⚫ Closed'}
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: { xs: '.7rem', sm: '.8rem' } }}>
+            Bid: ${Number(auction.currentBid || auction.startPrice).toLocaleString()}
           </Typography>
         </Box>
-        <Button size="small" variant="outlined" onClick={() => navigate(`/dashboard/auctions/${auction.id}/edit`)}>
-          Edit
-        </Button>
+
+        {/* End date — md+ only */}
+        <Box sx={{ display: { xs: 'none', md: 'block' }, px: 1 }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '.8rem', whiteSpace: 'nowrap' }}>
+            Ends {new Date(auction.endTime).toLocaleDateString()}
+          </Typography>
+        </Box>
+
+        {/* Edit button */}
+        <Box sx={{ pr: 1.5 }}>
+          <Button size="small" variant="outlined" onClick={() => navigate(`/dashboard/auctions/${auction.id}/edit`)}>
+            Edit
+          </Button>
+        </Box>
       </Box>
     ));
   };
@@ -302,24 +362,179 @@ export default function Dashboard({ products, setProducts, customerId }) {
 
         {/* Auctions view */}
         {dashboardView === 'auctions' && (
-          <Box sx={{ margin: 0, p: 0, position: 'relative', top: '-30px' }}>
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                mb: 2,
-                // margin: 'auto',
-                // maxWidth: '65%',
-              }}
-            >
-              <Typography variant="h6">My Auctions</Typography>
-              <Button variant="contained" size="small" onClick={() => navigate('/dashboard/auctions/new')}>
+          <>
+            {/* Mobile buttons bar — mirrors posts mobile bar */}
+            <Box className="mobile-dashboard-buttons">
+              <Button
+                size="small"
+                variant="contained"
+                onClick={() => navigate('/dashboard/auctions/new')}
+                sx={{ fontSize: '.7rem', padding: '10px 5px' }}
+              >
                 New Auction
               </Button>
             </Box>
-            {renderAuctionsContent()}
-          </Box>
+
+            {/* 3-column container — same structure as posts */}
+            <Box
+              className="admin-container"
+              sx={{
+                borderWidth: '1px',
+                borderStyle: 'solid',
+                borderColor: (theme) => theme.palette.primary.dark,
+                padding: 0,
+                display: isMobile ? '' : 'grid',
+                transform: 'translate(0px, -5%)',
+              }}
+            >
+              {/* LEFT PANEL */}
+              <aside className="admin-panel">
+                <section className="admin-panel-section">
+                  <div className="button-container">
+                    <Typography variant="h5">Auction Management</Typography>
+                    <div className="inner-button-container">
+                      <Button
+                        size="medium"
+                        variant="contained"
+                        onClick={() => navigate('/dashboard/auctions/new')}
+                        startIcon={<UploadIcon />}
+                        sx={{ width: '300px', marginTop: '20px' }}
+                      >
+                        New Auction
+                      </Button>
+                    </div>
+
+                    {/* Stats + filter (left-panel small-screen slot) */}
+                    <Box
+                      sx={{
+                        borderWidth: '1px',
+                        borderStyle: 'solid',
+                        borderColor: (theme) => theme.palette.primary.dark,
+                      }}
+                      className="small-size-inventory"
+                    >
+                      <Typography variant="subtitle2" sx={{ p: 1, fontWeight: 700 }}>
+                        Summary
+                      </Typography>
+                      <Box sx={{ px: 1, pb: 1 }}>
+                        <Typography variant="body2">Total: {sellerAuctions.length}</Typography>
+                        <Typography variant="body2" sx={{ color: 'success.main' }}>
+                          Active: {sellerAuctions.filter((a) => a.isActive).length}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                          Closed: {sellerAuctions.filter((a) => !a.isActive).length}
+                        </Typography>
+                      </Box>
+
+                      <Typography variant="subtitle2" sx={{ p: 1, fontWeight: 700 }}>
+                        Filter by Status
+                      </Typography>
+                      <ToggleButtonGroup
+                        value={auctionFilter}
+                        exclusive
+                        onChange={(_, val) => val && setAuctionFilter(val)}
+                        size="small"
+                        orientation="vertical"
+                        sx={{ width: '100%', px: 1, pb: 1 }}
+                      >
+                        <ToggleButton value="all" sx={{ justifyContent: 'flex-start' }}>
+                          All ({sellerAuctions.length})
+                        </ToggleButton>
+                        <ToggleButton value="active" sx={{ justifyContent: 'flex-start', color: 'success.main' }}>
+                          Active ({sellerAuctions.filter((a) => a.isActive).length})
+                        </ToggleButton>
+                        <ToggleButton value="closed" sx={{ justifyContent: 'flex-start' }}>
+                          Closed ({sellerAuctions.filter((a) => !a.isActive).length})
+                        </ToggleButton>
+                      </ToggleButtonGroup>
+                    </Box>
+
+                    <div className="temp-fix"></div>
+
+                    <Typography variant="h5" style={{ textAlign: 'center', paddingLeft: '0px', marginTop: '2rem' }}>
+                      Subscription Management
+                    </Typography>
+                    <DashboardSubMgt />
+                  </div>
+                </section>
+              </aside>
+
+              {/* CENTER LIST */}
+              <div className="list-container">
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    margin: 'auto',
+                    justifySelf: 'center',
+                  }}
+                >
+                  <Typography sx={{ color: 'green' }}>
+                    {filteredAuctions.length} auction{filteredAuctions.length !== 1 ? 's' : ''}
+                    {auctionFilter !== 'all' ? ` · ${auctionFilter}` : ''}
+                  </Typography>
+                </Box>
+                {renderAuctionsContent()}
+              </div>
+
+              {/* RIGHT PANEL — visible at 1600px+ */}
+              <Box
+                sx={{
+                  borderWidth: '1px',
+                  borderStyle: 'solid',
+                  borderColor: (theme) => theme.palette.primary.dark,
+                }}
+                className="large-size-inventory"
+              >
+                <Accordion
+                  expanded={expanded}
+                  onChange={handleAccordionChange}
+                  disabled={!isLargeTablet}
+                  sx={{ backgroundColor: 'rgb(40, 40, 40)' }}
+                >
+                  {isLargeTablet && (
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>Filter / Status</AccordionSummary>
+                  )}
+                  <AccordionDetails>
+                    <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 700 }}>
+                      Summary
+                    </Typography>
+                    <Typography variant="body2" sx={{ mb: 0.5 }}>
+                      Total: {sellerAuctions.length}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'success.main', mb: 0.5 }}>
+                      Active: {sellerAuctions.filter((a) => a.isActive).length}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+                      Closed: {sellerAuctions.filter((a) => !a.isActive).length}
+                    </Typography>
+
+                    <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 700 }}>
+                      Filter by Status
+                    </Typography>
+                    <ToggleButtonGroup
+                      value={auctionFilter}
+                      exclusive
+                      onChange={(_, val) => val && setAuctionFilter(val)}
+                      size="small"
+                      orientation="vertical"
+                      sx={{ width: '100%' }}
+                    >
+                      <ToggleButton value="all" sx={{ justifyContent: 'flex-start' }}>
+                        All ({sellerAuctions.length})
+                      </ToggleButton>
+                      <ToggleButton value="active" sx={{ justifyContent: 'flex-start', color: 'success.main' }}>
+                        Active ({sellerAuctions.filter((a) => a.isActive).length})
+                      </ToggleButton>
+                      <ToggleButton value="closed" sx={{ justifyContent: 'flex-start' }}>
+                        Closed ({sellerAuctions.filter((a) => !a.isActive).length})
+                      </ToggleButton>
+                    </ToggleButtonGroup>
+                  </AccordionDetails>
+                </Accordion>
+              </Box>
+            </Box>
+          </>
         )}
 
         {/* Posts view — only render when dashboardView === 'posts' */}
