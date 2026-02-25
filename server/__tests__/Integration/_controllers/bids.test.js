@@ -22,7 +22,7 @@ const mockBidder2 = {
 const authState = { user: null };
 
 jest.mock('../../../lib/middleware/authenticateAWS.js', () => (req, res, next) => {
-  req.user = authState.user;
+  req.userAWSSub = authState.user?.sub;
   next();
 });
 

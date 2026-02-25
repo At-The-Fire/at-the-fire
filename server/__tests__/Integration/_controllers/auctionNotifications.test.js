@@ -21,7 +21,8 @@ const mockOtherUser = {
 const authState = { user: null };
 
 jest.mock('../../../lib/middleware/authenticateAWS.js', () => (req, res, next) => {
-  req.user = authState.user;
+  // Real middleware attaches `req.userAWSSub` as a string (decodedToken.sub)
+  req.userAWSSub = authState.user?.sub;
   next();
 });
 
@@ -217,7 +218,10 @@ describe('AuctionNotification routes', () => {
 
       // Verify they are now read in the DB
       const { rows } = await pool.query(
-        `SELECT * FROM auction_notifications WHERE user_sub = $1 AND is_read = false`,
+        `
+        SELECT * FROM auction_notifications 
+        WHERE user_sub = $1 AND is_read = false
+        `,
         [mockUser.sub],
       );
       expect(rows).toHaveLength(0);
@@ -244,7 +248,10 @@ describe('AuctionNotification routes', () => {
 
       // Other user's notification should still be unread
       const { rows } = await pool.query(
-        `SELECT * FROM auction_notifications WHERE user_sub = $1 AND is_read = false`,
+        `
+        SELECT * FROM auction_notifications 
+        WHERE user_sub = $1 AND is_read = false
+        `,
         [mockOtherUser.sub],
       );
       expect(rows).toHaveLength(1);

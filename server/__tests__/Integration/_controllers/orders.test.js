@@ -17,28 +17,22 @@ const mockCustomer = {
   subscriptionEndDate: 1630435200,
 };
 
-// Mock authenticate middleware to attach mock user to req.user object before each test case runs (req.user is used in the route handler)
+// Mock authenticate middleware to attach mock sub to req.userAWSSub before each test case runs
 // this is assuming that the user is logged in and authenticated (tested elsewhere)
-jest.mock(
-  '../../../lib/middleware/authenticateAWS.js',
-  () => (req, res, next) => {
-    req.user = mockUser;
-    next();
-  }
-);
+jest.mock('../../../lib/middleware/authenticateAWS.js', () => (req, res, next) => {
+  req.userAWSSub = mockUser.sub;
+  next();
+});
 
 // Mock authorizeSubscription middleware to attach mock subscription to req.subscription object before each test case runs (req.subscription is used in the route handler)
 // this is assuming that the user is logged in and authenticated (tested elsewhere)
-jest.mock(
-  '../../../lib/middleware/authorizeSubscription.js',
-  () => (req, res, next) => {
-    // if (mockUser.sub !== null) {
-    req.customerId = mockCustomer.customerId;
-    // }
+jest.mock('../../../lib/middleware/authorizeSubscription.js', () => (req, res, next) => {
+  // if (mockUser.sub !== null) {
+  req.customerId = mockCustomer.customerId;
+  // }
 
-    next();
-  }
-);
+  next();
+});
 
 describe('orders routes', () => {
   beforeEach(() => {
@@ -321,8 +315,7 @@ describe('orders routes', () => {
 
     expect(response2.status).toBe(500);
     expect(response2.body).toEqual({
-      message:
-        'duplicate key value violates unique constraint "unique_user_order"',
+      message: 'duplicate key value violates unique constraint "unique_user_order"',
       status: 500,
     });
   });
@@ -477,9 +470,7 @@ describe('orders routes', () => {
       order_number: 21, // manually corresponding to db, GET done on front end to find this
     };
 
-    const response = await request(app)
-      .put('/api/v1/orders/1')
-      .send({ orderData });
+    const response = await request(app).put('/api/v1/orders/1').send({ orderData });
 
     expect(response.body).toEqual({
       client_name: 'John Collectorson Johnson',
@@ -519,9 +510,7 @@ describe('orders routes', () => {
       order_number: 21, // manually corresponding to db, GET done on front end to find this
     };
 
-    const response = await request(app)
-      .put('/api/v1/orders/1')
-      .send({ orderData });
+    const response = await request(app).put('/api/v1/orders/1').send({ orderData });
 
     expect(response.body).toEqual({
       client_name: 'John Collectorson Johnson',
@@ -544,9 +533,7 @@ describe('orders routes', () => {
     });
 
     const isFulfilled = true;
-    const response2 = await request(app)
-      .put('/api/v1/orders/1/fulfillment')
-      .send({ isFulfilled });
+    const response2 = await request(app).put('/api/v1/orders/1/fulfillment').send({ isFulfilled });
 
     expect(response2.status).toBe(200);
     expect(response2.body).toEqual({
@@ -586,9 +573,7 @@ describe('orders routes', () => {
       order_number: 21, // manually corresponding to db, GET done on front end to find this
     };
 
-    const response = await request(app)
-      .put('/api/v1/orders/1')
-      .send({ orderData });
+    const response = await request(app).put('/api/v1/orders/1').send({ orderData });
 
     expect(response.body).toEqual({
       client_name: 'John Collectorson Johnson',
@@ -611,9 +596,7 @@ describe('orders routes', () => {
     });
 
     const isFulfilled = undefined;
-    const response2 = await request(app)
-      .put('/api/v1/orders/1/fulfillment')
-      .send({ isFulfilled });
+    const response2 = await request(app).put('/api/v1/orders/1/fulfillment').send({ isFulfilled });
 
     expect(response2.status).toBe(400);
   });
@@ -646,9 +629,7 @@ describe('orders routes', () => {
   it('PUT /orders/:orderId should reject invalid fulfillment values', async () => {
     const isFulfilled = 'not a boolean';
     const body = { isFulfilled };
-    const response = await request(app)
-      .put('/api/v1/orders/1/fulfillment')
-      .send({ body });
+    const response = await request(app).put('/api/v1/orders/1/fulfillment').send({ body });
 
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: 'Missing data' });

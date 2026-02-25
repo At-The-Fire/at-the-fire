@@ -48,7 +48,7 @@ const authState = { user: null };
 
 // Mock authenticate middleware
 jest.mock('../../../lib/middleware/authenticateAWS.js', () => (req, res, next) => {
-  req.user = authState.user;
+  req.userAWSSub = authState.user?.sub;
   next();
 });
 
@@ -128,7 +128,7 @@ describe('Auction routes', () => {
     });
 
     it('returns empty array when seller has no auctions', async () => {
-      const res = await request(app).get('/api/v1/auctions/sfeller/sub_nobody');
+      const res = await request(app).get('/api/v1/auctions/seller/sub_nobody');
       expect(res.status).toBe(200);
       expect(res.body).toEqual([]);
     });
@@ -231,7 +231,7 @@ describe('Auction routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.title).toBe('New Auction');
-      expect(response.body.sellerSub).toBe('sub_fullCustomer'); // Auto-set from req.user
+      expect(response.body.sellerSub).toBe('sub_fullCustomer'); // Auto-set from req.userAWSSub
     });
 
     it('should return 400 if auctionDetails missing', async () => {

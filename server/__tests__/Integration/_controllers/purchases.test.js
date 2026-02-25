@@ -21,7 +21,7 @@ const mockBuyer = {
 const authState = { user: null };
 
 jest.mock('../../../lib/middleware/authenticateAWS.js', () => (req, res, next) => {
-  req.user = authState.user;
+  req.userAWSSub = authState.user?.sub;
   next();
 });
 
@@ -42,7 +42,17 @@ describe('Purchases routes', () => {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING id
       `,
-      ['Test Post', 'Test Description', 'https://test.com/img.jpg', 'Art', '25.00', 'stripe-customer-id_full', 'public_id_test', 1, 5],
+      [
+        'Test Post',
+        'Test Description',
+        'https://test.com/img.jpg',
+        'Art',
+        '25.00',
+        'stripe-customer-id_full',
+        'public_id_test',
+        1,
+        5,
+      ],
     );
     testPostId = rows[0].id;
   });
@@ -166,7 +176,17 @@ describe('Purchases routes', () => {
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id
         `,
-        ['Second Post', 'Desc', 'https://test.com/img2.jpg', 'Art', '10.00', 'stripe-customer-id_full', 'public_id_test2', 1, 3],
+        [
+          'Second Post',
+          'Desc',
+          'https://test.com/img2.jpg',
+          'Art',
+          '10.00',
+          'stripe-customer-id_full',
+          'public_id_test2',
+          1,
+          3,
+        ],
       );
       const secondPostId = rows[0].id;
 
@@ -261,7 +281,12 @@ describe('Purchases routes', () => {
         VALUES ($1, $2, $3, $4, $5, $6, $7), ($1, $2, $3, $4, $5, $6, $8)
         `,
         [
-          mockBuyer.sub, 'stripe-customer-id_full', 'gallery_post', testPostId, 1, '25.00',
+          mockBuyer.sub,
+          'stripe-customer-id_full',
+          'gallery_post',
+          testPostId,
+          1,
+          '25.00',
           new Date('2020-01-01T00:00:00Z'),
           new Date('2020-01-02T00:00:00Z'),
         ],

@@ -12,7 +12,7 @@ const mockUser = {
 const authState = { user: null };
 
 jest.mock('../../../lib/middleware/authenticateAWS.js', () => (req, res, next) => {
-  req.user = authState.user;
+  req.userAWSSub = authState.user?.sub;
   next();
 });
 
@@ -33,7 +33,18 @@ describe('Cart routes', () => {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING id
       `,
-      ['Available Post', 'Desc', 'https://test.com/img1.jpg', 'Art', '20.00', 'stripe-customer-id_full', 'pub_id_1', 1, 5, false],
+      [
+        'Available Post',
+        'Desc',
+        'https://test.com/img1.jpg',
+        'Art',
+        '20.00',
+        'stripe-customer-id_full',
+        'pub_id_1',
+        1,
+        5,
+        false,
+      ],
     );
     availablePostId = r1[0].id;
 
@@ -44,7 +55,18 @@ describe('Cart routes', () => {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING id
       `,
-      ['Sold Post', 'Desc', 'https://test.com/img2.jpg', 'Art', '30.00', 'stripe-customer-id_full', 'pub_id_2', 1, 0, true],
+      [
+        'Sold Post',
+        'Desc',
+        'https://test.com/img2.jpg',
+        'Art',
+        '30.00',
+        'stripe-customer-id_full',
+        'pub_id_2',
+        1,
+        0,
+        true,
+      ],
     );
     soldPostId = r2[0].id;
 
@@ -55,7 +77,18 @@ describe('Cart routes', () => {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING id
       `,
-      ['Low Qty Post', 'Desc', 'https://test.com/img3.jpg', 'Art', '15.00', 'stripe-customer-id_full', 'pub_id_3', 1, 2, false],
+      [
+        'Low Qty Post',
+        'Desc',
+        'https://test.com/img3.jpg',
+        'Art',
+        '15.00',
+        'stripe-customer-id_full',
+        'pub_id_3',
+        1,
+        2,
+        false,
+      ],
     );
     lowQtyPostId = r3[0].id;
   });
@@ -173,18 +206,14 @@ describe('Cart routes', () => {
     });
 
     it('returns 400 when items is an empty array', async () => {
-      const response = await request(app)
-        .post('/api/v1/cart/validate')
-        .send({ items: [] });
+      const response = await request(app).post('/api/v1/cart/validate').send({ items: [] });
 
       expect(response.status).toBe(400);
       expect(response.body.error).toBe('Items array is required');
     });
 
     it('returns 400 when items is missing from the body', async () => {
-      const response = await request(app)
-        .post('/api/v1/cart/validate')
-        .send({});
+      const response = await request(app).post('/api/v1/cart/validate').send({});
 
       expect(response.status).toBe(400);
       expect(response.body.error).toBe('Items array is required');
