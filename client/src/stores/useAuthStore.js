@@ -11,6 +11,7 @@ export const useAuthStore = create((set, get) => ({
   // State
   accessToken: null,
   admin: false,
+  hasAuthChecked: false,
   cookiesSet: false,
   customerId: null,
   email: '',
@@ -426,8 +427,11 @@ export const useAuthStore = create((set, get) => ({
       return;
     }
 
+    set({ loadingAuth: true });
+
     const cognitoUser = userPool.getCurrentUser();
     if (!cognitoUser) {
+      set({ isAuthenticated: false, loadingAuth: false, hasAuthChecked: true });
       return;
     }
 
@@ -492,6 +496,8 @@ export const useAuthStore = create((set, get) => ({
           autoClose: false,
         });
       }
+    } finally {
+      set({ loadingAuth: false, hasAuthChecked: true });
     }
   },
 
