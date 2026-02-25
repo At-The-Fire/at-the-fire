@@ -22,6 +22,7 @@ import {
 } from '../../services/fetch-auctions.js';
 import { useNavigate, useParams } from 'react-router-dom';
 import FlamePipe from '../FlamePipe/FlamePipe.js';
+import { useAuthStore } from '../../stores/useAuthStore.js';
 
 export default function AuctionForm() {
   const [title, setTitle] = useState('');
@@ -36,7 +37,22 @@ export default function AuctionForm() {
   const [existingAuction, setExistingAuction] = useState({});
   const [existingImages, setExistingImages] = useState([]);
 
+  const { authenticateUser, isAuthenticated, loadingAuth, hasAuthChecked, signingOut, error } = useAuthStore();
+
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isAuthenticated && !error && !signingOut && !loadingAuth) {
+      authenticateUser();
+    }
+  }, [isAuthenticated, error, signingOut, loadingAuth, authenticateUser]);
+
+  useEffect(() => {
+    // This route is under /dashboard; if we know the user is not authenticated, send them to sign-in.
+    if (hasAuthChecked && !loadingAuth && !isAuthenticated) {
+      navigate('/auth/sign-in');
+    }
+  }, [hasAuthChecked, loadingAuth, isAuthenticated, navigate]);
 
   useEffect(() => {
     if (id) {
