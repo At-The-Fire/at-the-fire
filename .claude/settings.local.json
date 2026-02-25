@@ -16,7 +16,8 @@
       "Bash(node --version:*)",
       "Bash(python3:*)",
       "Bash(git rm:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(curl:*)"
     ]
   }
 }
