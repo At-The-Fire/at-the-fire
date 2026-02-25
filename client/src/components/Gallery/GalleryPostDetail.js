@@ -386,7 +386,7 @@ export default function GalleryPostDetail() {
                 textDecoration: postDetail.sold ? 'line-through' : '',
               }}
             >
-              ${Number(postDetail.price).toLocaleString()}
+              ${Number(postDetail.price || 0).toLocaleString()}
             </Typography>
           </Box>
         </Box>
