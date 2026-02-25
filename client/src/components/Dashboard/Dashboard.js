@@ -1,5 +1,5 @@
 import PostCard from '../PostCard/PostCard.js';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import './Dashboard.css';
 import DashboardSubMgt from '../Subscription/SubscriptionPages/DashboardSubMgt/DashboardSubMgt.js';
 import { downloadInventoryCSV } from '../../services/fetch-utils.js';
@@ -52,7 +52,8 @@ export default function Dashboard({ products, setProducts, customerId }) {
   const postsPerPage = 6;
 
   // Posts / Auctions toggle
-  const [dashboardView, setDashboardView] = useState('posts');
+  const location = useLocation();
+  const [dashboardView, setDashboardView] = useState(location.state?.view === 'auctions' ? 'auctions' : 'posts');
   const [sellerAuctions, setSellerAuctions] = useState([]);
   const [auctionsLoading, setAuctionsLoading] = useState(false);
   const [auctionFilter, setAuctionFilter] = useState('all');
