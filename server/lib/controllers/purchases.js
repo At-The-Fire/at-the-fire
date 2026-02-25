@@ -11,7 +11,7 @@ module.exports = Router()
   .post('/intent', authenticateAWS, async (req, res, next) => {
     try {
       const { totalAmount, items } = req.body;
-      const buyerSub = req.user.sub;
+      const buyerSub = req.userAWSSub;
 
       if (!totalAmount || !items || !Array.isArray(items)) {
         return res.status(400).json({ error: 'totalAmount and items are required' });
@@ -40,7 +40,7 @@ module.exports = Router()
       await client.query('BEGIN');
 
       const { intentId, items } = req.body;
-      const buyerSub = req.user.sub;
+      const buyerSub = req.userAWSSub;
 
       if (!intentId || !items || !Array.isArray(items)) {
         await client.query('ROLLBACK');
@@ -121,7 +121,7 @@ module.exports = Router()
   // GET /api/v1/purchases - get user's purchase history
   .get('/', authenticateAWS, async (req, res, next) => {
     try {
-      const buyerSub = req.user.sub;
+      const buyerSub = req.userAWSSub;
       const purchases = await Purchase.getByBuyerSub(buyerSub);
       res.json(purchases);
     } catch (e) {
