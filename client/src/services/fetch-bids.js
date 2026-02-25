@@ -32,7 +32,7 @@ export async function placeBid({ auctionId, userId, bidAmount }) {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ auctionId, userId, bidAmount }),
+      body: JSON.stringify({ auctionId, bidderSub: userId, bidAmount }),
       credentials: 'include',
     });
 
@@ -58,7 +58,7 @@ export async function buyItNow({ auctionId, userId }) {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ auctionId, userId }),
+      body: JSON.stringify({ auctionId, buyerSub: userId }),
       credentials: 'include',
     });
 
