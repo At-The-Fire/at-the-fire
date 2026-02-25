@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getAuctions } from '../../services/fetch-auctions.js';
+import { getAuctionDetail } from '../../services/fetch-auctions.js';
 import AuctionCard from './AuctionCard.js';
 import { useAuctionEventsStore } from '../../stores/useAuctionEventsStore.js';
 import './AuctionList.css';
@@ -27,9 +27,8 @@ export default function AuctionDetail() {
     (async () => {
       try {
         setLoading(true);
-        const all = await getAuctions();
-        const found = all.find((a) => Number(a.id) === auctionId) || null;
-        if (isMounted) setAuction(found);
+        const found = await getAuctionDetail(auctionId);
+        if (isMounted) setAuction(found && found.id ? found : null);
       } finally {
         if (isMounted) setLoading(false);
       }
