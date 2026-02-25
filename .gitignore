@@ -18,3 +18,4 @@ npm-debug.log*
 #^ TEMP for building shopping cart:
 /docs/
 .claude/settings.local.json
+.playwright-mcp
