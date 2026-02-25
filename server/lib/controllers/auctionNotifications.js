@@ -6,7 +6,7 @@ module.exports = Router()
   // Get unread auction notifications for the current user
   .get('/', authenticateAWS, async (req, res, next) => {
     try {
-      const userSub = req.user.sub;
+      const userSub = req.userAWSSub;
       const notifications = await AuctionNotification.getUnreadByUserSub(userSub);
       res.json(notifications);
     } catch (e) {
@@ -17,7 +17,7 @@ module.exports = Router()
   // Mark all auction notifications as read for the current user
   .patch('/mark-read', authenticateAWS, async (req, res, next) => {
     try {
-      const userSub = req.user.sub;
+      const userSub = req.userAWSSub;
       await AuctionNotification.markAsRead(userSub);
       res.json({ message: 'All auction notifications marked as read' });
     } catch (e) {
