@@ -170,6 +170,15 @@ export async function updateAuction(id, auction) {
   }
 }
 
+export async function cancelAuction(id) {
+  const resp = await fetch(`${BASE_URL}/api/v1/auctions/${id}/cancel`, {
+    method: 'PUT',
+    credentials: 'include',
+  });
+  if (!resp.ok) throw new Error(await resp.text());
+  return resp.json();
+}
+
 export async function markAuctionPaid(auctionId, isPaid) {
   try {
     const resp = await fetch(`${BASE_URL}/api/v1/auctions/${auctionId}/paid`, {
