@@ -58,6 +58,10 @@ export default function AuctionForm() {
     if (id) {
       const auctionData = async () => {
         const currentAuction = await getAuctionDetail(id);
+        if (!currentAuction.isActive) {
+          navigate('/dashboard', { state: { view: 'auctions' } });
+          return;
+        }
         setExistingAuction(currentAuction);
 
         setTitle(currentAuction.title || '');
@@ -139,7 +143,7 @@ export default function AuctionForm() {
         setFiles([]);
         setExistingImages([]);
       }
-      navigate('/dashboard');
+      navigate('/dashboard', { state: { view: 'auctions' } });
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error(err);
@@ -159,7 +163,7 @@ export default function AuctionForm() {
     try {
       await cancelAuction(id);
       toast.success('Auction cancelled', { theme: 'dark', toastId: 'auction-cancel', autoClose: true });
-      navigate('/dashboard');
+      navigate('/dashboard', { state: { view: 'auctions' } });
     } catch (err) {
       toast.error(err.message, { theme: 'colored', toastId: 'auction-cancel-error', autoClose: true });
     } finally {
@@ -264,11 +268,11 @@ export default function AuctionForm() {
           </Box>
         )}
         <Box className="btn-container">
-          <Button variant="outlined" onClick={() => navigate('/dashboard')}>
+          <Button variant="outlined" onClick={() => navigate('/dashboard', { state: { view: 'auctions' } })}>
             Cancel
           </Button>
           <Button type="submit" variant="outlined">
-            Upload
+            {id ? 'Save Auction' : 'Create Auction'}
           </Button>
         </Box>
 
