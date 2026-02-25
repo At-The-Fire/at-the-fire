@@ -167,11 +167,11 @@ module.exports = Router()
       const auction = await Auction.getById(req.params.id);
       if (!auction) return res.status(404).json({ message: 'Auction not found' });
 
-      const isAdmin = req.user.sub === process.env.ADMIN_SUB;
-      const isOwner = req.user.sub === auction.sellerSub;
+      const isAdmin = req.userAWSSub === process.env.ADMIN_SUB;
+      const isOwner = req.userAWSSub === auction.sellerSub;
       if (!isAdmin && !isOwner) return res.status(403).json({ error: 'Forbidden' });
 
-      if (auction.currentBid) {
+      if (Number(auction.currentBid) > 0) {
         return res.status(409).json({ error: 'Cannot cancel an auction that has bids' });
       }
 
@@ -195,10 +195,14 @@ module.exports = Router()
       }
 
       // 2. Check ownership (seller or admin)
-      const isAdmin = req.user.sub === process.env.ADMIN_SUB;
-      const isOwner = req.user.sub === existingAuction.sellerSub;
+      const isAdmin = req.userAWSSub === process.env.ADMIN_SUB;
+      const isOwner = req.userAWSSub === existingAuction.sellerSub;
       if (!isAdmin && !isOwner) {
         return res.status(403).json({ error: 'Forbidden' });
+      }
+
+      if (!existingAuction.isActive) {
+        return res.status(409).json({ error: 'Cannot edit a closed auction' });
       }
 
       // 3. Determine which URLs need to be deleted
@@ -267,7 +271,7 @@ module.exports = Router()
 
       const auction = await Auction.getById(id);
       if (!auction) return res.status(404).json({ message: 'Auction not found' });
-      if (req.user.sub !== auction.sellerSub) {
+      if (req.userAWSSub !== auction.sellerSub) {
         return res.status(403).json({ error: 'Forbidden' });
       }
 
@@ -299,7 +303,7 @@ module.exports = Router()
 
       const auction = await Auction.getById(id);
       if (!auction) return res.status(404).json({ message: 'Auction not found' });
-      if (req.user.sub !== auction.sellerSub) {
+      if (req.userAWSSub !== auction.sellerSub) {
         return res.status(403).json({ error: 'Forbidden' });
       }
 
