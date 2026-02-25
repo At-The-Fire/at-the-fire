@@ -229,7 +229,7 @@ export default function AuctionForm() {
             onChange={(e) => setEndTime(e.target.value)}
           />
         </Box>
-        <Box {...getRootProps()} className="dropzone" sx={{ marginTop: '40px' }}>
+        <Box {...getRootProps()} className="dropzone" sx={{ marginTop: { xs: '40px', md: '0px' } }}>
           <input {...getInputProps()} />
           <label className="file-upload-label">
             {files.length === 0 ? 'Choose images' : `${files.length} file${files.length > 1 ? 's' : ''} selected`}
@@ -267,19 +267,19 @@ export default function AuctionForm() {
           <Button variant="outlined" onClick={() => navigate('/dashboard')}>
             Cancel
           </Button>
-          <Button className="submit-btn" type="submit" variant="outlined">
+          <Button type="submit" variant="outlined">
             Upload
           </Button>
         </Box>
-      </form>
 
-      {id && existingAuction?.isActive && (
-        <Box className="cancel-auction-container">
-          <Button variant="outlined" color="error" onClick={() => setCancelDialogOpen(true)}>
-            Cancel Auction
-          </Button>
-        </Box>
-      )}
+        {id && existingAuction?.isActive && (
+          <Box className="cancel-auction-container">
+            <Button variant="outlined" color="error" onClick={() => setCancelDialogOpen(true)}>
+              Cancel Auction
+            </Button>
+          </Box>
+        )}
+      </form>
 
       <Dialog open={cancelDialogOpen} onClose={() => setCancelDialogOpen(false)}>
         <DialogTitle>Cancel this auction?</DialogTitle>
