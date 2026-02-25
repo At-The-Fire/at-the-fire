@@ -18,20 +18,20 @@ export const useCartStore = create(
       // Actions
       addItem: (post) => {
         const { items } = get();
-        const alreadyInCart = items.some((i) => i.postId === post.id);
+        const alreadyInCart = items.some((i) => i.postId === post.postId);
         if (alreadyInCart) return;
 
         set({
           items: [
             ...items,
             {
-              postId: post.id,
+              postId: post.postId,
               title: post.title,
               price: Number(post.price),
-              quantity: 1,
-              maxQuantity: post.quantity || 1,
-              imageUrl: post.image_url,
-              sellerCustomerId: post.customer_id || null,
+              quantity: post.quantity || 1,
+              maxQuantity: post.maxQuantity || 1,
+              imageUrl: post.imageUrl,
+              sellerCustomerId: post.sellerCustomerId || null,
             },
           ],
         });
