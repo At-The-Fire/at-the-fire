@@ -128,7 +128,7 @@ describe('Auction routes', () => {
     });
 
     it('returns empty array when seller has no auctions', async () => {
-      const res = await request(app).get(`/api/v1/auctions/seller/sub_nobody`);
+      const res = await request(app).get('/api/v1/auctions/sfeller/sub_nobody');
       expect(res.status).toBe(200);
       expect(res.body).toEqual([]);
     });
@@ -316,6 +316,39 @@ describe('Auction routes', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.error).toBe('isPaid must be boolean');
+    });
+  });
+
+  describe('PUT /api/v1/auctions/:id/cancel', () => {
+    it('cancels an active auction with no bids (seller)', async () => {
+      const res = await request(app).put(`/api/v1/auctions/${testAuctionId}/cancel`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.isActive).toBe(false);
+    });
+
+    it('returns 409 when auction has bids', async () => {
+      await pool.query('UPDATE auctions SET current_bid = 150 WHERE id = $1', [testAuctionId]);
+
+      const res = await request(app).put(`/api/v1/auctions/${testAuctionId}/cancel`);
+
+      expect(res.status).toBe(409);
+      expect(res.body.error).toBe('Cannot cancel an auction that has bids');
+    });
+
+    it('returns 403 for non-owner', async () => {
+      authState.user = mockOtherUser;
+      const res = await request(app).put(`/api/v1/auctions/${testAuctionId}/cancel`);
+
+      expect(res.status).toBe(403);
+      expect(res.body.error).toBe('Forbidden');
+    });
+
+    it('returns 404 for non-existent auction', async () => {
+      const res = await request(app).put('/api/v1/auctions/99999/cancel');
+
+      expect(res.status).toBe(404);
+      expect(res.body.message).toBe('Auction not found');
     });
   });
 

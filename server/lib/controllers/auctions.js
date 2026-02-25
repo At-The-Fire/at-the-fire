@@ -161,6 +161,27 @@ module.exports = Router()
     }
   })
 
+  // PUT cancel auction (seller only, no bids) /////////////////////////////////
+  .put('/:id/cancel', [authenticateAWS], async (req, res, next) => {
+    try {
+      const auction = await Auction.getById(req.params.id);
+      if (!auction) return res.status(404).json({ message: 'Auction not found' });
+
+      const isAdmin = req.user.sub === process.env.ADMIN_SUB;
+      const isOwner = req.user.sub === auction.sellerSub;
+      if (!isAdmin && !isOwner) return res.status(403).json({ error: 'Forbidden' });
+
+      if (auction.currentBid) {
+        return res.status(409).json({ error: 'Cannot cancel an auction that has bids' });
+      }
+
+      const updated = await Auction.updateById(req.params.id, { isActive: false });
+      res.json(updated);
+    } catch (e) {
+      next(e);
+    }
+  })
+
   // PUT update auction (seller or admin) /////////////////////////////////
   .put('/:id', [authenticateAWS], async (req, res, next) => {
     try {
