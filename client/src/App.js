@@ -128,7 +128,16 @@ const lightTheme = createTheme({
 function App() {
   const [theme, setTheme] = useState(darkTheme);
   const { isAuthenticated } = useAuthStore();
+  const authenticateUser = useAuthStore((state) => state.authenticateUser);
+  const hasAuthChecked = useAuthStore((state) => state.hasAuthChecked);
   const fetchUnreadCount = useNotificationStore((state) => state.fetchUnreadCount);
+
+  // Hydrate auth state on full page refresh / initial load
+  useEffect(() => {
+    if (!hasAuthChecked) {
+      authenticateUser();
+    }
+  }, [authenticateUser, hasAuthChecked]);
 
   // auth check
   useEffect(() => {
