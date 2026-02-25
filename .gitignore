@@ -13,7 +13,7 @@ npm-debug.log*
 
 
 # (Optional) ignore a root-level settings.local.json if present
-/settings.local.json
+settings.local.json
 
 #^ TEMP for building shopping cart:
 /docs/
