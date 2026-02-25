@@ -1,13 +1,41 @@
-#form-title-header {
-  color: #ffffff;
+/* ── Mobile base ─────────────────────────────────────────────────────── */
+.new-post-form {
+  min-width: 320px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;   /* children fill the full width */
+  gap: 16px;
+  margin: 75px auto 0 auto;
+  padding: 16px;
+  border: 1px solid #1f8e3d53;
+  overflow: auto;
 }
 
-.new-post-form {
-  border: 1px solid #1f8e3d53;
+#form-title-header {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: white;
+  margin: 0;
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+/* Price / time fields stacked on mobile */
+.desk-price-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .file-upload-label {
-  border-color: #1f8e3d53;
+  border: 2px solid white;
+  padding: 0.4rem;
+  border-radius: 0.5rem;
+}
+
+.file-upload-label:hover {
+  cursor: pointer;
 }
 
 .submit-btn {
@@ -18,6 +46,114 @@
   padding: 5px 5px 3px 5px;
   box-shadow: 2px 2px 4px 0 black;
   cursor: pointer;
-  margin-top: 50px;
   width: unset;
+}
+
+.btn-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.thumbnail {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+}
+
+.thumbnails-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  padding: 10px;
+  border-radius: 0.5rem;
+  border: 1px solid #5b36ff59;
+  overflow-y: auto;
+  max-height: 265px;
+}
+
+.thumbnail-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.delete-button-form {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: rgb(253, 34, 34);
+  color: white;
+  font-weight: bold;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid rgb(165, 167, 197);
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 14px;
+  padding: 0;
+  box-shadow: inset 0px 0px 0px 2px white;
+  box-sizing: border-box;
+}
+
+.form-wrapper {
+  letter-spacing: 1.5px;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── Desktop grid — 768px+ ───────────────────────────────────────────── */
+@media (min-width: 768px) {
+  .new-post-form {
+    width: 700px;
+    height: calc(100vh - 90px);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 60px auto 1fr auto auto auto;
+    column-gap: 24px;
+    row-gap: 12px;
+    padding: 20px 24px;
+    /* no justify-items — defaults to stretch so columns fill their full 1fr width */
+    align-items: start;
+    overflow: auto;
+  }
+
+  #form-title-header      { grid-row: 1; grid-column: 1 / 3; text-align: center; }
+  .desk-title-input       { grid-row: 2; grid-column: 1; }
+  .desk-desc-input        { grid-row: 3 / 6; grid-column: 1; }
+
+  .desk-price-input-wrapper {
+    grid-row: 2 / 5;
+    grid-column: 2;
+    gap: 12px;
+    justify-content: center;
+  }
+
+  .dropzone               { grid-row: 5 / 7; grid-column: 2; }
+  .thumbnails-container   { grid-row: 7;      grid-column: 2; }
+  .btn-container          { grid-row: 8;      grid-column: 1 / 3; margin-top: 0; }
+
+  .description { height: 200px; max-height: 300px; }
+}
+
+/* ── Cancel Auction danger zone ──────────────────────────────────────── */
+.cancel-auction-container {
+  display: flex;
+  justify-content: center;
+  margin: 24px auto;
+  padding: 16px;
+  border-top: 1px solid rgba(211, 47, 47, 0.3);
+  width: 100%;
+  max-width: 700px;
 }

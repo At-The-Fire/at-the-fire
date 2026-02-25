@@ -1,9 +1,25 @@
 import { useEffect, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Box } from '@mui/material';
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  InputAdornment,
+  TextField,
+} from '@mui/material';
 import { toast } from 'react-toastify';
 import './AuctionForm.css';
-import { createAuction, getAuctionDetail, updateAuction, uploadAuctionImagesToS3 } from '../../services/fetch-auctions.js';
+import {
+  cancelAuction,
+  createAuction,
+  getAuctionDetail,
+  updateAuction,
+  uploadAuctionImagesToS3,
+} from '../../services/fetch-auctions.js';
 import { useNavigate, useParams } from 'react-router-dom';
 import FlamePipe from '../FlamePipe/FlamePipe.js';
 
@@ -15,6 +31,7 @@ export default function AuctionForm() {
   const [endTime, setEndTime] = useState('');
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const { id } = useParams();
   const [existingAuction, setExistingAuction] = useState({});
   const [existingImages, setExistingImages] = useState([]);
@@ -80,7 +97,9 @@ export default function AuctionForm() {
         startPrice: parseInt(startPrice),
         buyNowPrice: buyNowPrice ? parseInt(buyNowPrice) : null,
         endTime: new Date(endTime).toISOString(),
-        startTime: existingAuction?.startTime ? new Date(existingAuction.startTime).toISOString() : new Date().toISOString(),
+        startTime: existingAuction?.startTime
+          ? new Date(existingAuction.startTime).toISOString()
+          : new Date().toISOString(),
         imageUrls: finalImageUrls,
         currentBid: existingAuction?.currentBid || 0,
       };
@@ -104,7 +123,7 @@ export default function AuctionForm() {
         setFiles([]);
         setExistingImages([]);
       }
-      navigate('/auctions');
+      navigate('/dashboard');
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error(err);
@@ -120,6 +139,18 @@ export default function AuctionForm() {
     }
   };
 
+  const handleCancelAuction = async () => {
+    try {
+      await cancelAuction(id);
+      toast.success('Auction cancelled', { theme: 'dark', toastId: 'auction-cancel', autoClose: true });
+      navigate('/dashboard');
+    } catch (err) {
+      toast.error(err.message, { theme: 'colored', toastId: 'auction-cancel-error', autoClose: true });
+    } finally {
+      setCancelDialogOpen(false);
+    }
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', paddingTop: '100px' }}>
@@ -132,58 +163,52 @@ export default function AuctionForm() {
     <Box className="form-wrapper">
       <form className="new-post-form" onSubmit={handleSubmit}>
         <h1 id="form-title-header">{id ? 'Edit Auction' : 'New Auction'}</h1>
-        <Box className="desk-title-input">
-          <span className="labels-form-inputs">Title</span>
-          <input
+        <Box className="desk-title-input" sx={{ position: 'relative', top: '-8px' }}>
+          <TextField
+            label="Title"
             required
-            maxLength={80}
-            placeholder="Enter auction title"
-            className="image-input"
-            type="text"
+            fullWidth
+            inputProps={{ maxLength: 80 }}
             value={title || ''}
             onChange={(e) => setTitle(e.target.value)}
           />
         </Box>
         <Box className="desk-desc-input">
-          <span className="labels-form-inputs">Description</span>
-          <textarea
+          <TextField
+            label="Description"
             required
-            maxLength={400}
-            placeholder="Enter auction description"
-            className="image-input description shadow-border"
+            fullWidth
+            multiline
+            rows={4}
+            inputProps={{ maxLength: 400 }}
             value={description || ''}
             onChange={(e) => setDescription(e.target.value)}
+            className="description"
           />
         </Box>
-        <Box className="price-in-form">
-          <span>Start Price</span>
-          <input
+        <Box className="desk-price-input-wrapper">
+          <TextField
+            label="Start Price"
             required
-            placeholder="Enter starting bid"
-            className="image-input price-input"
             type="number"
-            step="1"
+            inputProps={{ step: 1 }}
+            InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
             value={startPrice || ''}
             onChange={(e) => setStartPrice(e.target.value)}
           />
-        </Box>
-        <Box className="price-in-form">
-          <span>Buy Now Price</span>
-          <input
-            placeholder="Enter buy now price (optional)"
-            className="image-input price-input"
+          <TextField
+            label="Buy Now Price (optional)"
             type="number"
-            step="1"
+            inputProps={{ step: 1 }}
+            InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
             value={buyNowPrice || ''}
             onChange={(e) => setBuyNowPrice(e.target.value)}
           />
-        </Box>
-        <Box className="price-in-form">
-          <span>End Time</span>
-          <input
+          <TextField
+            label="End Time"
             required
-            className="image-input"
             type="datetime-local"
+            InputLabelProps={{ shrink: true }}
             value={endTime || ''}
             onChange={(e) => setEndTime(e.target.value)}
           />
@@ -223,11 +248,38 @@ export default function AuctionForm() {
           </Box>
         )}
         <Box className="btn-container">
-          <button className="submit-btn" type="submit">
-            <img className="upload-icon" src="/upload.png" alt="upload" />
-          </button>
+          <Button variant="outlined" onClick={() => navigate('/dashboard')}>
+            Cancel
+          </Button>
+          <Button className="submit-btn" type="submit" variant="outlined">
+            Upload
+          </Button>
         </Box>
       </form>
+
+      {id && existingAuction?.isActive && (
+        <Box className="cancel-auction-container">
+          <Button variant="outlined" color="error" onClick={() => setCancelDialogOpen(true)}>
+            Cancel Auction
+          </Button>
+        </Box>
+      )}
+
+      <Dialog open={cancelDialogOpen} onClose={() => setCancelDialogOpen(false)}>
+        <DialogTitle>Cancel this auction?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            This will end the auction immediately. This action cannot be undone.
+            {existingAuction?.currentBid && ' Note: auctions with bids cannot be cancelled.'}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCancelDialogOpen(false)}>Go Back</Button>
+          <Button onClick={handleCancelAuction} color="error" autoFocus>
+            Confirm Cancel
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
