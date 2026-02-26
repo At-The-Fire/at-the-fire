@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 import { useDropzone } from 'react-dropzone';
 import {
   Box,
@@ -85,8 +87,22 @@ export default function AuctionForm() {
   }, [id]);
 
   const onDrop = (acceptedFiles) => {
-    const newFiles = acceptedFiles.map((file) => Object.assign(file, { preview: URL.createObjectURL(file) }));
-    setFiles((prev) => [...prev, ...newFiles]);
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    const validFiles = [];
+    acceptedFiles.forEach((file) => {
+      if (!validTypes.includes(file.type)) {
+        toast.warn('Only JPG and PNG files are allowed', { theme: 'colored', draggable: true, draggablePercent: 60 });
+      } else if (file.size > MAX_FILE_SIZE) {
+        toast.warn('File size too large, must be less than 10MB', {
+          theme: 'colored',
+          draggable: true,
+          draggablePercent: 60,
+        });
+      } else {
+        validFiles.push(Object.assign(file, { preview: URL.createObjectURL(file) }));
+      }
+    });
+    setFiles((prev) => [...prev, ...validFiles]);
   };
 
   const { getRootProps, getInputProps } = useDropzone({
@@ -102,6 +118,21 @@ export default function AuctionForm() {
     e.preventDefault();
     setLoading(true);
 
+    const sanitizedTitle = title.trim();
+    const sanitizedDescription = description.trim();
+
+    if (!sanitizedTitle || !sanitizedDescription) {
+      toast.warn('Title and description are required', { theme: 'colored', draggable: true, draggablePercent: 60 });
+      setLoading(false);
+      return;
+    }
+
+    if (files.length === 0 && existingImages.length === 0) {
+      toast.warn('At least one image is required', { theme: 'colored', draggable: true, draggablePercent: 60 });
+      setLoading(false);
+      return;
+    }
+
     try {
       let uploadedUrls = [];
       if (files.length > 0) {
@@ -112,8 +143,8 @@ export default function AuctionForm() {
       const finalImageUrls = [...existingImages, ...uploadedUrls];
 
       const payload = {
-        title,
-        description,
+        title: sanitizedTitle,
+        description: sanitizedDescription,
         startPrice: parseInt(startPrice),
         buyNowPrice: buyNowPrice ? parseInt(buyNowPrice) : null,
         endTime: new Date(endTime).toISOString(),
@@ -271,7 +302,11 @@ export default function AuctionForm() {
           <Button variant="outlined" onClick={() => navigate('/dashboard', { state: { view: 'auctions' } })}>
             Cancel
           </Button>
-          <Button type="submit" variant="outlined">
+          <Button
+            type="submit"
+            variant="outlined"
+            disabled={loading || (files.length === 0 && existingImages.length === 0)}
+          >
             {id ? 'Save Auction' : 'Create Auction'}
           </Button>
         </Box>
