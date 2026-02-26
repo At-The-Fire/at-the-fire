@@ -205,4 +205,42 @@ module.exports = Router()
     } catch (e) {
       next(e);
     }
+  })
+
+  // PUT /api/v1/purchases/:id/tracking - seller sets tracking number
+  .put('/:id/tracking', authenticateAWS, async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const { trackingNumber } = req.body;
+
+      if (!trackingNumber || typeof trackingNumber !== 'string') {
+        return res.status(400).json({ error: 'trackingNumber must be a string' });
+      }
+
+      const purchase = await Purchase.getById(id);
+      if (!purchase) return res.status(404).json({ error: 'Purchase not found' });
+
+      // Verify seller ownership via stripe_customers
+      const { rows } = await pool.query(
+        'SELECT aws_sub FROM stripe_customers WHERE customer_id = $1',
+        [purchase.sellerCustomerId],
+      );
+      if (!rows[0] || rows[0].aws_sub !== req.userAWSSub) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+
+      const updated = await Purchase.updateTracking(id, trackingNumber);
+
+      const io = req.app.get('io');
+      if (io) {
+        io.to(`user_${updated.buyerSub}`).emit('tracking-info', {
+          purchaseId: updated.id,
+          trackingNumber: updated.trackingNumber,
+        });
+      }
+
+      res.json(updated);
+    } catch (e) {
+      next(e);
+    }
   });
