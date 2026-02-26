@@ -95,24 +95,17 @@ module.exports = Router()
       const accessToken = session.accessToken.jwtToken;
       const refreshToken = session.refreshToken.token;
 
+      const isSecure = process.env.SECURE_COOKIES === 'true';
+      const cookieOpts = {
+        httpOnly: true,
+        secure: isSecure,
+        sameSite: isSecure ? 'None' : 'Lax',
+      };
+
       // bake the cookies with the tokens received from the session
-      res.cookie('accessToken', accessToken, {
-        httpOnly: true,
-        secure: process.env.SECURE_COOKIES === 'true' ? 'true' : 'false',
-        sameSite: 'None',
-      });
-
-      res.cookie('idToken', idToken, {
-        httpOnly: true,
-        secure: process.env.SECURE_COOKIES === 'true' ? 'true' : 'false',
-        sameSite: 'None',
-      });
-
-      res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: process.env.SECURE_COOKIES === 'true' ? 'true' : 'false',
-        sameSite: 'None',
-      });
+      res.cookie('accessToken', accessToken, cookieOpts);
+      res.cookie('idToken', idToken, cookieOpts);
+      res.cookie('refreshToken', refreshToken, cookieOpts);
 
       res.json({ message: 'Cookies created successfully!' });
     } catch (e) {
@@ -132,10 +125,11 @@ module.exports = Router()
       Expires: '0',
     });
     try {
+      const isSecure = process.env.SECURE_COOKIES === 'true';
       const cookieOptions = {
         httpOnly: true,
-        secure: process.env.SECURE_COOKIES === 'true' ? 'true' : 'false', // String values to match exactly
-        sameSite: 'None',
+        secure: isSecure,
+        sameSite: isSecure ? 'None' : 'Lax',
       };
 
       res.clearCookie('accessToken', cookieOptions);
@@ -291,23 +285,17 @@ module.exports = Router()
         // You might not get a new refreshToken every time. But if you do:
         const newRefreshToken = session.refreshToken ? session.refreshToken.token : null;
 
-        res.cookie('accessToken', newAccessToken, {
+        const isSecure = process.env.SECURE_COOKIES === 'true';
+        const refreshCookieOpts = {
           httpOnly: true,
-          secure: process.env.SECURE_COOKIES === 'true' ? 'true' : 'false',
-          sameSite: 'None',
-        });
-        res.cookie('idToken', newIdToken, {
-          httpOnly: true,
-          secure: process.env.SECURE_COOKIES === 'true' ? 'true' : 'false',
-          sameSite: 'None',
-        });
+          secure: isSecure,
+          sameSite: isSecure ? 'None' : 'Lax',
+        };
+        res.cookie('accessToken', newAccessToken, refreshCookieOpts);
+        res.cookie('idToken', newIdToken, refreshCookieOpts);
         if (newRefreshToken) {
           // Only set this if you've received a new one.
-          res.cookie('refreshToken', newRefreshToken, {
-            httpOnly: true,
-            secure: process.env.SECURE_COOKIES === 'true' ? 'true' : 'false',
-            sameSite: 'None',
-          });
+          res.cookie('refreshToken', newRefreshToken, refreshCookieOpts);
         }
 
         // Example: Adding expiration time to the response

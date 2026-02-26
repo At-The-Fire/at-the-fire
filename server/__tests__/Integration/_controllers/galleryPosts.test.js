@@ -63,6 +63,7 @@ describe('posts/ post details/ cloudinary routes', () => {
       image_url: 'sample_image_url_path_1',
       logo_image_url: null,
       num_imgs: '1',
+      quantity: 1,
       price: 'SamplePrice1',
       public_id: 'publicID_post_1',
       sold: false,

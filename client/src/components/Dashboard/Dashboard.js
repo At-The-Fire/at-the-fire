@@ -1,5 +1,5 @@
 import PostCard from '../PostCard/PostCard.js';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import './Dashboard.css';
 import DashboardSubMgt from '../Subscription/SubscriptionPages/DashboardSubMgt/DashboardSubMgt.js';
 import { downloadInventoryCSV } from '../../services/fetch-utils.js';
@@ -11,6 +11,8 @@ import {
   Button,
   List,
   ListItem,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
   useMediaQuery,
 } from '@mui/material';
@@ -29,6 +31,7 @@ import { useProfileContext } from '../../context/ProfileContext.js';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useAuthStore } from '../../stores/useAuthStore.js';
+import { getSellerAuctions } from '../../services/fetch-auctions.js';
 const logo = require('../../assets/logo-icon-6.png');
 
 export default function Dashboard({ products, setProducts, customerId }) {
@@ -47,6 +50,20 @@ export default function Dashboard({ products, setProducts, customerId }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [expanded, setExpanded] = useState(!isLargeTablet);
   const postsPerPage = 6;
+
+  // Posts / Auctions toggle
+  const location = useLocation();
+  const [dashboardView, setDashboardView] = useState(location.state?.view === 'auctions' ? 'auctions' : 'posts');
+  const [sellerAuctions, setSellerAuctions] = useState([]);
+  const [auctionsLoading, setAuctionsLoading] = useState(false);
+  const [auctionFilter, setAuctionFilter] = useState('all');
+
+  // auction filter
+  const filteredAuctions = sellerAuctions.filter((a) => {
+    if (auctionFilter === 'active') return a.isActive;
+    if (auctionFilter === 'closed') return !a.isActive;
+    return true;
+  });
 
   // pagination
   const postsFilteredByCategory = posts.filter((post) => !selectedCategory || post.category === selectedCategory);
@@ -196,6 +213,110 @@ export default function Dashboard({ products, setProducts, customerId }) {
     setExpanded(isExpanded);
   };
 
+  useEffect(() => {
+    if (dashboardView !== 'auctions' || !user) return;
+    setAuctionsLoading(true);
+    getSellerAuctions(user)
+      .then((data) => {
+        const all = Array.isArray(data) ? data : [];
+        setSellerAuctions(all);
+      })
+      .catch((err) => {
+        // eslint-disable-next-line no-console
+        console.error('Error fetching seller auctions:', err);
+      })
+      .finally(() => setAuctionsLoading(false));
+  }, [dashboardView, user]);
+
+  const renderAuctionsContent = () => {
+    if (auctionsLoading) {
+      return <Typography>Loading auctions...</Typography>;
+    }
+    if (filteredAuctions.length === 0) {
+      return (
+        <Typography sx={{ color: 'text.secondary' }}>
+          {sellerAuctions.length === 0 ? 'No auctions yet.' : 'No auctions match this filter.'}
+        </Typography>
+      );
+    }
+    return filteredAuctions.map((auction) => (
+      <Box
+        key={auction.id}
+        sx={{
+          width: '100%',
+          display: 'grid',
+          gridTemplateColumns: { xs: '60px 1fr auto', sm: '100px 1fr auto', md: '100px 1fr 160px auto' },
+          alignItems: 'center',
+          minHeight: { xs: '60px', sm: '100px' },
+          border: '1px solid',
+          borderColor: 'divider',
+          mb: '4px',
+          backgroundColor: 'rgba(255,255,255,0.07)',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Thumbnail */}
+        {auction.imageUrls?.[0] ? (
+          <Box
+            component="img"
+            src={auction.imageUrls[0]}
+            alt={auction.title}
+            sx={{
+              width: { xs: '60px', sm: '100px' },
+              height: { xs: '60px', sm: '100px' },
+              objectFit: 'cover',
+              objectPosition: 'center',
+              display: 'block',
+            }}
+          />
+        ) : (
+          <Box
+            sx={{
+              width: { xs: '60px', sm: '100px' },
+              height: { xs: '60px', sm: '100px' },
+              backgroundColor: 'rgba(255,255,255,0.05)',
+            }}
+          />
+        )}
+
+        {/* Title + status + bid */}
+        <Box sx={{ px: 1.5, overflow: 'hidden' }}>
+          <Typography
+            fontWeight={700}
+            sx={{
+              fontSize: { xs: '.8rem', sm: '.9rem' },
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: { xs: 'nowrap', sm: 'normal' },
+            }}
+          >
+            {auction.title}
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: { xs: '.7rem', sm: '.8rem' } }}>
+            {auction.isActive ? '🟢 Active' : '⚫ Closed'}
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: { xs: '.7rem', sm: '.8rem' } }}>
+            Bid: ${Number(auction.currentBid || auction.startPrice).toLocaleString()}
+          </Typography>
+        </Box>
+
+        {/* End date — md+ only */}
+        <Box sx={{ display: { xs: 'none', md: 'block' }, px: 1 }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '.8rem', whiteSpace: 'nowrap' }}>
+            Ends {new Date(auction.endTime).toLocaleDateString()}
+          </Typography>
+        </Box>
+
+        {/* Edit button */}
+        <Box sx={{ pr: 1.5 }}>
+          <Button size="small" variant="outlined" onClick={() => navigate(`/dashboard/auctions/${auction.id}/edit`)}>
+            Edit
+          </Button>
+        </Box>
+      </Box>
+    ));
+  };
+
   return (
     (loading && (
       <Box
@@ -215,240 +336,456 @@ export default function Dashboard({ products, setProducts, customerId }) {
         <FlamePipe />
       </Box>
     )) || (
-      <Box>
-        <Box className="mobile-dashboard-buttons">
-          <Button
-            size="small"
-            variant="contained"
-            onClick={handleNewPost}
-            sx={{
-              fontSize: '.7rem',
-              padding: '10px 5px',
-            }}
-            disabled={restricted ? restricted : false}
-          >
-            New Post
-          </Button>
-          <Button
-            size="small"
-            variant="outlined"
-            onClick={handleDownloadCSV}
-            sx={{ fontSize: '.7rem', padding: '10px 5px' }}
-          >
-            Inventory CSV
-          </Button>
-          {!restricted ? (
-            <Button
-              size="small"
-              variant="contained"
-              onClick={handleOpenCustomerPortal}
-              sx={{ fontSize: '.7rem', padding: '10px 5px' }}
-            >
-              Manage Subscription
-            </Button>
-          ) : (
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                backgroundColor: 'yellow',
-                color: 'black',
-                borderRadius: '5px',
-                width: '100px',
-              }}
-            >
-              <Button
-                size="small"
-                textAlign={'center'}
-                padding={'10px'}
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  backgroundColor: 'yellow',
-                  color: 'black',
-                  borderRadius: '5px',
-                  width: '100px',
-                  fontSize: '.7rem',
-                  lineHeight: '1rem',
-                }}
-                onClick={handleNavToRenewSubscription}
-              >
-                Subscription Expired!
-              </Button>
-            </Box>
-          )}
-        </Box>
-
+      <Box sx={{ paddingTop: 0 }}>
+        {/* Posts / Auctions view toggle */}
         <Box
-          className="admin-container"
           sx={{
-            borderWidth: '1px',
-            borderStyle: 'solid',
-            borderColor: (theme) => theme.palette.primary.dark,
-            padding: 0,
-            display: isMobile ? '' : 'grid',
-            transform: 'translate(0px, -2.5%)',
+            display: 'flex',
+            justifyContent: 'center',
+            position: 'relative',
+            top: '-50px',
+            // border: '2px solid red',
           }}
         >
-          <aside className="admin-panel ">
-            <section className="admin-panel-section ">
-              <div className="button-container">
-                <Typography variant="h5">Post Management</Typography>
-                <div className="inner-button-container">
-                  {
-                    <Button
-                      title="New Post"
-                      size="medium"
-                      variant="contained"
-                      onClick={handleNewPost}
-                      disabled={restricted ? restricted : false}
-                      startIcon={<UploadIcon />}
-                      sx={{ width: '300px', marginTop: '20px' }}
-                    >
-                      {restricted ? 'New Post disabled' : 'New Post'}
-                    </Button>
-                  }
-                  <Button
-                    size="medium"
-                    variant="outlined"
-                    className="new-link download-button"
-                    title="Download Inventory CSV"
-                    onClick={handleDownloadCSV}
-                    startIcon={<CloudDownloadIcon />}
-                    sx={{ width: '300px' }}
-                  >
-                    Inventory CSV
-                  </Button>
-                </div>
-                <Box
-                  sx={{
-                    borderWidth: '1px',
-                    borderStyle: 'solid',
-                    borderColor: (theme) => theme.palette.primary.dark,
-                  }}
-                  className="small-size-inventory"
-                >
-                  <Button disabled={!selectedCategory} onClick={() => setSelectedCategory(null)}>
-                    Show All Categories
-                  </Button>
-                  <Inventory posts={posts} onCategorySelect={setSelectedCategory} selectedCategory={selectedCategory} />
-                </Box>
-                <div className="temp-fix"></div>
+          <ToggleButtonGroup
+            value={dashboardView}
+            exclusive
+            onChange={(_, val) => val && setDashboardView(val)}
+            size="small"
+            sx={{
+              marginTop: '22px',
+            }}
+          >
+            <ToggleButton value="posts">Posts</ToggleButton>
+            <ToggleButton value="auctions">Auctions</ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
 
-                <Typography variant="h5" style={{ textAlign: 'center', paddingLeft: '0px', marginTop: '2rem' }}>
-                  Subscription Management
-                </Typography>
-                <DashboardSubMgt />
-              </div>
-            </section>
-          </aside>
-
-          <div className="list-container">
-            {/* Pagination Controls */}
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                margin: 'auto',
-                justifySelf: 'center',
-              }}
-            >
+        {/* Auctions view */}
+        {dashboardView === 'auctions' && (
+          <>
+            {/* Mobile buttons bar — mirrors posts mobile bar */}
+            <Box className="mobile-dashboard-buttons">
               <Button
-                onClick={() => setCurrentPage((prevPage) => Math.max(prevPage - 1, 1))}
-                disabled={currentPage === 1}
+                size="small"
+                variant="contained"
+                onClick={() => navigate('/dashboard/auctions/new')}
+                sx={{ fontSize: '.7rem', padding: '10px 5px' }}
               >
-                Previous
-              </Button>
-              <Typography mx={2} sx={{ color: 'green' }}>
-                Page {postsFilteredByCategory.length === 0 ? 0 : currentPage} of{' '}
-                {Math.ceil(postsFilteredByCategory.length / postsPerPage)}
-              </Typography>
-              <Button
-                onClick={() =>
-                  setCurrentPage((prevPage) =>
-                    currentPage >= Math.ceil(postsFilteredByCategory.length / postsPerPage) ? prevPage : prevPage + 1
-                  )
-                }
-                disabled={currentPage >= Math.ceil(postsFilteredByCategory.length / postsPerPage)}
-              >
-                Next
+                New Auction
               </Button>
             </Box>
 
-            {postsFilteredByCategory.length === 0 ? (
-              <>
+            {/* 3-column container — same structure as posts */}
+            <Box
+              className="admin-container"
+              sx={{
+                borderWidth: '1px',
+                borderStyle: 'solid',
+                borderColor: (theme) => theme.palette.primary.dark,
+                padding: 0,
+                display: isMobile ? '' : 'grid',
+                transform: 'translate(0px, -5%)',
+              }}
+            >
+              {/* LEFT PANEL */}
+              <aside className="admin-panel">
+                <section className="admin-panel-section">
+                  <div className="button-container">
+                    <Typography variant="h5">Auction Management</Typography>
+                    <div className="inner-button-container">
+                      <Button
+                        size="medium"
+                        variant="contained"
+                        onClick={() => navigate('/dashboard/auctions/new')}
+                        startIcon={<UploadIcon />}
+                        sx={{ width: '300px', marginTop: '20px' }}
+                      >
+                        New Auction
+                      </Button>
+                    </div>
+
+                    {/* Stats + filter (left-panel small-screen slot) */}
+                    <Box
+                      sx={{
+                        borderWidth: '1px',
+                        borderStyle: 'solid',
+                        borderColor: (theme) => theme.palette.primary.dark,
+                      }}
+                      className="small-size-inventory"
+                    >
+                      <Typography variant="subtitle2" sx={{ p: 1, fontWeight: 700 }}>
+                        Summary
+                      </Typography>
+                      <Box sx={{ px: 1, pb: 1 }}>
+                        <Typography variant="body2">Total: {sellerAuctions.length}</Typography>
+                        <Typography variant="body2" sx={{ color: 'success.main' }}>
+                          Active: {sellerAuctions.filter((a) => a.isActive).length}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                          Closed: {sellerAuctions.filter((a) => !a.isActive).length}
+                        </Typography>
+                      </Box>
+
+                      <Typography variant="subtitle2" sx={{ p: 1, fontWeight: 700 }}>
+                        Filter by Status
+                      </Typography>
+                      <ToggleButtonGroup
+                        value={auctionFilter}
+                        exclusive
+                        onChange={(_, val) => val && setAuctionFilter(val)}
+                        size="small"
+                        orientation="vertical"
+                        sx={{ width: '100%', px: 1, pb: 1 }}
+                      >
+                        <ToggleButton value="all" sx={{ justifyContent: 'flex-start' }}>
+                          All ({sellerAuctions.length})
+                        </ToggleButton>
+                        <ToggleButton value="active" sx={{ justifyContent: 'flex-start', color: 'success.main' }}>
+                          Active ({sellerAuctions.filter((a) => a.isActive).length})
+                        </ToggleButton>
+                        <ToggleButton value="closed" sx={{ justifyContent: 'flex-start' }}>
+                          Closed ({sellerAuctions.filter((a) => !a.isActive).length})
+                        </ToggleButton>
+                      </ToggleButtonGroup>
+                    </Box>
+
+                    <div className="temp-fix"></div>
+
+                    <Typography variant="h5" style={{ textAlign: 'center', paddingLeft: '0px', marginTop: '2rem' }}>
+                      Subscription Management
+                    </Typography>
+                    <DashboardSubMgt />
+                  </div>
+                </section>
+              </aside>
+
+              {/* CENTER LIST */}
+              <div className="list-container">
                 <Box
                   sx={{
                     display: 'flex',
-                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    margin: 'auto',
                     justifySelf: 'center',
-                    alignItems: 'center',
                   }}
                 >
-                  {posts.length === 0 ? (
-                    <>
-                      <Typography variant="h5">No posts yet!</Typography>
-                      <FlamePipe />
-                    </>
-                  ) : (
-                    <Typography variant="h5" marginTop="50px">
-                      No posts for selected category
-                    </Typography>
-                  )}
+                  <Typography sx={{ color: 'green' }}>
+                    {filteredAuctions.length} auction{filteredAuctions.length !== 1 ? 's' : ''}
+                    {auctionFilter !== 'all' ? ` · ${auctionFilter}` : ''}
+                  </Typography>
                 </Box>
-              </>
-            ) : (
-              currentPosts.map((post) => (
-                <PostCard
-                  key={post.id}
-                  id={post.id}
-                  post={post}
-                  setPosts={setPosts}
-                  posts={posts}
-                  products={products}
-                  setProducts={setProducts}
-                  restricted={restricted}
-                />
-              ))
-            )}
-          </div>
+                {renderAuctionsContent()}
+              </div>
 
-          <Box
-            sx={{
-              borderWidth: '1px',
-              borderStyle: 'solid',
-              borderColor: (theme) => theme.palette.primary.dark,
-            }}
-            className="large-size-inventory"
-          >
-            <Accordion
-              expanded={expanded}
-              onChange={handleAccordionChange}
-              disabled={!isLargeTablet}
-              sx={{ backgroundColor: 'rgb(40, 40, 40)' }}
-            >
-              {isLargeTablet && (
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>Inventory/ Category Selector</AccordionSummary>
-              )}
-              <AccordionDetails>
+              {/* RIGHT PANEL — visible at 1600px+ */}
+              <Box
+                sx={{
+                  borderWidth: '1px',
+                  borderStyle: 'solid',
+                  borderColor: (theme) => theme.palette.primary.dark,
+                }}
+                className="large-size-inventory"
+              >
+                <Accordion
+                  expanded={expanded}
+                  onChange={handleAccordionChange}
+                  disabled={!isLargeTablet}
+                  sx={{ backgroundColor: 'rgb(40, 40, 40)' }}
+                >
+                  {isLargeTablet && (
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>Filter / Status</AccordionSummary>
+                  )}
+                  <AccordionDetails>
+                    <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 700 }}>
+                      Summary
+                    </Typography>
+                    <Typography variant="body2" sx={{ mb: 0.5 }}>
+                      Total: {sellerAuctions.length}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'success.main', mb: 0.5 }}>
+                      Active: {sellerAuctions.filter((a) => a.isActive).length}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+                      Closed: {sellerAuctions.filter((a) => !a.isActive).length}
+                    </Typography>
+
+                    <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 700 }}>
+                      Filter by Status
+                    </Typography>
+                    <ToggleButtonGroup
+                      value={auctionFilter}
+                      exclusive
+                      onChange={(_, val) => val && setAuctionFilter(val)}
+                      size="small"
+                      orientation="vertical"
+                      sx={{ width: '100%' }}
+                    >
+                      <ToggleButton value="all" sx={{ justifyContent: 'flex-start' }}>
+                        All ({sellerAuctions.length})
+                      </ToggleButton>
+                      <ToggleButton value="active" sx={{ justifyContent: 'flex-start', color: 'success.main' }}>
+                        Active ({sellerAuctions.filter((a) => a.isActive).length})
+                      </ToggleButton>
+                      <ToggleButton value="closed" sx={{ justifyContent: 'flex-start' }}>
+                        Closed ({sellerAuctions.filter((a) => !a.isActive).length})
+                      </ToggleButton>
+                    </ToggleButtonGroup>
+                  </AccordionDetails>
+                </Accordion>
+              </Box>
+            </Box>
+          </>
+        )}
+
+        {/* Posts view — only render when dashboardView === 'posts' */}
+        {dashboardView === 'posts' && (
+          <>
+            <Box className="mobile-dashboard-buttons">
+              <Button
+                size="small"
+                variant="contained"
+                onClick={handleNewPost}
+                sx={{
+                  fontSize: '.7rem',
+                  padding: '10px 5px',
+                }}
+                disabled={restricted ? restricted : false}
+              >
+                New Post
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={handleDownloadCSV}
+                sx={{ fontSize: '.7rem', padding: '10px 5px' }}
+              >
+                Inventory CSV
+              </Button>
+              {!restricted ? (
                 <Button
-                  style={{ marginTop: '0px' }}
-                  disabled={!selectedCategory}
-                  onClick={() => {
-                    setSelectedCategory(null);
-                    setCurrentPage(1);
+                  size="small"
+                  variant="contained"
+                  onClick={handleOpenCustomerPortal}
+                  sx={{ fontSize: '.7rem', padding: '10px 5px' }}
+                >
+                  Manage Subscription
+                </Button>
+              ) : (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    backgroundColor: 'yellow',
+                    color: 'black',
+                    borderRadius: '5px',
+                    width: '100px',
                   }}
                 >
-                  {selectedCategory ? 'Show All Categories' : 'Select Category'}
-                </Button>
+                  <Button
+                    size="small"
+                    textAlign={'center'}
+                    padding={'10px'}
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      backgroundColor: 'yellow',
+                      color: 'black',
+                      borderRadius: '5px',
+                      width: '100px',
+                      fontSize: '.7rem',
+                      lineHeight: '1rem',
+                    }}
+                    onClick={handleNavToRenewSubscription}
+                  >
+                    Subscription Expired!
+                  </Button>
+                </Box>
+              )}
+            </Box>
 
-                <Inventory posts={posts} selectedCategory={selectedCategory} onCategorySelect={handleCategorySelect} />
-              </AccordionDetails>
-            </Accordion>
-          </Box>
-          {/*  */}
-          {/*  */}
-        </Box>
+            <Box
+              className="admin-container"
+              sx={{
+                borderWidth: '1px',
+                borderStyle: 'solid',
+                borderColor: (theme) => theme.palette.primary.dark,
+                padding: 0,
+                display: isMobile ? '' : 'grid',
+                transform: 'translate(0px, -5%)',
+              }}
+            >
+              <aside className="admin-panel ">
+                <section className="admin-panel-section ">
+                  <div className="button-container">
+                    <Typography variant="h5">Post Management</Typography>
+                    <div className="inner-button-container">
+                      {
+                        <Button
+                          title="New Post"
+                          size="medium"
+                          variant="contained"
+                          onClick={handleNewPost}
+                          disabled={restricted ? restricted : false}
+                          startIcon={<UploadIcon />}
+                          sx={{ width: '300px', marginTop: '20px' }}
+                        >
+                          {restricted ? 'New Post disabled' : 'New Post'}
+                        </Button>
+                      }
+                      <Button
+                        size="medium"
+                        variant="outlined"
+                        className="new-link download-button"
+                        title="Download Inventory CSV"
+                        onClick={handleDownloadCSV}
+                        startIcon={<CloudDownloadIcon />}
+                        sx={{ width: '300px' }}
+                      >
+                        Inventory CSV
+                      </Button>
+                    </div>
+                    <Box
+                      sx={{
+                        borderWidth: '1px',
+                        borderStyle: 'solid',
+                        borderColor: (theme) => theme.palette.primary.dark,
+                      }}
+                      className="small-size-inventory"
+                    >
+                      <Button disabled={!selectedCategory} onClick={() => setSelectedCategory(null)}>
+                        Show All Categories
+                      </Button>
+                      <Inventory
+                        posts={posts}
+                        onCategorySelect={setSelectedCategory}
+                        selectedCategory={selectedCategory}
+                      />
+                    </Box>
+                    <div className="temp-fix"></div>
+
+                    <Typography variant="h5" style={{ textAlign: 'center', paddingLeft: '0px', marginTop: '2rem' }}>
+                      Subscription Management
+                    </Typography>
+                    <DashboardSubMgt />
+                  </div>
+                </section>
+              </aside>
+
+              <div className="list-container">
+                {/* Pagination Controls */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    margin: 'auto',
+                    justifySelf: 'center',
+                  }}
+                >
+                  <Button
+                    onClick={() => setCurrentPage((prevPage) => Math.max(prevPage - 1, 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <Typography mx={2} sx={{ color: 'green' }}>
+                    Page {postsFilteredByCategory.length === 0 ? 0 : currentPage} of{' '}
+                    {Math.ceil(postsFilteredByCategory.length / postsPerPage)}
+                  </Typography>
+                  <Button
+                    onClick={() =>
+                      setCurrentPage((prevPage) =>
+                        currentPage >= Math.ceil(postsFilteredByCategory.length / postsPerPage)
+                          ? prevPage
+                          : prevPage + 1
+                      )
+                    }
+                    disabled={currentPage >= Math.ceil(postsFilteredByCategory.length / postsPerPage)}
+                  >
+                    Next
+                  </Button>
+                </Box>
+
+                {postsFilteredByCategory.length === 0 ? (
+                  <>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifySelf: 'center',
+                        alignItems: 'center',
+                      }}
+                    >
+                      {posts.length === 0 ? (
+                        <>
+                          <Typography variant="h5">No posts yet!</Typography>
+                          <FlamePipe />
+                        </>
+                      ) : (
+                        <Typography variant="h5" marginTop="50px">
+                          No posts for selected category
+                        </Typography>
+                      )}
+                    </Box>
+                  </>
+                ) : (
+                  currentPosts.map((post) => (
+                    <PostCard
+                      key={post.id}
+                      id={post.id}
+                      post={post}
+                      setPosts={setPosts}
+                      posts={posts}
+                      products={products}
+                      setProducts={setProducts}
+                      restricted={restricted}
+                    />
+                  ))
+                )}
+              </div>
+
+              <Box
+                sx={{
+                  borderWidth: '1px',
+                  borderStyle: 'solid',
+                  borderColor: (theme) => theme.palette.primary.dark,
+                }}
+                className="large-size-inventory"
+              >
+                <Accordion
+                  expanded={expanded}
+                  onChange={handleAccordionChange}
+                  disabled={!isLargeTablet}
+                  sx={{ backgroundColor: 'rgb(40, 40, 40)' }}
+                >
+                  {isLargeTablet && (
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>Inventory/ Category Selector</AccordionSummary>
+                  )}
+                  <AccordionDetails>
+                    <Button
+                      style={{ marginTop: '0px' }}
+                      disabled={!selectedCategory}
+                      onClick={() => {
+                        setSelectedCategory(null);
+                        setCurrentPage(1);
+                      }}
+                    >
+                      {selectedCategory ? 'Show All Categories' : 'Select Category'}
+                    </Button>
+
+                    <Inventory
+                      posts={posts}
+                      selectedCategory={selectedCategory}
+                      onCategorySelect={handleCategorySelect}
+                    />
+                  </AccordionDetails>
+                </Accordion>
+              </Box>
+              {/*  */}
+              {/*  */}
+            </Box>
+          </>
+        )}
       </Box>
     )
   );

@@ -11,6 +11,7 @@ module.exports = class Gallery {
   customer_id;
   public_id;
   num_imgs;
+  quantity;
   display_name;
   logo_image_url;
   sub;
@@ -27,6 +28,7 @@ module.exports = class Gallery {
     this.customer_id = row.customer_id;
     this.public_id = row.public_id;
     this.num_imgs = row.num_imgs;
+    this.quantity = row.quantity;
     this.display_name = row.display_name;
     this.logo_image_url = row.logo_image_url;
     this.sub = row.sub;
@@ -48,6 +50,7 @@ module.exports = class Gallery {
         g.public_id,
         g.title,
         g.sold,
+        g.quantity,
         s.display_name,
         s.logo_image_url
     FROM
@@ -85,7 +88,7 @@ module.exports = class Gallery {
       stripe_customers AS s ON g.customer_id = s.customer_id
   JOIN
       cognito_users AS cu ON s.aws_sub = cu.sub
-  WHERE 
+  WHERE
       g.customer_id= $1
   ORDER BY 
       created_at DESC;
@@ -112,6 +115,7 @@ module.exports = class Gallery {
       g.public_id,
       g.title,
       g.sold,
+      g.quantity,
       s.display_name,
       s.logo_image_url,
       cu.sub
@@ -121,7 +125,7 @@ module.exports = class Gallery {
       stripe_customers AS s ON g.customer_id = s.customer_id
   JOIN
       cognito_users AS cu ON s.aws_sub = cu.sub
-  WHERE 
+  WHERE
       g.id= $1
   ORDER BY 
       created_at DESC;

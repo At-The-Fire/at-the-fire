@@ -31,6 +31,11 @@ import AboutProject from './components/About/AboutProject.js';
 import MessagingContainer from './components/Messaging/MessagingContainer.js';
 import { useNotificationStore } from './stores/useNotificationStore.js';
 import PasswordChange from './components/Auth/AuthForms.js/PasswordChange.js';
+import AuctionList from './components/Auctions/AuctionList.js';
+import AuctionArchive from './components/Auctions/AuctionArchive.js';
+import AuctionDetail from './components/Auctions/AuctionDetail.js';
+import AuctionForm from './components/Auctions/AuctionForm.js';
+import Checkout from './components/Checkout/Checkout.js';
 
 //? this is referenced in ResponsiveAppBar for replacing title to display which development local/ deploy is in the browser tab
 window.REACT_APP_BASE_URL = window.location.origin;
@@ -123,7 +128,16 @@ const lightTheme = createTheme({
 function App() {
   const [theme, setTheme] = useState(darkTheme);
   const { isAuthenticated } = useAuthStore();
+  const authenticateUser = useAuthStore((state) => state.authenticateUser);
+  const hasAuthChecked = useAuthStore((state) => state.hasAuthChecked);
   const fetchUnreadCount = useNotificationStore((state) => state.fetchUnreadCount);
+
+  // Hydrate auth state on full page refresh / initial load
+  useEffect(() => {
+    if (!hasAuthChecked) {
+      authenticateUser();
+    }
+  }, [authenticateUser, hasAuthChecked]);
 
   // auth check
   useEffect(() => {
@@ -159,9 +173,15 @@ function App() {
             <Route path="/about" element={<About />} />
             <Route path="/about-project" element={<AboutProject />} />
             <Route path="/stripe-return" element={<StripeReturn />} />
+            <Route path="/auctions" element={<AuctionList />} />
+            <Route path="/auctions/archive" element={<AuctionArchive />} />
+            <Route path="/auctions/:id" element={<AuctionDetail />} />
             <Route path="/dashboard" element={<DashboardTabs />} />
             <Route path="/dashboard/new" element={<NewPost />} />
             <Route path="/dashboard/edit/:id" element={<EditPost />} />
+            <Route path="/dashboard/auctions/new" element={<AuctionForm />} />
+            <Route path="/dashboard/auctions/:id/edit" element={<AuctionForm />} />
+            <Route path="/checkout" element={<Checkout />} />
             <Route path="/profile/:sub" element={<Profile />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/messages" element={<MessagingContainer />} />

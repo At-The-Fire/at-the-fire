@@ -550,10 +550,10 @@ export default function PostForm({
                   variant="outlined"
                   disabled={loading || (files.length === 0 && currentImages.length === 0)}
                 >
-                  {loading ? 'Uploading...' : 'Upload'}
+                  {loading ? 'Uploading...' : 'Create Post'}
                 </Button>
               ) : (
-                <Typography>Upload Disabled</Typography>
+                <Typography>Post Creation Disabled</Typography>
               )}
             </Box>
           </form>

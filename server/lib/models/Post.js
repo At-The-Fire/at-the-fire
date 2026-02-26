@@ -114,7 +114,8 @@ module.exports = class Post {
           public_id = $8,
           num_imgs = $9,
           sold = $10,
-          date_sold = $11
+          date_sold = $11,
+          quantity = CASE WHEN $10 = true THEN 0 ELSE quantity END
       WHERE id = $1
       RETURNING *;
       `,

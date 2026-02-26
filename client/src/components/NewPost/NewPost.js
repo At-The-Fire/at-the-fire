@@ -14,23 +14,26 @@ export default function NewPost() {
   const navigate = useNavigate();
 
   const { setNewPostCreated } = useQuery();
-  const { authenticateUser, isAuthenticated, error, signingOut, checkTokenExpiry } = useAuthStore();
+  const { authenticateUser, isAuthenticated, error, signingOut, checkTokenExpiry, loadingAuth, hasAuthChecked } =
+    useAuthStore();
 
   // authenticate and check tokens
   useEffect(() => {
-    if (!isAuthenticated && !error && !signingOut) {
+    if (!isAuthenticated && !error && !signingOut && !loadingAuth) {
       authenticateUser();
     } else if (isAuthenticated) {
       // If we are authenticated, check token expiry
       checkTokenExpiry();
     }
-  }, [isAuthenticated, error, authenticateUser, signingOut, checkTokenExpiry]);
+  }, [isAuthenticated, error, authenticateUser, signingOut, checkTokenExpiry, loadingAuth]);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    // Only redirect after we've actually checked whether the user has a session.
+    // This prevents a full-refresh bounce through /auth/sign-in (which then routes to /dashboard).
+    if (hasAuthChecked && !loadingAuth && !isAuthenticated) {
       navigate('/auth/sign-in');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, hasAuthChecked, loadingAuth]);
 
   const handleAddProduct = async (productData) => {
     try {

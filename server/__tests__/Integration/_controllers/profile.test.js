@@ -45,25 +45,19 @@ let mockCustomer = {
   subscriptionEndDate: 1630435200,
 };
 
-// Mock authenticate middleware to attach mock user to req.user object before each test case runs (req.user is used in the route handler)
+// Mock authenticate middleware to attach mock sub to req.userAWSSub before each test case runs
 // this is assuming that the user is logged in and authenticated (tested elsewhere)
-jest.mock(
-  '../../../lib/middleware/authenticateAWS.js',
-  () => (req, res, next) => {
-    req.userAWSSub = mockUser.sub;
-    next();
-  }
-);
+jest.mock('../../../lib/middleware/authenticateAWS.js', () => (req, res, next) => {
+  req.userAWSSub = mockUser.sub;
+  next();
+});
 
 // Mock authorizeSubscription middleware to attach mock subscription to req.subscription object before each test case runs (req.subscription is used in the route handler)
 // this is assuming that the user is logged in and authenticated (tested elsewhere)
-jest.mock(
-  '../../../lib/middleware/authorizeSubscription.js',
-  () => (req, res, next) => {
-    req.customerId = mockCustomer.customerId;
-    next();
-  }
-);
+jest.mock('../../../lib/middleware/authorizeSubscription.js', () => (req, res, next) => {
+  req.customerId = mockCustomer.customerId;
+  next();
+});
 
 describe('Profile routes that use mocked middleware: /profile/user-update/:sub and /profile/customer-update/:sub profile routes', () => {
   beforeEach(() => {
@@ -80,9 +74,7 @@ describe('Profile routes that use mocked middleware: /profile/user-update/:sub a
   // test all GET scenarios:
   // testing new user/ no profile data yet
   it('GET /profile/:sub, should retrieve a user with no profile data', async () => {
-    const resp = await request(app).get(
-      `/api/v1/profile/${process.env.TEST_SUB_NO_PROFILE}`
-    );
+    const resp = await request(app).get(`/api/v1/profile/${process.env.TEST_SUB_NO_PROFILE}`);
 
     const profile = resp.body.profile;
     const bizProfile = resp.body.bizProfile;
@@ -106,9 +98,7 @@ describe('Profile routes that use mocked middleware: /profile/user-update/:sub a
 
   // testing new user with profile data but no subscription
   it('GET /profile/:sub, should retrieve a user with profile data but no subscription', async () => {
-    const resp = await request(app).get(
-      `/api/v1/profile/${process.env.TEST_SUB_WITH_PROFILE}`
-    );
+    const resp = await request(app).get(`/api/v1/profile/${process.env.TEST_SUB_WITH_PROFILE}`);
 
     const profile = resp.body.profile;
     const bizProfile = resp.body.bizProfile;
@@ -135,7 +125,7 @@ describe('Profile routes that use mocked middleware: /profile/user-update/:sub a
   // and are a paid customer and  have active subscription
   it('GET /profile/:sub, should retrieve a user with user profile data but no customer profile data', async () => {
     const resp = await request(app).get(
-      `/api/v1/profile/${process.env.TEST_SUB_CUSTOMER_NO_PROFILE}`
+      `/api/v1/profile/${process.env.TEST_SUB_CUSTOMER_NO_PROFILE}`,
     );
 
     const profile = resp.body.profile;
@@ -200,9 +190,7 @@ describe('Profile routes that use mocked middleware: /profile/user-update/:sub a
 
   // testing fully paid user with active subscription
   it('GET /profile/:sub should fetch the correct user/customer profile structure', async () => {
-    const resp = await request(app).get(
-      `/api/v1/profile/${process.env.TEST_SUB_FULL_CUSTOMER}`
-    );
+    const resp = await request(app).get(`/api/v1/profile/${process.env.TEST_SUB_FULL_CUSTOMER}`);
 
     const profile = resp.body.profile;
     const bizProfile = resp.body.bizProfile;
@@ -278,13 +266,13 @@ describe('Profile routes that use mocked middleware: /profile/user-update/:sub a
     // Mock the database function to throw an error
     jest.spyOn(AWSUser, 'getCognitoUserBySub').mockImplementation(() => {
       throw new Error(
-        'ERROR: this is thrown to represent connection failure for GET /profile/:sub test'
+        'ERROR: this is thrown to represent connection failure for GET /profile/:sub test',
       );
     });
 
     // Send the request (should trigger the mocked failure)
     const response = await request(app).get(
-      `/api/v1/profile/${process.env.TEST_SUB_FULL_CUSTOMER}`
+      `/api/v1/profile/${process.env.TEST_SUB_FULL_CUSTOMER}`,
     );
 
     // Expect a 500 error since the database function is mocked to fail
@@ -296,7 +284,7 @@ describe('Profile routes that use mocked middleware: /profile/user-update/:sub a
 
   it('GET /profile/:sub should handle a profile with missing fields', async () => {
     const response = await request(app).get(
-      `/api/v1/profile/${process.env.TEST_SUB_INCOMPLETE_PROFILE}`
+      `/api/v1/profile/${process.env.TEST_SUB_INCOMPLETE_PROFILE}`,
     );
 
     // Assert the response status and the structure of the returned profile
@@ -357,14 +345,12 @@ describe('Profile routes that use mocked middleware: /profile/user-update/:sub a
       customerId: process.env.TEST_STRIPE_CUSTOMER_ID_NO_PROFILE,
     };
 
-    const resp = await request(app)
-      .put('/api/v1/profile/customer-update')
-      .send({
-        displayName: 'Display Name New',
-        websiteUrl: 'Website URL New',
-        logoImageUrl: 'Logo Image URL New',
-        logoPublicId: 'Logo Public ID New',
-      });
+    const resp = await request(app).put('/api/v1/profile/customer-update').send({
+      displayName: 'Display Name New',
+      websiteUrl: 'Website URL New',
+      logoImageUrl: 'Logo Image URL New',
+      logoPublicId: 'Logo Public ID New',
+    });
 
     const bizProfile = resp.body;
 
@@ -412,12 +398,10 @@ describe('Profile routes that use mocked middleware: /profile/user-update/:sub a
       customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
     };
 
-    const resp = await request(app)
-      .put('/api/v1/profile/customer-update')
-      .send({
-        displayName: 'Display Name New',
-        websiteUrl: 'Website URL New',
-      });
+    const resp = await request(app).put('/api/v1/profile/customer-update').send({
+      displayName: 'Display Name New',
+      websiteUrl: 'Website URL New',
+    });
 
     const bizProfile = resp.body;
 
@@ -483,9 +467,7 @@ describe('Profile routes that use mocked middleware: /profile/user-update/:sub a
   });
 
   it('POST /profile/avatar-delete should return a 400 error if public_id is not provided', async () => {
-    const response = await request(app)
-      .post('/api/v1/profile/avatar-delete')
-      .send({}); // Empty body, no public_id
+    const response = await request(app).post('/api/v1/profile/avatar-delete').send({}); // Empty body, no public_id
 
     expect(response.statusCode).toBe(400);
     expect(response.body.error).toBe('Public ID is required');
@@ -502,9 +484,7 @@ describe('Profile routes that use mocked middleware: /profile/user-update/:sub a
 
   it('GET /profile/:nonExistingSub should return 404 for non-existent user', async () => {
     const nonExistingSub = 'non-existent-sub';
-    const response = await request(app).get(
-      `/api/v1/profile/${nonExistingSub}`
-    );
+    const response = await request(app).get(`/api/v1/profile/${nonExistingSub}`);
 
     expect(response.status).toBe(404);
     expect(response.body.error).toBe('User profile not found');
@@ -513,9 +493,7 @@ describe('Profile routes that use mocked middleware: /profile/user-update/:sub a
   it('GET /profile/:sub should handle database connection failure', async () => {
     // Spy on the method and mock its implementation temporarily
     const spy = jest.spyOn(AWSUser, 'getCognitoUserBySub');
-    spy.mockImplementationOnce(() =>
-      Promise.reject(new Error('Database connection failed'))
-    );
+    spy.mockImplementationOnce(() => Promise.reject(new Error('Database connection failed')));
 
     const sub = 'valid-sub';
     const response = await request(app).get(`/api/v1/profile/${sub}`);
@@ -536,9 +514,7 @@ describe('Profile routes that use mocked middleware: /profile/user-update/:sub a
       .attach('avatar', Buffer.from('test'), 'test-image.jpg');
 
     expect(response.status).toBe(500);
-    expect(response.body.message).toBe(
-      'An error occurred while uploading the image'
-    );
+    expect(response.body.message).toBe('An error occurred while uploading the image');
 
     __mockS3Send.mockClear();
   });
@@ -595,7 +571,7 @@ describe('Profile routes that use mocked middleware: /profile/user-update/:sub a
 
     // First request (should hit the database)
     const response1 = await request(app).get(
-      `/api/v1/profile/${process.env.TEST_SUB_FULL_CUSTOMER}`
+      `/api/v1/profile/${process.env.TEST_SUB_FULL_CUSTOMER}`,
     );
 
     expect(response1.status).toBe(200);
@@ -612,7 +588,7 @@ describe('Profile routes that use mocked middleware: /profile/user-update/:sub a
 
     // Second request (should now hit Redis, NOT the database)
     const response2 = await request(app).get(
-      `/api/v1/profile/${process.env.TEST_SUB_FULL_CUSTOMER}`
+      `/api/v1/profile/${process.env.TEST_SUB_FULL_CUSTOMER}`,
     );
 
     expect(response2.status).toBe(200);
@@ -638,11 +614,7 @@ describe('Profile routes that use mocked middleware: /profile/user-update/:sub a
     await redisClient.del(cacheKey);
 
     // 🔹 Step 2: Set fresh cache with short TTL
-    await redisClient.set(
-      cacheKey,
-      JSON.stringify({ firstName: 'Temporary' }),
-      { EX: 2 }
-    );
+    await redisClient.set(cacheKey, JSON.stringify({ firstName: 'Temporary' }), { EX: 2 });
 
     // Confirm it's set
     let cachedProfile = await redisClient.get(cacheKey);

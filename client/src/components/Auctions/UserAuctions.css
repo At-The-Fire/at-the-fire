@@ -1,0 +1,97 @@
+.user-auctions-widget {
+  margin-top: 1rem;
+  padding: 0.5rem;
+  border: 1px solid white;
+  color: white;
+  text-align: left;
+  background-color: black;
+}
+
+.user-auctions-widget h2 {
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  color: #fff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  padding-bottom: 0.25rem;
+}
+
+.auction-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.auction-mini-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+  transition: box-shadow 0.2s ease;
+  margin: 0;
+}
+
+.auction-mini-card-image:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+
+.auction-mini-img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.auction-mini-info {
+  padding: 0.75rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.auction-mini-info p {
+  margin: 0;
+}
+
+.auction-mini-info h4 {
+  font-size: 1.1rem;
+  margin: 0 0 0.25rem 0;
+  color: #fff;
+}
+
+.empty-msg {
+  color: rgba(255, 255, 255, 0.7);
+  font-style: italic;
+  margin-bottom: 1.5rem;
+}
+
+.won-card-p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.tracking-link {
+  padding: 4px 20px 4px 6px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  border: 1px solid #1f8e3d;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 5px;
+}
+
+.new-work-msg {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+@media (max-width: 768px) {
+  .auction-mini-grid {
+    grid-template-columns: 1fr;
+  }
+}

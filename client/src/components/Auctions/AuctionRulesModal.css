@@ -1,0 +1,40 @@
+.rules-modal-text {
+  font-size: 1rem;
+  line-height: 20px;
+  background: rgba(0, 0, 0, 1);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 2rem;
+  border-radius: 10px;
+  max-width: 450px;
+  width: 90%;
+  color: white;
+}
+
+.rules-modal-text li {
+  padding: 0.3rem;
+}
+
+.close-button-rules-modal {
+  margin-top: 1.5rem;
+  width: 100%;
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.auction-rules-modal-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}

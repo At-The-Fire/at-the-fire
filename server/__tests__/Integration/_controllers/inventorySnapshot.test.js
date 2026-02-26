@@ -17,10 +17,10 @@ const mockCustomer = {
   subscriptionEndDate: 1630435200,
 };
 
-// Mock authenticate middleware to attach mock user to req.user object before each test case runs (req.user is used in the route handler)
+// Mock authenticate middleware to attach mock sub to req.userAWSSub before each test case runs
 // this is assuming that the user is logged in and authenticated (tested elsewhere)
 jest.mock('../../../lib/middleware/authenticateAWS.js', () => (req, res, next) => {
-  req.user = mockUser;
+  req.userAWSSub = mockUser.sub;
   next();
 });
 
