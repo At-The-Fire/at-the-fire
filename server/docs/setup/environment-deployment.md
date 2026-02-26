@@ -1,42 +1,96 @@
 # Environment & Deployment Guide
 
-This guide explains how to set up and deploy the system in local, staging, and production environments.
+This guide covers local setup and environment variable configuration.
 
 ---
 
-## Environment Setup
+## Local Setup
 
-- **Clone the repo** and install dependencies: `npm install`
-- **Copy `.env.example` to `.env`** and fill in required values
-- **Key Env Vars:**
-  - AWS: `COGNITO_USER_POOL_ID`, `APP_CLIENT_ID`, `AWS_REGION`, `AWS_BUCKET_NAME`, etc.
-  - Stripe: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
-  - Redis: `REDIS_URL`
-  - Database: `DATABASE_URL`
-  - See Heroku server settings for entire list
+```bash
+# Install server dependencies
+npm install --prefix server
 
-## Local Development
+# Install client dependencies
+npm install --prefix client
 
-- Start the server: `npm run dev` or `node server.js`
-- Use local database and test credentials
-- Use Stripe test mode
-- Set up Stripe CLI listener
-  - Stripe CLI quick start guide in **/docs/api/**
+# Start the server (port 7890)
+npm start
 
-## Staging/Production
+# Start the React dev server (port 3000)
+npm start --prefix client
 
-- Set all secrets and production env vars
-- Use production database and Stripe keys
-- Deploy using your preferred method (e.g., Docker, cloud service, CI/CD)
-- Run migrations if needed: `npm run migrate`
+# Reset the database (DESTRUCTIVE — drops and recreates all tables)
+npm run setup-db --prefix server
+```
 
-## Deployment Checklist
-
-- All env vars set
-- Database migrated
-- Webhooks configured (Stripe, etc.)
-- Monitoring/logging enabled
+There is no `.env.example` — copy env vars from Heroku config or the team's shared secrets. The server uses `dotenv` to load `.env` from the server directory.
 
 ---
 
-For more, see the README and deployment scripts.
+## Key Environment Variables
+
+### Database
+| Variable | Description |
+|---|---|
+| `DATABASE_URL` | PostgreSQL connection string (used in CI and optionally locally) |
+
+### AWS
+| Variable | Description |
+|---|---|
+| `COGNITO_USER_POOL_ID` | Cognito user pool ID |
+| `APP_CLIENT_ID` | Cognito app client ID |
+| `AWS_REGION` | AWS region (e.g. `us-west-2`) |
+| `AWS_BUCKET_NAME` | S3 bucket name |
+| `AWS_ACCESS_KEY_ID` | AWS access key |
+| `AWS_SECRET_ACCESS_KEY` | AWS secret key |
+| `CLOUDFRONT_DOMAIN` | CloudFront domain for image delivery |
+
+### Stripe
+| Variable | Description |
+|---|---|
+| `STRIPE_PRIVATE_KEY` | Stripe secret key |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
+
+### Redis
+| Variable | Default | Description |
+|---|---|---|
+| `REDIS_ENABLED` | `true` | Set to `false` to disable caching |
+| `REDIS_HOST` | — | Redis hostname |
+| `REDIS_PORT` | `6379` | Redis port |
+| `REDIS_USERNAME` | `default` | Redis username |
+| `REDIS_PASSWORD` | — | Redis password |
+
+### App
+| Variable | Description |
+|---|---|
+| `ADMIN_ID` | Stripe customer ID of the admin user |
+| `ENCRYPTION_KEY` | AES-256 key for PII encryption |
+| `CLIENT_URL` | Base URL of the client (used in Stripe redirect URLs) |
+| `APP_ENV` | `development` or `production` (controls S3 bucket suffix and logging) |
+| `DEV_SERVER` | Set to `dev` to show "DEV" in browser title |
+| `NODE_ENV` | `test` disables console errors and uses test mocks |
+
+### Test-only
+| Variable | Description |
+|---|---|
+| `TEST_SUB_FULL_CUSTOMER` | Cognito sub for the full test customer |
+| `TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER` | Stripe customer ID for the full test customer (also used as admin in tests) |
+| _(+ others)_ | See `ci.yml` for the full list of `TEST_*` vars |
+
+---
+
+## Stripe Local Webhook Testing
+
+Run the Stripe CLI to forward webhook events to your local server:
+
+```bash
+stripe listen --forward-to localhost:7890/api/v1/webhook
+```
+
+See `docs/api/stripe-cli-quickstart.md` for setup instructions.
+
+---
+
+## Production / Heroku
+
+All env vars are configured in Heroku's config vars dashboard. See `docs/deployment-workflow.md` for the full deploy process.
