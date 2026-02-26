@@ -39,7 +39,6 @@ const getSigningKey = (() => {
 
       const signingKey = key.publicKey || key.rsaPublicKey;
 
-      keyCache[header.kid] = signingKey; // Cache the signing key
       // Cache the signing key with timestamp
       keyCache[header.kid] = {
         key: signingKey,

@@ -333,6 +333,8 @@ CREATE TABLE purchases (
   amount_paid             NUMERIC NOT NULL,
   processor_transaction_id VARCHAR,
   status                  VARCHAR NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'refunded')),
+  tracking_number         TEXT,
+  shipped_at              TIMESTAMPTZ,
   created_at              TIMESTAMPTZ DEFAULT NOW()
 );
 

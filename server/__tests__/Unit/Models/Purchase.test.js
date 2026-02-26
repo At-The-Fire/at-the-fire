@@ -1,7 +1,11 @@
+jest.mock('../../../lib/utils/pool');
+jest.mock('../../../lib/models/Post.js', () => ({
+  getAdditionalImages: jest.fn(),
+}));
+
 const Purchase = require('../../../lib/models/Purchase.js');
 const pool = require('../../../lib/utils/pool.js');
-
-jest.mock('../../../lib/utils/pool');
+const Post = require('../../../lib/models/Post.js');
 
 describe('Purchase Model', () => {
   beforeEach(() => {
@@ -66,10 +70,14 @@ describe('Purchase Model', () => {
       expect(result.itemType).toBe('gallery_post');
       expect(result.status).toBe('pending');
       expect(pool.query).toHaveBeenCalledTimes(1);
-      expect(pool.query).toHaveBeenCalledWith(
-        expect.stringContaining('INSERT INTO purchases'),
-        ['sub_123', 'cus_stripe123', 'gallery_post', 10, 1, '24.99'],
-      );
+      expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO purchases'), [
+        'sub_123',
+        'cus_stripe123',
+        'gallery_post',
+        10,
+        1,
+        '24.99',
+      ]);
     });
   });
 
@@ -137,6 +145,7 @@ describe('Purchase Model', () => {
       ];
 
       pool.query.mockResolvedValueOnce({ rows: mockRows });
+      Post.getAdditionalImages.mockResolvedValue([{ image_url: 'https://example.com/image.jpg' }]);
 
       const results = await Purchase.getByBuyerSub('sub_123');
 
@@ -145,6 +154,9 @@ describe('Purchase Model', () => {
       expect(results[0].id).toBe(2);
       expect(results[1].id).toBe(1);
       expect(pool.query).toHaveBeenCalledWith(expect.any(String), ['sub_123']);
+      expect(Post.getAdditionalImages).toHaveBeenCalledTimes(2);
+      expect(Post.getAdditionalImages).toHaveBeenNthCalledWith(1, 20);
+      expect(Post.getAdditionalImages).toHaveBeenNthCalledWith(2, 10);
     });
 
     it('returns empty array when buyer has no purchases', async () => {

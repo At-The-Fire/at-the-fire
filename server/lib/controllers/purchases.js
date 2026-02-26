@@ -196,12 +196,65 @@ module.exports = Router()
     }
   })
 
+  // GET /api/v1/purchases/seller - get seller's sales
+  .get('/seller', authenticateAWS, async (req, res, next) => {
+    try {
+      const { rows } = await pool.query(
+        'SELECT customer_id FROM stripe_customers WHERE aws_sub = $1',
+        [req.userAWSSub],
+      );
+      if (!rows[0]) return res.json([]);
+      const purchases = await Purchase.getBySellerCustomerId(rows[0].customer_id);
+      res.json(purchases);
+    } catch (e) {
+      next(e);
+    }
+  })
+
   // GET /api/v1/purchases - get user's purchase history
   .get('/', authenticateAWS, async (req, res, next) => {
     try {
       const buyerSub = req.userAWSSub;
       const purchases = await Purchase.getByBuyerSub(buyerSub);
       res.json(purchases);
+    } catch (e) {
+      next(e);
+    }
+  })
+
+  // PUT /api/v1/purchases/:id/tracking - seller sets tracking number
+  .put('/:id/tracking', authenticateAWS, async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const { trackingNumber } = req.body;
+
+      if (!trackingNumber || typeof trackingNumber !== 'string') {
+        return res.status(400).json({ error: 'trackingNumber must be a string' });
+      }
+
+      const purchase = await Purchase.getById(id);
+      if (!purchase) return res.status(404).json({ error: 'Purchase not found' });
+
+      // Verify seller ownership via stripe_customers
+      const { rows } = await pool.query(
+        'SELECT aws_sub FROM stripe_customers WHERE customer_id = $1',
+        [purchase.sellerCustomerId],
+      );
+      if (!rows[0] || rows[0].aws_sub !== req.userAWSSub) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+
+      const updated = await Purchase.updateTracking(id, trackingNumber);
+
+      const io = req.app.get('io');
+      if (io) {
+        io.to(`user_${updated.buyerSub}`).emit('tracking-info', {
+          purchaseId: updated.id,
+          trackingNumber: updated.trackingNumber,
+        });
+      }
+
+      res.json(updated);
     } catch (e) {
       next(e);
     }

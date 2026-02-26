@@ -65,6 +65,54 @@ export async function createPaymentIntent(cartItems) {
   }
 }
 
+export async function getSellerPurchases() {
+  try {
+    const resp = await fetch(`${BASE_URL}/api/v1/purchases/seller`, {
+      credentials: 'include',
+    });
+    const data = await resp.json();
+    if (resp.ok) return data;
+    throw new Error(data.error || data.message || 'Failed to fetch seller purchases');
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Error fetching seller purchases:', error);
+    throw error;
+  }
+}
+
+export async function getPurchases() {
+  try {
+    const resp = await fetch(`${BASE_URL}/api/v1/purchases`, {
+      credentials: 'include',
+    });
+    const data = await resp.json();
+    if (resp.ok) return data;
+    throw new Error(data.error || data.message || 'Failed to fetch purchases');
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Error fetching purchases:', error);
+    throw error;
+  }
+}
+
+export async function updatePurchaseTracking(purchaseId, trackingNumber) {
+  try {
+    const resp = await fetch(`${BASE_URL}/api/v1/purchases/${purchaseId}/tracking`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ trackingNumber }),
+      credentials: 'include',
+    });
+    const data = await resp.json();
+    if (resp.ok) return data;
+    throw new Error(data.error || data.message || 'Failed to update tracking');
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Error updating purchase tracking:', error);
+    throw error;
+  }
+}
+
 export async function confirmPurchase(intentId, items, payment = null) {
   try {
     const normalizedItems = (items || []).map((i) => ({

@@ -1,4 +1,5 @@
 const pool = require('../utils/pool');
+const Post = require('./Post');
 
 module.exports = class Purchase {
   id;
@@ -10,7 +11,12 @@ module.exports = class Purchase {
   amountPaid;
   processorTransactionId;
   status;
+  trackingNumber;
+  shippedAt;
   createdAt;
+  // Optional join fields
+  title;
+  imageUrls;
 
   constructor(row) {
     this.id = row.id;
@@ -22,7 +28,11 @@ module.exports = class Purchase {
     this.amountPaid = row.amount_paid;
     this.processorTransactionId = row.processor_transaction_id;
     this.status = row.status;
+    this.trackingNumber = row.tracking_number || null;
+    this.shippedAt = row.shipped_at || null;
     this.createdAt = row.created_at;
+    this.title = row.title || null;
+    this.imageUrls = null;
   }
 
   static async insert({ buyerSub, sellerCustomerId, itemType, itemId, quantity, amountPaid }) {
@@ -54,14 +64,27 @@ module.exports = class Purchase {
   static async getByBuyerSub(sub) {
     const { rows } = await pool.query(
       `
-      SELECT * FROM purchases
-      WHERE buyer_sub = $1
-      ORDER BY created_at DESC
+      SELECT p.*, gp.title
+      FROM purchases p
+      LEFT JOIN gallery_posts gp ON p.item_type = 'gallery_post' AND p.item_id = gp.id
+      WHERE p.buyer_sub = $1
+      ORDER BY p.created_at DESC
       `,
       [sub],
     );
 
-    return rows.map((row) => new Purchase(row));
+    const purchases = await Promise.all(
+      rows.map(async (row) => {
+        const purchase = new Purchase(row);
+        if (row.item_type === 'gallery_post' && row.item_id) {
+          const imgs = await Post.getAdditionalImages(row.item_id);
+          purchase.imageUrls = imgs.map((i) => i.image_url);
+        }
+        return purchase;
+      }),
+    );
+
+    return purchases;
   }
 
   static async updateStatus(id, status) {
@@ -88,6 +111,45 @@ module.exports = class Purchase {
       RETURNING *
       `,
       [id, processorTransactionId],
+    );
+
+    if (!rows[0]) throw new Error('Purchase not found');
+    return new Purchase(rows[0]);
+  }
+
+  static async getBySellerCustomerId(customerid) {
+    const { rows } = await pool.query(
+      `
+      SELECT p.*, gp.title
+      FROM purchases p
+      LEFT JOIN gallery_posts gp ON p.item_type = 'gallery_post' AND p.item_id = gp.id
+      WHERE p.seller_customer_id = $1
+      ORDER BY p.created_at DESC
+      `,
+      [customerid],
+    );
+
+    return Promise.all(
+      rows.map(async (row) => {
+        const purchase = new Purchase(row);
+        if (row.item_type === 'gallery_post' && row.item_id) {
+          const imgs = await Post.getAdditionalImages(row.item_id);
+          purchase.imageUrls = imgs.map((i) => i.image_url);
+        }
+        return purchase;
+      }),
+    );
+  }
+
+  static async updateTracking(id, trackingNumber) {
+    const { rows } = await pool.query(
+      `
+      UPDATE purchases
+      SET tracking_number = $2, shipped_at = NOW()
+      WHERE id = $1
+      RETURNING *
+      `,
+      [id, trackingNumber],
     );
 
     if (!rows[0]) throw new Error('Purchase not found');
