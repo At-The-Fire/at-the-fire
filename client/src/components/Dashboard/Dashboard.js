@@ -67,6 +67,12 @@ export default function Dashboard({ products, setProducts, customerId }) {
   const [trackingModal, setTrackingModal] = useState({ open: false, type: null, id: null });
   const [trackingLoading, setTrackingLoading] = useState(false);
 
+  const dashboardToggleButtonGroupSx = {
+    '& .MuiToggleButton-root': {
+      textTransform: 'none',
+    },
+  };
+
   // auction filter
   const filteredAuctions = sellerAuctions.filter((a) => {
     if (auctionFilter === 'active') return a.isActive;
@@ -398,6 +404,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
             size="small"
             sx={{
               marginTop: '22px',
+              ...dashboardToggleButtonGroupSx,
             }}
           >
             <ToggleButton value="posts">Posts</ToggleButton>
@@ -423,7 +430,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
 
             {/* 3-column container — same structure as posts */}
             <Box
-              className="admin-container"
+              className="admin-container dashboard-admin-container"
               sx={{
                 borderWidth: '1px',
                 borderStyle: 'solid',
@@ -485,7 +492,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
                         onChange={(_, val) => val && setAuctionFilter(val)}
                         size="small"
                         orientation="vertical"
-                        sx={{ width: '100%', px: 1, pb: 1 }}
+                        sx={{ width: '100%', px: 1, pb: 1, ...dashboardToggleButtonGroupSx }}
                       >
                         <ToggleButton value="all" sx={{ justifyContent: 'flex-start' }}>
                           All ({sellerAuctions.length})
@@ -568,7 +575,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
                       onChange={(_, val) => val && setAuctionFilter(val)}
                       size="small"
                       orientation="vertical"
-                      sx={{ width: '100%' }}
+                      sx={{ width: '100%', ...dashboardToggleButtonGroupSx }}
                     >
                       <ToggleButton value="all" sx={{ justifyContent: 'flex-start' }}>
                         All ({sellerAuctions.length})
@@ -591,13 +598,19 @@ export default function Dashboard({ products, setProducts, customerId }) {
         {dashboardView === 'sales' && (
           <>
             <Box
-              className="admin-container"
+              className="admin-container dashboard-admin-container"
               sx={{
                 borderWidth: '1px',
                 borderStyle: 'solid',
                 borderColor: (theme) => theme.palette.primary.dark,
                 padding: 0,
+                boxSizing: 'border-box',
+                width: '100%',
+                maxWidth: '100%',
+                overflowX: 'hidden',
                 display: isMobile ? '' : 'grid',
+                flexDirection: { xs: 'column', sm: 'column' },
+                alignItems: { xs: 'stretch', sm: 'stretch' },
                 transform: 'translate(0px, -5%)',
               }}
             >
@@ -609,26 +622,66 @@ export default function Dashboard({ products, setProducts, customerId }) {
 
                     <Box
                       sx={{
-                        borderWidth: '1px',
-                        borderStyle: 'solid',
-                        borderColor: (theme) => theme.palette.primary.dark,
                         mt: 2,
+                        width: '100%',
+                        boxSizing: 'border-box',
                       }}
                     >
-                      <Typography variant="subtitle2" sx={{ p: 1, fontWeight: 700 }}>
-                        Summary
-                      </Typography>
-                      <Box sx={{ px: 1, pb: 1 }}>
-                        <Typography variant="body2">Gallery sales: {sellerPurchases.length}</Typography>
-                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                          Need tracking: {sellerPurchases.filter((s) => !s.trackingNumber).length}
-                        </Typography>
-                        <Typography variant="body2" sx={{ mt: 1 }}>
-                          Closed auctions: {sellerAuctions.filter((a) => !a.isActive).length}
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                          Need tracking: {sellerAuctions.filter((a) => !a.isActive && !a.trackingNumber).length}
-                        </Typography>
+                      <Box
+                        sx={{
+                          px: 1,
+                          pb: 1,
+                          display: 'grid',
+                          gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'minmax(0, 1fr) minmax(0, 1fr)' },
+                          columnGap: 2,
+                          rowGap: 1,
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25, minWidth: 0 }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, width: '100%' }}>
+                            <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'left' }}>
+                              Gallery Sales:
+                            </Typography>
+                            <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'right' }}>
+                              {sellerPurchases.length}
+                            </Typography>
+                          </Box>
+
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, width: '100%' }}>
+                            <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'left' }}>
+                              Need tracking:
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'right' }}>
+                              {sellerPurchases.filter((s) => !s.trackingNumber).length}
+                            </Typography>
+                          </Box>
+                        </Box>
+
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25, minWidth: 0 }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, width: '100%' }}>
+                            <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'left' }}>
+                              Closed Auctions:
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              sx={{ fontWeight: 700, textAlign: 'right', marginRight: '.5rem' }}
+                            >
+                              {sellerAuctions.filter((a) => !a.isActive).length}
+                            </Typography>
+                          </Box>
+
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, width: '100%' }}>
+                            <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'left' }}>
+                              Need tracking:
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              sx={{ color: 'text.secondary', textAlign: 'right', marginRight: '.5rem' }}
+                            >
+                              {sellerAuctions.filter((a) => !a.isActive && !a.trackingNumber).length}
+                            </Typography>
+                          </Box>
+                        </Box>
                       </Box>
                     </Box>
 
@@ -646,8 +699,11 @@ export default function Dashboard({ products, setProducts, customerId }) {
               <div
                 className="list-container"
                 style={{
+                  display: 'flex',
+                  flexDirection: 'column',
                   padding: isMobile ? '0 8px' : undefined,
                   maxWidth: '100%',
+                  marginTop: '1rem',
                   overflowX: 'hidden',
                 }}
               >
@@ -656,7 +712,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
                 ) : (
                   <>
                     {/* Gallery Post Sales */}
-                    <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
+                    <Typography variant="h6" sx={{ margin: '0 0 4px 10px', fontWeight: 700 }}>
                       Gallery Post Sales ({sellerPurchases.length})
                     </Typography>
                     {sellerPurchases.length === 0 ? (
@@ -823,7 +879,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
                     )}
 
                     {/* Closed Auction Results */}
-                    <Typography variant="h6" sx={{ mb: 1, mt: 3, fontWeight: 700 }}>
+                    <Typography variant="h6" sx={{ margin: '0 0 0 10px', fontWeight: 700 }}>
                       Closed Auctions ({sellerAuctions.filter((a) => !a.isActive).length})
                     </Typography>
                     {sellerAuctions.filter((a) => !a.isActive).length === 0 ? (
@@ -987,33 +1043,81 @@ export default function Dashboard({ products, setProducts, customerId }) {
                 )}
               </div>
 
-              {/* RIGHT PANEL — visible at 1600px+ */}
-              <Box
-                sx={{
-                  borderWidth: '1px',
-                  borderStyle: 'solid',
-                  borderColor: (theme) => theme.palette.primary.dark,
-                }}
-                className="large-size-inventory"
-              >
-                <Box sx={{ p: 2 }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
-                    Shipping Summary
-                  </Typography>
-                  <Typography variant="body2" sx={{ mb: 0.5 }}>
-                    Gallery sales: {sellerPurchases.length}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1.5 }}>
-                    Need tracking: {sellerPurchases.filter((s) => !s.trackingNumber).length}
-                  </Typography>
-                  <Typography variant="body2" sx={{ mb: 0.5 }}>
-                    Closed auctions: {sellerAuctions.filter((a) => !a.isActive).length}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    Need tracking: {sellerAuctions.filter((a) => !a.isActive && !a.trackingNumber).length}
-                  </Typography>
+              {/* Shipping Summary — show on mobile/mid only (desktop has left-panel summary) */}
+              {isLargeTablet && (
+                <Box
+                  sx={{
+                    borderWidth: '1px',
+                    borderStyle: 'solid',
+                    borderColor: (theme) => theme.palette.primary.dark,
+                    position: 'static',
+                    width: '100%',
+                    order: { xs: -1, sm: -1 },
+                  }}
+                  className="large-size-inventory"
+                >
+                  <Box sx={{ p: 1.5 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.75, textAlign: 'center' }}>
+                      Shipping Summary
+                    </Typography>
+
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: {
+                          xs: 'minmax(0, 1fr) minmax(0, 1fr)',
+                          sm: 'minmax(0, 1fr) minmax(0, 1fr)',
+                        },
+                        columnGap: 2,
+                        rowGap: 0,
+                        width: '100%',
+                        textAlign: 'left',
+                        paddingLeft: '.5rem',
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, width: '100%' }}>
+                          <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'left' }}>
+                            Gallery Sales:
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'right' }}>
+                            {sellerPurchases.length}
+                          </Typography>
+                        </Box>
+
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, width: '100%' }}>
+                          <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'left' }}>
+                            Need tracking:
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'right' }}>
+                            {sellerPurchases.filter((s) => !s.trackingNumber).length}
+                          </Typography>
+                        </Box>
+                      </Box>
+
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, width: '100%' }}>
+                          <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'left' }}>
+                            Closed Auctions:
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'right' }}>
+                            {sellerAuctions.filter((a) => !a.isActive).length}
+                          </Typography>
+                        </Box>
+
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, width: '100%' }}>
+                          <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'left' }}>
+                            Need tracking:
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'right' }}>
+                            {sellerAuctions.filter((a) => !a.isActive && !a.trackingNumber).length}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Box>
+                  </Box>
                 </Box>
-              </Box>
+              )}
             </Box>
 
             <TrackingModal
@@ -1092,7 +1196,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
             </Box>
 
             <Box
-              className="admin-container"
+              className="admin-container dashboard-admin-container"
               sx={{
                 borderWidth: '1px',
                 borderStyle: 'solid',

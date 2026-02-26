@@ -29,6 +29,34 @@
   background-color: rgb(237, 237, 102);
 }
 
+/* Dashboard-only override: PostCard.css defines .admin-container with content-box sizing,
+   which can cause borders to overflow horizontally by a few pixels. */
+.admin-container.dashboard-admin-container {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* On desktop, PostCard.css sets `.admin-container` columns as `350px 1fr`.
+   `1fr` behaves like `minmax(auto, 1fr)` and can cause subtle horizontal overflow.
+   Force the flexible track to `minmax(0, 1fr)` so it can shrink. */
+@media (min-width: 1024px) {
+  .admin-container.dashboard-admin-container {
+    grid-template-columns: 350px minmax(0, 1fr);
+  }
+
+  .admin-container.dashboard-admin-container > * {
+    min-width: 0;
+  }
+}
+
+@media (min-width: 1600px) {
+  .admin-container.dashboard-admin-container {
+    grid-template-columns: 350px minmax(0, 1fr) 350px;
+  }
+}
+
 .prod-header {
   display: grid;
   grid-template-columns: repeat(11, 1fr);
