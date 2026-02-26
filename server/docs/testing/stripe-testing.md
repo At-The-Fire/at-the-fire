@@ -19,27 +19,31 @@ Our application listens for the following events:
 
    - Triggered when a new customer signs up
 
-2. **`charge.succeeded`**
+2. **`customer.subscription.created`**
+
+   - Triggered when a new subscription is created; sets initial subscription tier in the database
+
+3. **`charge.succeeded`**
 
    - Confirms successful payment processing
 
-3. **`invoice.created`**
+4. **`invoice.created`**
 
    - Indicates the start of a new billing cycle
 
-4. **`invoice.payment_succeeded`**
+5. **`invoice.payment_succeeded`**
 
    - Confirms payment collection
 
-5. **`customer.subscription.updated`**
+6. **`customer.subscription.updated`**
 
    - Handles plan changes (upgrades/downgrades)
 
-6. **`customer.subscription.deleted`**
+7. **`customer.subscription.deleted`**
 
    - Manages subscription cancellations
 
-7. **`payment_intent.payment_failed`**
+8. **`payment_intent.payment_failed`**
    - Handles failed payments
 
 ## Local Testing with Stripe VS Code Extension
@@ -67,7 +71,7 @@ Our application listens for the following events:
   cd [path/to/stripe.exe]  # Paste the direct path to the exe file
   ./stripe.exe
   ./stripe login
-  ./stripe listen --forward-to localhost:4242/api/v1/webhook
+  ./stripe listen --forward-to localhost:7890/api/v1/webhook
   ```
 
 **Install Stripe Extension in VS Code:**
@@ -100,6 +104,7 @@ Our application listens for the following events:
    ```shell
    # You can still use the CLI commands if needed:
    stripe trigger customer.created
+   stripe trigger customer.subscription.created
    stripe trigger charge.succeeded
    stripe trigger invoice.created
    stripe trigger invoice.payment_succeeded
