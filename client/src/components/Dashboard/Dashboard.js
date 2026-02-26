@@ -31,7 +31,10 @@ import { useProfileContext } from '../../context/ProfileContext.js';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useAuthStore } from '../../stores/useAuthStore.js';
-import { getSellerAuctions } from '../../services/fetch-auctions.js';
+import { getSellerAuctions, updateAuctionTracking } from '../../services/fetch-auctions.js';
+import { getSellerPurchases, updatePurchaseTracking } from '../../services/fetch-purchases.js';
+import TrackingModal from '../shared/TrackingModal.js';
+import { getTrackingUrl } from '../../utils/tracking.js';
 const logo = require('../../assets/logo-icon-6.png');
 
 export default function Dashboard({ products, setProducts, customerId }) {
@@ -57,6 +60,12 @@ export default function Dashboard({ products, setProducts, customerId }) {
   const [sellerAuctions, setSellerAuctions] = useState([]);
   const [auctionsLoading, setAuctionsLoading] = useState(false);
   const [auctionFilter, setAuctionFilter] = useState('all');
+
+  // Sales (seller tracking) state
+  const [sellerPurchases, setSellerPurchases] = useState([]);
+  const [salesLoading, setSalesLoading] = useState(false);
+  const [trackingModal, setTrackingModal] = useState({ open: false, type: null, id: null });
+  const [trackingLoading, setTrackingLoading] = useState(false);
 
   // auction filter
   const filteredAuctions = sellerAuctions.filter((a) => {
@@ -214,6 +223,45 @@ export default function Dashboard({ products, setProducts, customerId }) {
   };
 
   useEffect(() => {
+    if (dashboardView !== 'sales') return;
+    setSalesLoading(true);
+    Promise.all([getSellerPurchases(), user ? getSellerAuctions(user) : Promise.resolve([])])
+      .then(([purchases, auctions]) => {
+        setSellerPurchases(Array.isArray(purchases) ? purchases : []);
+        setSellerAuctions(Array.isArray(auctions) ? auctions : []);
+      })
+      .catch((err) => {
+        // eslint-disable-next-line no-console
+        console.error('Error fetching sales:', err);
+        toast.error('Failed to load sales');
+      })
+      .finally(() => setSalesLoading(false));
+  }, [dashboardView, user]);
+
+  const handleTrackingSubmit = async (trackingNumber) => {
+    setTrackingLoading(true);
+    try {
+      if (trackingModal.type === 'purchase') {
+        await updatePurchaseTracking(trackingModal.id, trackingNumber);
+        setSellerPurchases((prev) =>
+          prev.map((p) => (p.id === trackingModal.id ? { ...p, trackingNumber } : p)),
+        );
+      } else {
+        await updateAuctionTracking(trackingModal.id, trackingNumber);
+        setSellerAuctions((prev) =>
+          prev.map((a) => (a.id === trackingModal.id ? { ...a, trackingNumber } : a)),
+        );
+      }
+      toast.success('Tracking number saved');
+      setTrackingModal({ open: false, type: null, id: null });
+    } catch (err) {
+      toast.error(err.message || 'Failed to save tracking');
+    } finally {
+      setTrackingLoading(false);
+    }
+  };
+
+  useEffect(() => {
     if (dashboardView !== 'auctions' || !user) return;
     setAuctionsLoading(true);
     getSellerAuctions(user)
@@ -358,6 +406,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
           >
             <ToggleButton value="posts">Posts</ToggleButton>
             <ToggleButton value="auctions">Auctions</ToggleButton>
+            <ToggleButton value="sales">Sales</ToggleButton>
           </ToggleButtonGroup>
         </Box>
 
@@ -536,6 +585,156 @@ export default function Dashboard({ products, setProducts, customerId }) {
               </Box>
             </Box>
           </>
+        )}
+
+        {/* Sales view — seller tracking */}
+        {dashboardView === 'sales' && (
+          <Box sx={{ px: { xs: 1, sm: 2 }, mt: 1 }}>
+            {salesLoading ? (
+              <Typography>Loading sales...</Typography>
+            ) : (
+              <>
+                {/* Gallery Post Sales */}
+                <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
+                  Gallery Post Sales ({sellerPurchases.length})
+                </Typography>
+                {sellerPurchases.length === 0 ? (
+                  <Typography sx={{ color: 'text.secondary', mb: 3 }}>No gallery sales yet.</Typography>
+                ) : (
+                  sellerPurchases.map((sale) => (
+                    <Box
+                      key={sale.id}
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: { xs: '60px 1fr auto', sm: '80px 1fr auto' },
+                        alignItems: 'center',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        mb: '4px',
+                        backgroundColor: 'rgba(255,255,255,0.05)',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {sale.imageUrls?.[0] ? (
+                        <Box
+                          component="img"
+                          src={sale.imageUrls[0]}
+                          alt={sale.title}
+                          sx={{ width: { xs: 60, sm: 80 }, height: { xs: 60, sm: 80 }, objectFit: 'cover' }}
+                        />
+                      ) : (
+                        <Box sx={{ width: { xs: 60, sm: 80 }, height: { xs: 60, sm: 80 }, backgroundColor: 'rgba(255,255,255,0.05)' }} />
+                      )}
+                      <Box sx={{ px: 1.5, overflow: 'hidden' }}>
+                        <Typography fontWeight={700} sx={{ fontSize: { xs: '.8rem', sm: '.9rem' }, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {sale.title || `Post #${sale.itemId}`}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '.75rem' }}>
+                          ${Number(sale.amountPaid).toFixed(2)} · qty {sale.quantity} · {new Date(sale.createdAt).toLocaleDateString()}
+                        </Typography>
+                        {sale.trackingNumber ? (() => {
+                          const tr = getTrackingUrl(sale.trackingNumber);
+                          return (
+                            <Typography variant="body2" sx={{ fontSize: '.75rem' }}>
+                              📦{tr.carrier ? ` ${tr.carrier}: ` : ' '}
+                              <a href={tr.url} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit' }}>
+                                {sale.trackingNumber}
+                              </a>
+                            </Typography>
+                          );
+                        })() : (
+                          <Typography variant="body2" sx={{ fontSize: '.75rem', color: 'text.secondary' }}>No tracking yet</Typography>
+                        )}
+                      </Box>
+                      <Box sx={{ pr: 1.5 }}>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() => setTrackingModal({ open: true, type: 'purchase', id: sale.id })}
+                        >
+                          {sale.trackingNumber ? 'Update' : 'Add Tracking'}
+                        </Button>
+                      </Box>
+                    </Box>
+                  ))
+                )}
+
+                {/* Closed Auction Results */}
+                <Typography variant="h6" sx={{ mb: 1, mt: 3, fontWeight: 700 }}>
+                  Closed Auctions ({sellerAuctions.filter((a) => !a.isActive).length})
+                </Typography>
+                {sellerAuctions.filter((a) => !a.isActive).length === 0 ? (
+                  <Typography sx={{ color: 'text.secondary' }}>No closed auctions yet.</Typography>
+                ) : (
+                  sellerAuctions
+                    .filter((a) => !a.isActive)
+                    .map((auction) => (
+                      <Box
+                        key={auction.id}
+                        sx={{
+                          display: 'grid',
+                          gridTemplateColumns: { xs: '60px 1fr auto', sm: '80px 1fr auto' },
+                          alignItems: 'center',
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          mb: '4px',
+                          backgroundColor: 'rgba(255,255,255,0.05)',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {auction.imageUrls?.[0] ? (
+                          <Box
+                            component="img"
+                            src={auction.imageUrls[0]}
+                            alt={auction.title}
+                            sx={{ width: { xs: 60, sm: 80 }, height: { xs: 60, sm: 80 }, objectFit: 'cover' }}
+                          />
+                        ) : (
+                          <Box sx={{ width: { xs: 60, sm: 80 }, height: { xs: 60, sm: 80 }, backgroundColor: 'rgba(255,255,255,0.05)' }} />
+                        )}
+                        <Box sx={{ px: 1.5, overflow: 'hidden' }}>
+                          <Typography fontWeight={700} sx={{ fontSize: { xs: '.8rem', sm: '.9rem' }, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {auction.title}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '.75rem' }}>
+                            Final bid: ${Number(auction.currentBid || auction.startPrice).toLocaleString()}
+                          </Typography>
+                          {auction.trackingNumber ? (() => {
+                            const tr = getTrackingUrl(auction.trackingNumber);
+                            return (
+                              <Typography variant="body2" sx={{ fontSize: '.75rem' }}>
+                                📦{tr.carrier ? ` ${tr.carrier}: ` : ' '}
+                                <a href={tr.url} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit' }}>
+                                  {auction.trackingNumber}
+                                </a>
+                              </Typography>
+                            );
+                          })() : (
+                            <Typography variant="body2" sx={{ fontSize: '.75rem', color: 'text.secondary' }}>No tracking yet</Typography>
+                          )}
+                        </Box>
+                        <Box sx={{ pr: 1.5 }}>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => setTrackingModal({ open: true, type: 'auction', id: auction.id })}
+                          >
+                            {auction.trackingNumber ? 'Update' : 'Add Tracking'}
+                          </Button>
+                        </Box>
+                      </Box>
+                    ))
+                )}
+              </>
+            )}
+
+            <TrackingModal
+              open={trackingModal.open}
+              onClose={() => setTrackingModal({ open: false, type: null, id: null })}
+              onSubmit={handleTrackingSubmit}
+              loading={trackingLoading}
+            />
+          </Box>
         )}
 
         {/* Posts view — only render when dashboardView === 'posts' */}
