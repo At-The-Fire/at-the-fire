@@ -8,22 +8,92 @@ export default function PaymentWidget({ amount, items, onSuccess, onError }) {
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
   const [cvc, setCvc] = useState('');
+  const [errors, setErrors] = useState({});
 
-  const last4 = (cardNumber || '').replace(/\D/g, '').slice(-4);
+  // --- Formatting helpers ---
 
-  const buildMockPayment = () => {
-    // This mirrors a real processor flow where the client SDK returns a token/nonce.
-    // The backend adapter will later translate this into an actual capture.
-    return {
-      provider: 'mock',
-      token: `mock_tok_${last4 || '0000'}`,
-      last4: last4 || null,
-      expiry: expiry || null,
-      cvcProvided: Boolean((cvc || '').trim()),
-    };
+  const formatCardNumber = (val) => {
+    const digits = val.replace(/\D/g, '').slice(0, 16);
+    return digits.replace(/(.{4})/g, '$1 ').trim();
   };
 
+  const formatExpiry = (val) => {
+    const digits = val.replace(/\D/g, '').slice(0, 4);
+    if (digits.length >= 3) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    return digits;
+  };
+
+  // --- Validation ---
+
+  const validate = () => {
+    const newErrors = {};
+
+    const rawCard = cardNumber.replace(/\s/g, '');
+    if (!rawCard) {
+      newErrors.cardNumber = 'Card number is required';
+    } else if (!/^\d{16}$/.test(rawCard)) {
+      newErrors.cardNumber = 'Card number must be 16 digits';
+    }
+
+    if (!expiry) {
+      newErrors.expiry = 'Expiry is required';
+    } else {
+      const match = expiry.match(/^(\d{2})\/(\d{2})$/);
+      if (!match) {
+        newErrors.expiry = 'Use MM/YY format';
+      } else {
+        const month = parseInt(match[1], 10);
+        const year = 2000 + parseInt(match[2], 10);
+        const now = new Date();
+        const cardExpiry = new Date(year, month, 1); // first day of month AFTER expiry
+        if (month < 1 || month > 12) {
+          newErrors.expiry = 'Invalid month';
+        } else if (cardExpiry <= now) {
+          newErrors.expiry = 'Card has expired';
+        }
+      }
+    }
+
+    if (!cvc.trim()) {
+      newErrors.cvc = 'CVC is required';
+    } else if (!/^\d{3,4}$/.test(cvc.trim())) {
+      newErrors.cvc = 'CVC must be 3 or 4 digits';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // --- Handlers ---
+
+  const handleCardNumberChange = (e) => {
+    setCardNumber(formatCardNumber(e.target.value));
+    if (errors.cardNumber) setErrors((prev) => ({ ...prev, cardNumber: undefined }));
+  };
+
+  const handleExpiryChange = (e) => {
+    setExpiry(formatExpiry(e.target.value));
+    if (errors.expiry) setErrors((prev) => ({ ...prev, expiry: undefined }));
+  };
+
+  const handleCvcChange = (e) => {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 4);
+    setCvc(digits);
+    if (errors.cvc) setErrors((prev) => ({ ...prev, cvc: undefined }));
+  };
+
+  const last4 = cardNumber.replace(/\s/g, '').slice(-4) || null;
+
+  const buildMockPayment = () => ({
+    provider: 'mock',
+    token: `mock_tok_${last4 || '0000'}`,
+    last4,
+    expiry,
+    cvcProvided: true,
+  });
+
   const handlePlaceOrder = async () => {
+    if (!validate()) return;
     try {
       setSubmitting(true);
       const { intentId } = await createPaymentIntent(items);
@@ -42,48 +112,53 @@ export default function PaymentWidget({ amount, items, onSuccess, onError }) {
         borderColor: 'divider',
         borderRadius: 2,
         p: 3,
-        textAlign: 'center',
         mt: 2,
       }}
     >
       <Typography variant="h6" gutterBottom>
         Payment
       </Typography>
-      <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-        Payment processing is coming soon.
+      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+        Test mode — no real charge will be made
       </Typography>
       {amount > 0 && (
-        <Typography variant="body2" sx={{ mt: 1, color: 'primary.main' }}>
+        <Typography variant="body2" sx={{ mb: 2, color: 'primary.main' }}>
           Order total: ${Number(amount).toLocaleString()}
         </Typography>
       )}
 
-      <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          Mock card details (no real charge)
-        </Typography>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
         <TextField
           label="Card number"
           size="small"
           value={cardNumber}
-          onChange={(e) => setCardNumber(e.target.value)}
+          onChange={handleCardNumberChange}
+          placeholder="1234 5678 9012 3456"
           inputProps={{ inputMode: 'numeric' }}
+          error={Boolean(errors.cardNumber)}
+          helperText={errors.cardNumber}
         />
         <Box sx={{ display: 'flex', gap: 1.5 }}>
           <TextField
             label="MM/YY"
             size="small"
             value={expiry}
-            onChange={(e) => setExpiry(e.target.value)}
+            onChange={handleExpiryChange}
+            placeholder="MM/YY"
             sx={{ flex: 1 }}
+            error={Boolean(errors.expiry)}
+            helperText={errors.expiry}
           />
           <TextField
             label="CVC"
             size="small"
             value={cvc}
-            onChange={(e) => setCvc(e.target.value)}
+            onChange={handleCvcChange}
+            placeholder="123"
             sx={{ flex: 1 }}
             inputProps={{ inputMode: 'numeric' }}
+            error={Boolean(errors.cvc)}
+            helperText={errors.cvc}
           />
         </Box>
       </Box>
