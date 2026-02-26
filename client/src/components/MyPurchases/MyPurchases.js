@@ -92,7 +92,8 @@ function TrackingDisplay({ trackingNumber }) {
         },
       }}
     >
-      {result.carrier ? `${result.carrier}: ` : ''}{trackingNumber}
+      {result.carrier ? `${result.carrier}: ` : ''}
+      {trackingNumber}
     </Link>
   );
 }
