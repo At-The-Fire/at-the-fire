@@ -1,14 +1,9 @@
+process.env.PAYMENTS_ADAPTER = 'mock';
+
 const pool = require('../../../lib/utils/pool');
 const setup = require('../../../data/setup');
 const request = require('supertest');
 const app = require('../../../lib/app');
-
-// Mock paymentService — currently a NullAdapter (503); mock for happy-path /intent tests
-jest.mock('../../../lib/services/paymentService', () => ({
-  createPaymentIntent: jest.fn(),
-}));
-
-const paymentService = require('../../../lib/services/paymentService');
 
 // Buyer is a seeded user with a stripe_customers row (customer_id present)
 const mockBuyer = {
@@ -28,10 +23,18 @@ jest.mock('../../../lib/middleware/authenticateAWS.js', () => (req, res, next) =
 describe('Purchases routes', () => {
   let testPostId;
 
+  const createIntent = async ({ totalAmount, items }) => {
+    const intentResponse = await request(app)
+      .post('/api/v1/purchases/intent')
+      .send({ totalAmount, items });
+
+    expect(intentResponse.status).toBe(200);
+    expect(intentResponse.body.intentId).toMatch(/^mock_pi_/);
+    return intentResponse.body.intentId;
+  };
+
   beforeEach(async () => {
     authState.user = mockBuyer;
-    paymentService.createPaymentIntent.mockReset();
-
     await setup(pool);
 
     // Insert a gallery post with a numeric price and known seller for FK constraints.
@@ -64,25 +67,13 @@ describe('Purchases routes', () => {
 
   describe('POST /api/v1/purchases/intent', () => {
     it('returns intentId and clientSecret on success', async () => {
-      paymentService.createPaymentIntent.mockResolvedValueOnce({
-        intentId: 'pi_test123',
-        clientSecret: 'pi_test123_secret',
-      });
-
       const response = await request(app)
         .post('/api/v1/purchases/intent')
         .send({ totalAmount: 2500, items: [{ postId: testPostId, quantity: 1 }] });
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual({
-        intentId: 'pi_test123',
-        clientSecret: 'pi_test123_secret',
-      });
-      expect(paymentService.createPaymentIntent).toHaveBeenCalledWith(
-        2500,
-        'usd',
-        expect.objectContaining({ buyerSub: mockBuyer.sub }),
-      );
+      expect(response.body.intentId).toMatch(/^mock_pi_/);
+      expect(response.body.clientSecret).toEqual(expect.stringContaining(response.body.intentId));
     });
 
     it('returns 400 when totalAmount is missing', async () => {
@@ -112,24 +103,19 @@ describe('Purchases routes', () => {
       expect(response.body.error).toBe('totalAmount and items are required');
     });
 
-    it('returns 503 when payment processor is not configured', async () => {
-      paymentService.createPaymentIntent.mockRejectedValueOnce(
-        Object.assign(new Error('Payment processor not yet configured'), { status: 503 }),
-      );
-
-      const response = await request(app)
-        .post('/api/v1/purchases/intent')
-        .send({ totalAmount: 2500, items: [{ postId: testPostId, quantity: 1 }] });
-
-      expect(response.status).toBe(503);
-    });
+    // NOTE: 503 behavior is covered by NullAdapter; this suite runs with PAYMENTS_ADAPTER=mock
   });
 
   describe('POST /api/v1/purchases/confirm', () => {
     it('creates a purchase record and returns purchaseIds and summary', async () => {
+      const intentId = await createIntent({
+        totalAmount: 5000,
+        items: [{ postId: testPostId, quantity: 2 }],
+      });
+
       const response = await request(app)
         .post('/api/v1/purchases/confirm')
-        .send({ intentId: 'pi_test123', items: [{ postId: testPostId, quantity: 2 }] });
+        .send({ intentId, items: [{ postId: testPostId, quantity: 2 }] });
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('purchaseIds');
@@ -143,12 +129,22 @@ describe('Purchases routes', () => {
         newQuantity: 3,
         isSold: false,
       });
+
+      const { rows } = await pool.query('SELECT status, processor_transaction_id FROM purchases');
+      expect(rows).toHaveLength(1);
+      expect(rows[0].status).toBe('completed');
+      expect(rows[0].processor_transaction_id).toMatch(/^mock_tx_/);
     });
 
     it('decrements gallery_posts.quantity after confirm', async () => {
+      const intentId = await createIntent({
+        totalAmount: 7500,
+        items: [{ postId: testPostId, quantity: 3 }],
+      });
+
       await request(app)
         .post('/api/v1/purchases/confirm')
-        .send({ intentId: 'pi_test123', items: [{ postId: testPostId, quantity: 3 }] });
+        .send({ intentId, items: [{ postId: testPostId, quantity: 3 }] });
 
       const { rows } = await pool.query('SELECT quantity FROM gallery_posts WHERE id = $1', [
         testPostId,
@@ -157,9 +153,14 @@ describe('Purchases routes', () => {
     });
 
     it('sets sold=true when quantity reaches zero', async () => {
+      const intentId = await createIntent({
+        totalAmount: 12500,
+        items: [{ postId: testPostId, quantity: 5 }],
+      });
+
       await request(app)
         .post('/api/v1/purchases/confirm')
-        .send({ intentId: 'pi_test123', items: [{ postId: testPostId, quantity: 5 }] });
+        .send({ intentId, items: [{ postId: testPostId, quantity: 5 }] });
 
       const { rows } = await pool.query('SELECT quantity, sold FROM gallery_posts WHERE id = $1', [
         testPostId,
@@ -190,10 +191,18 @@ describe('Purchases routes', () => {
       );
       const secondPostId = rows[0].id;
 
+      const intentId = await createIntent({
+        totalAmount: 4500,
+        items: [
+          { postId: testPostId, quantity: 1 },
+          { postId: secondPostId, quantity: 2 },
+        ],
+      });
+
       const response = await request(app)
         .post('/api/v1/purchases/confirm')
         .send({
-          intentId: 'pi_test123',
+          intentId,
           items: [
             { postId: testPostId, quantity: 1 },
             { postId: secondPostId, quantity: 2 },
