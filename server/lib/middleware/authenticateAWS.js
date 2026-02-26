@@ -25,10 +25,7 @@ const getSigningKey = (() => {
     }
 
     // Check if key exists and isn't expired
-    if (
-      keyCache[header.kid] &&
-      Date.now() - keyCache[header.kid].timestamp < KEY_TTL
-    ) {
+    if (keyCache[header.kid] && Date.now() - keyCache[header.kid].timestamp < KEY_TTL) {
       callback(null, keyCache[header.kid].key);
       return;
     }
