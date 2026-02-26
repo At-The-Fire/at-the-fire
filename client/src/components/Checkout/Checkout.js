@@ -60,9 +60,9 @@ export default function Checkout() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleSuccess = async (intentId) => {
+  const handleSuccess = async (intentId, payment) => {
     try {
-      await confirmPurchase(intentId, items);
+      await confirmPurchase(intentId, items, payment);
       clearCart();
       setOrderConfirmed(true);
       toast.success('Order placed successfully!', {
@@ -150,7 +150,7 @@ export default function Checkout() {
             </Box>
           </Box>
 
-          <PaymentWidget amount={totalAmount} onSuccess={handleSuccess} onError={handleError} />
+          <PaymentWidget amount={totalAmount} items={items} onSuccess={handleSuccess} onError={handleError} />
         </>
       )}
     </Box>
