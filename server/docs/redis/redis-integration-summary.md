@@ -15,6 +15,22 @@ Redis is used as a caching layer to improve performance and reduce database load
 
 ---
 
+## Connection
+
+Redis is configured via environment variables:
+
+| Variable | Default | Description |
+|---|---|---|
+| `REDIS_ENABLED` | `true` | Set to `false`/`0`/`off`/`no` to disable |
+| `REDIS_HOST` | — | Redis server hostname |
+| `REDIS_PORT` | `6379` | Redis server port |
+| `REDIS_USERNAME` | `default` | Redis username |
+| `REDIS_PASSWORD` | — | Redis password |
+
+The client is a singleton — initialized once on first call to `getRedisClient()` and reused for all subsequent calls.
+
+---
+
 ## Disabling Redis (temporary)
 
 Redis is optional. You can disable it without removing any Redis-related code paths.
@@ -138,10 +154,20 @@ If Redis is enabled but the connection fails (expired Redis plan, wrong credenti
 
 ---
 
+## Cache Invalidation
+
+| Key | Invalidated by |
+|---|---|
+| `gallery:main` | Post create, update, delete, image operations (`dashboard.js`) |
+| `profilePosts:<sub>` | Post create, update, delete, image operations (`dashboard.js`) |
+| `profile:<sub>` | Avatar upload/delete, user profile update, logo upload/delete (`profile.js`) |
+| `bizProfile:<sub>` | Business profile update (`profile.js`) |
+| `conversation:<sub>` | Message sent, conversation started/deleted, mark-read (`conversations.js`) |
+
 ## Notes
 
-- All cached objects are JSON-serialized.
-- Cache is invalidated on relevant data changes (e.g., post creation, profile update).
+- All cached objects are JSON-serialized strings (`JSON.stringify` / `JSON.parse`).
+- Cache keys are invalidated eagerly on write — no TTL-only strategy for mutable data.
 
 ---
 
