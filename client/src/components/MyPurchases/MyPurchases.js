@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import { useAuthStore } from '../../stores/useAuthStore.js';
 import { getPurchases } from '../../services/fetch-purchases.js';
+import { getTrackingUrl } from '../../utils/tracking.js';
 
 const BASE_URL = process.env.REACT_APP_BASE_URL;
 
@@ -46,14 +47,52 @@ function TrackingDisplay({ trackingNumber }) {
         —
       </Typography>
     );
+  const result = getTrackingUrl(trackingNumber);
   return (
     <Link
-      href={`https://parcelsapp.com/en/tracking/${trackingNumber}`}
+      href={result.url}
       target="_blank"
       rel="noopener noreferrer"
-      underline="hover"
+      underline="none"
+      color="text.primary"
+      sx={{
+        display: 'inline-block',
+        position: 'relative',
+        fontWeight: 500,
+        textDecoration: 'none',
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: -2,
+          height: 2,
+          backgroundColor: 'currentColor',
+          opacity: 0,
+          transition: 'opacity 420ms cubic-bezier(0.4, 0, 0.2, 1)',
+        },
+        '&:hover': {
+          '&::after': {
+            opacity: 1,
+          },
+        },
+        '&:focus-visible': {
+          '&::after': {
+            opacity: 1,
+          },
+          outline: '2px solid',
+          outlineColor: (theme) => theme.palette.text.primary,
+          outlineOffset: 2,
+          borderRadius: 2,
+        },
+        '@media (prefers-reduced-motion: reduce)': {
+          '&::after': {
+            transition: 'none',
+          },
+        },
+      }}
     >
-      {trackingNumber}
+      {result.carrier ? `${result.carrier}: ` : ''}{trackingNumber}
     </Link>
   );
 }
