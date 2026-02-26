@@ -8,15 +8,17 @@ function checkIfOrderExistsAndMatchCustomerId({
   customerId,
 }) {
   if (!existingOrder) {
-    return res.status(404).json({
+    res.status(404).json({
       message: 'Order not found',
     });
+    return true;
   }
 
   if (existingOrder.customerId !== customerId) {
-    return res.status(403).json({
+    res.status(403).json({
       message: 'Access denied',
     });
+    return true;
   }
 }
 
@@ -72,7 +74,7 @@ module.exports = Router()
         customerId,
       };
 
-      checkIfOrderExistsAndMatchCustomerId(checkOrderObj);
+      if (checkIfOrderExistsAndMatchCustomerId(checkOrderObj)) return;
 
       // Update the order
       const updatedOrder = await Orders.editOrder(
@@ -112,7 +114,7 @@ module.exports = Router()
         customerId,
       };
 
-      checkIfOrderExistsAndMatchCustomerId(checkOrderObj);
+      if (checkIfOrderExistsAndMatchCustomerId(checkOrderObj)) return;
 
       const updatedOrder = await Orders.updateFulfillment(
         orderId,
@@ -138,7 +140,7 @@ module.exports = Router()
         customerId,
       };
 
-      checkIfOrderExistsAndMatchCustomerId(checkOrderObj);
+      if (checkIfOrderExistsAndMatchCustomerId(checkOrderObj)) return;
 
       await Orders.deleteOrder(orderId, customerId);
       res.status(204).send();
