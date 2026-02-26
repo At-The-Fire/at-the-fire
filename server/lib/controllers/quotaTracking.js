@@ -57,7 +57,7 @@ module.exports = Router()
       const data = await QuotaProduct.updateProduct(req.body, req.params.id, customerId);
 
       if (!data) {
-        res.status(404).send({ error: 'Product not found' });
+        return res.status(404).send({ error: 'Product not found' });
       }
 
       // Add sales array for the updated product, matching GET behavior
@@ -74,7 +74,7 @@ module.exports = Router()
       const deletedProduct = await QuotaProduct.deleteProduct(req.params.id);
 
       if (!deletedProduct) {
-        res.status(404).send({ error: 'Product not found' });
+        return res.status(404).send({ error: 'Product not found' });
       }
 
       res.status(204).send();
