@@ -46,10 +46,11 @@ describe('Bid Model', () => {
       expect(result.id).toBe(1);
       expect(result.auctionId).toBe(10);
       expect(result.bidAmount).toBe('150.00');
-      expect(pool.query).toHaveBeenCalledWith(
-        expect.stringContaining('INSERT INTO bids'),
-        [10, 'sub_123', '150.00'],
-      );
+      expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO bids'), [
+        10,
+        'sub_123',
+        '150.00',
+      ]);
     });
 
     it('uses the provided client instead of pool when given', async () => {
@@ -75,10 +76,11 @@ describe('Bid Model', () => {
 
       expect(result).toBeInstanceOf(Bid);
       expect(result.bidderSub).toBe('sub_456');
-      expect(mockClient.query).toHaveBeenCalledWith(
-        expect.stringContaining('INSERT INTO bids'),
-        [10, 'sub_456', '200.00'],
-      );
+      expect(mockClient.query).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO bids'), [
+        10,
+        'sub_456',
+        '200.00',
+      ]);
       expect(pool.query).not.toHaveBeenCalled();
     });
 
@@ -230,10 +232,7 @@ describe('Bid Model', () => {
 
       expect(results).toHaveLength(2);
       expect(results[0]).toBeInstanceOf(Bid);
-      expect(pool.query).toHaveBeenCalledWith(
-        expect.stringContaining('DELETE FROM bids'),
-        [10],
-      );
+      expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('DELETE FROM bids'), [10]);
     });
 
     it('returns empty array when no bids to delete', async () => {
