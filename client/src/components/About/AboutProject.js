@@ -46,11 +46,11 @@ const AboutProject = () => {
       </Box>
 
       <Typography variant="body1" paragraph sx={{ textAlign: 'left' }}>
-        <em>At The Fire</em> is a subscription-based social media, business software, and gallery site designed for
-        artists to showcase their collections and offer their work for sale. Collectors are welcome to subscribe as
-        well. The platform features a tiered subscription model- basic accounts are free, while a paid subscription
-        unlocks business accounting and sales analysis tools. Artists can create posts, manage inventory, track sales,
-        analyze production, set goals & monitor performance.
+        <em>At The Fire</em> is a subscription-based social media, business software, gallery, and ecommerce platform
+        designed for artists to showcase their collections and sell their work. Collectors can browse, bid on auctions,
+        and purchase directly from artists. The platform features a tiered subscription model- basic accounts are free,
+        while a paid subscription unlocks business accounting, sales analysis, and ecommerce tools. Artists can create
+        posts, manage inventory, run auctions, track sales, analyze production, set goals & monitor performance.
       </Typography>
 
       <Typography variant="h4" gutterBottom sx={{ mt: 4 }}>
@@ -66,7 +66,7 @@ const AboutProject = () => {
         </Typography>
         <Typography paragraph>
           Allows users to log in and out, manage a profile, like posts & follow their favorite artists, instant message
-          other users, and view galleries.
+          other users, view galleries, browse and bid on auctions, and purchase directly from artists.
         </Typography>
 
         <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
@@ -92,6 +92,11 @@ const AboutProject = () => {
             Data Visualization:
           </Typography>
           <Typography paragraph>Access graphical and tabular data analysis for sales and production</Typography>
+
+          <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+            Auctions:
+          </Typography>
+          <Typography paragraph>Create and manage timed auctions with live bidding</Typography>
         </Box>
       </Box>
 
@@ -168,9 +173,24 @@ const AboutProject = () => {
             <Typography paragraph>For decoding JSON Web Tokens in authentication flow</Typography>
 
             <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-              Material-UI Icons:
+              Material-UI Icons & lucide-react:
             </Typography>
-            <Typography paragraph>Comprehensive icon library for the user interface</Typography>
+            <Typography paragraph>Icon libraries for the user interface</Typography>
+
+            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+              React Router v6:
+            </Typography>
+            <Typography paragraph>Client-side routing</Typography>
+
+            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+              Socket.IO client:
+            </Typography>
+            <Typography paragraph>Real-time messaging in the browser</Typography>
+
+            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+              Stripe.js:
+            </Typography>
+            <Typography paragraph>Subscription checkout</Typography>
           </Box>
         </Grid>
 
@@ -180,10 +200,10 @@ const AboutProject = () => {
           </Typography>
           <Box sx={{ pl: 2, textAlign: 'left' }}>
             <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 1 }}>
-              Node.js & Express using PostGres:
+              Node.js & Express with PostgreSQL:
             </Typography>
             <Typography paragraph>
-              Backend framework for handling server-side logic and requests stored in a PostGres database
+              Backend framework for handling server-side logic and requests stored in a PostgreSQL database
             </Typography>
 
             <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
@@ -234,6 +254,11 @@ const AboutProject = () => {
               Helmet:
             </Typography>
             <Typography paragraph>Content security policies (CSP)</Typography>
+
+            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+              json2csv:
+            </Typography>
+            <Typography paragraph>CSV export for inventory and sales data</Typography>
           </Box>
         </Grid>
         <Typography variant="h6" gutterBottom color="primary" sx={{ mt: 4, textAlign: 'center', width: '100%' }}>
@@ -280,11 +305,6 @@ const AboutProject = () => {
       </Typography>
       <Box sx={{ pl: 2, textAlign: 'left' }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 1 }}>
-          Monetization:
-        </Typography>
-        <Typography paragraph>Planning to introduce a shopping cart and more ecommerce features</Typography>
-
-        <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
           Social Media Features:
         </Typography>
         <Typography paragraph>
