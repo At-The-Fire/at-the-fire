@@ -50,6 +50,7 @@ module.exports = class Gallery {
         g.public_id,
         g.title,
         g.sold,
+        g.quantity,
         s.display_name,
         s.logo_image_url
     FROM
