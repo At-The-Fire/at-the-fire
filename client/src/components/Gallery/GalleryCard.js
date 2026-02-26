@@ -29,7 +29,7 @@ export default function GalleryCard({ item }) {
 
   const handleAddToCart = (e) => {
     e.stopPropagation();
-    useCartStore.getState().addItem({
+    const result = useCartStore.getState().addItem({
       postId: item.id,
       title: item.title,
       price: Number(item.price),
@@ -38,7 +38,13 @@ export default function GalleryCard({ item }) {
       imageUrl: item.image_url,
       sellerCustomerId: item.customer_id,
     });
-    toast.success(`"${item.title}" added to cart`, { theme: 'colored', autoClose: 2000 });
+    if (result === true) {
+      toast.success(`"${item.title}" added to cart`, { theme: 'colored', autoClose: 2000 });
+    } else if (result === 'updated') {
+      toast.info(`"${item.title}" cart quantity updated`, { theme: 'colored', autoClose: 2000 });
+    } else {
+      toast.warning(`"${item.title}" is already at max quantity`, { theme: 'colored', autoClose: 2000 });
+    }
   };
 
   // Observer to handle lazy-loading images
@@ -219,7 +225,7 @@ export default function GalleryCard({ item }) {
               }
             </Box>
           </Box>
-          {!item.sold && item.price > 0 && (
+          {!item.sold && item.price > 0 && item.quantity > 0 && (
             <Box onClick={(e) => e.stopPropagation()} sx={{ px: 1, pb: 1 }}>
               <Button
                 size="small"
