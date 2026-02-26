@@ -98,6 +98,9 @@ export default function useAppBar({ setAnchorElNav, setAnchorElUser }) {
         if (!mobileOpen) setMobileOpen(true);
         closeNavMenuHelper('messages');
         break;
+      case 'Purchases':
+        closeNavMenuHelper('/my-purchases');
+        break;
       case 'Workspace':
         closeNavMenuHelper('dashboard');
         break;

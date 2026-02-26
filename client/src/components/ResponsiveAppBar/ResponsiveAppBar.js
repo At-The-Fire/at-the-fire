@@ -62,7 +62,7 @@ export default function ResponsiveAppBar() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
-  let userMenuItems = ['Profile', 'Subscription', 'Logout'];
+  let userMenuItems = [];
 
   const messages = unreadCount === 0 ? 'Messages' : `Messages (${unreadCount})`;
 
@@ -82,8 +82,8 @@ export default function ResponsiveAppBar() {
   userMenuItems =
     isAuthenticated && !loadingCustomerId
       ? customerId && isConfirmed
-        ? [messages, 'Workspace', 'Profile', 'User Guide', 'Logout']
-        : [messages, 'Profile', 'User Guide', 'Logout']
+        ? [messages, 'Workspace', 'Purchases', 'Profile', 'User Guide', 'Logout']
+        : [messages, 'My Orders', 'Profile', 'User Guide', 'Logout']
       : [];
 
   const pages = user
