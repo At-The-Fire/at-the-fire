@@ -100,13 +100,59 @@ This document lists and describes **all** API endpoints, their request/response 
 - **GET** `/api/v1/inventory-snapshot` — Get inventory snapshots (auth required)
 - **POST** `/api/v1/inventory-snapshot` — Add/update inventory snapshot (auth required)
 
+## Quota Tracking — Sales
+
+_Base path: `/api/v1/quota-tracking/:productId/sales` — all routes require auth + paid subscription_
+
+- **GET** `/` — Get all sales for a product
+- **POST** `/` — Add a sale entry to a product
+- **PUT** `/:saleId` — Update a sale entry
+- **DELETE** `/:saleId` — Delete a sale entry
+
+## Auctions
+
+- **GET** `/api/v1/auctions` — Get all active auctions (public)
+- **GET** `/api/v1/auctions/seller/:sub` — Get seller's own auctions (auth required)
+- **GET** `/api/v1/auctions/results/:auctionId` — Get auction results (public)
+- **GET** `/api/v1/auctions/user-auctions/:sub` — Get user's active bids and won auctions (auth required)
+- **GET** `/api/v1/auctions/:id` — Get auction by ID (auth required)
+- **POST** `/api/v1/auctions/upload` — Upload auction images to S3 (auth required)
+- **POST** `/api/v1/auctions` — Create new auction (auth required)
+- **PUT** `/api/v1/auctions/:id` — Update auction (auth required, seller/admin only)
+- **PUT** `/api/v1/auctions/:id/cancel` — Cancel auction with no bids (auth required, seller/admin only)
+- **PUT** `/api/v1/auctions/:id/paid` — Mark auction as paid (auth required, seller only)
+- **PUT** `/api/v1/auctions/:id/tracking` — Set shipment tracking number (auth required, seller only)
+
+## Bids
+
+- **GET** `/api/v1/bids/:id` — Get bids for an auction with bidder profiles (public)
+- **POST** `/api/v1/bids` — Place a bid (auth required)
+- **POST** `/api/v1/bids/buy-it-now` — Buy-it-now — closes auction immediately (auth required)
+
+## Auction Notifications
+
+- **GET** `/api/v1/auction-notifications` — Get unread auction notifications for current user (auth required)
+- **PATCH** `/api/v1/auction-notifications/mark-read` — Mark all auction notifications as read (auth required)
+
+## Cart
+
+- **POST** `/api/v1/cart/validate` — Validate cart item availability and current prices (auth required)
+
+## Purchases
+
+- **POST** `/api/v1/purchases/intent` — Create a Stripe payment intent (auth required)
+- **POST** `/api/v1/purchases/confirm` — Confirm purchase, decrement inventory, record purchase rows (auth required)
+- **GET** `/api/v1/purchases` — Get buyer's purchase history (auth required)
+- **GET** `/api/v1/purchases/seller` — Get seller's incoming sales (auth required)
+- **PUT** `/api/v1/purchases/:id/tracking` — Set shipment tracking number (auth required, seller only)
+
 ## Stripe & Billing
 
 - **GET** `/api/v1/stripe/billing-period` — Get current billing period (auth required)
 - **DELETE** `/api/v1/stripe/cancel-deletion` — Cancel and delete customer data (auth required)
 - **GET** `/api/v1/stripe/verify` — Verify Stripe cookies
-- **POST** `/api/v1/create-checkout-session` — Create Stripe checkout session
-- **POST** `/api/v1/customer-portal` — Create Stripe customer portal session
+- **POST** `/api/v1/create-checkout-session` — Create Stripe subscription checkout session
+- **POST** `/api/v1/create-customer-portal-session` — Create Stripe customer portal session (auth required, subscription required)
 
 ## Webhooks
 
