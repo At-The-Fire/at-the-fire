@@ -14,8 +14,7 @@ npm-debug.log*
 
 # (Optional) ignore a root-level settings.local.json if present
 settings.local.json
-
-#^ TEMP for building shopping cart:
 /docs/
 .claude/settings.local.json
 .playwright-mcp
+add_tracking_to_purchases.sql
