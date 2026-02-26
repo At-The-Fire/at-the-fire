@@ -2,9 +2,9 @@
 
 # At The Fire
 
-**A Gallery Platform for Artists and Collectors**
+**A Gallery, Auction, and Ecommerce Platform for Artists and Collectors**
 
-_At The Fire_ is a subscription-based gallery site designed for artists to showcase their collections and offer their work for sale. Collectors are welcome to subscribe as well. The platform features a tiered subscription model—basic accounts are free, while a paid subscription unlocks business accounting and sales analysis tools. Artists can create posts, manage inventory, track sales, and analyze production.
+_At The Fire_ is a subscription-based gallery and ecommerce platform designed for artists to showcase their collections and sell their work. Collectors can browse, bid on auctions, and purchase directly from artists. The platform features a tiered subscription model—basic accounts are free, while a paid subscription unlocks business accounting, sales analysis, and ecommerce tools. Artists can create posts, manage inventory, run auctions, track sales, and analyze production.
 
 ## Features
 
@@ -13,11 +13,14 @@ _At The Fire_ is a subscription-based gallery site designed for artists to showc
 - **Basic Account (Free)**: Social features available to all users:
   - Manage a profile, like posts, and follow other users for a personal feed
   - Send and receive private messages
-- **Paid Subscription**: Full business toolkit:
+  - Browse and bid on auctions; add items to cart and purchase from artists
+  - View purchase history
+- **Paid Subscription**: Full business toolkit for artists:
   - **Content Posting**: Create gallery posts that contribute to the inventory list
   - **Inventory Management**: View inventory snapshots and download CSV files
   - **Orders & Goals**: Create/manage orders, track daily/monthly production quotas, and set goals
   - **Data Visualization**: Graphical and tabular data analysis for sales and production
+  - **Auctions**: Create and manage timed auctions with live bidding
 
 ### Artist Tools
 
@@ -26,6 +29,13 @@ _At The Fire_ is a subscription-based gallery site designed for artists to showc
 - **Production Management**: Set daily production quotas and track goals with an interactive calendar
 - **Sales Analysis**: Analyze all financial data through interactive graphs and tables
 - **Create and Print Purchase Orders**
+- **Auctions**: Create timed auctions with a start price, manage active and archived auctions
+
+### Ecommerce & Buyer Features
+
+- **Shopping Cart**: Add items to cart from product listings or auction buy-now offers
+- **Checkout**: Stripe-powered checkout for direct product purchases
+- **Purchase History**: Buyers can view all past purchases via `/my-purchases`
 
 ### User Interaction & Social Features
 
@@ -75,11 +85,6 @@ _At The Fire_ is a subscription-based gallery site designed for artists to showc
 
 - **Owner / Lead Developer**: [Kevin Nail](https://www.kevinnail.com/)
 - **Contributors**: [Tyler Watson](https://www.linkedin.com/in/tylerwatson91), [Jake Doherty](https://www.linkedin.com/in/jacob-doherty1)
-
-## Future Plans
-
-- **Ecommerce**: Shopping cart and direct sales features to help artists sell on the platform
-- **Full Deployment**: Planned once resources and funding are secured
 
 ## Licensing
 
