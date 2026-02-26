@@ -36,6 +36,7 @@ import AuctionArchive from './components/Auctions/AuctionArchive.js';
 import AuctionDetail from './components/Auctions/AuctionDetail.js';
 import AuctionForm from './components/Auctions/AuctionForm.js';
 import Checkout from './components/Checkout/Checkout.js';
+import MyOrders from './components/MyOrders/MyOrders.js';
 
 //? this is referenced in ResponsiveAppBar for replacing title to display which development local/ deploy is in the browser tab
 window.REACT_APP_BASE_URL = window.location.origin;
@@ -182,6 +183,7 @@ function App() {
             <Route path="/dashboard/auctions/new" element={<AuctionForm />} />
             <Route path="/dashboard/auctions/:id/edit" element={<AuctionForm />} />
             <Route path="/checkout" element={<Checkout />} />
+            <Route path="/my-orders" element={<MyOrders />} />
             <Route path="/profile/:sub" element={<Profile />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/messages" element={<MessagingContainer />} />
