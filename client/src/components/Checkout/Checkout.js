@@ -26,7 +26,7 @@ export default function Checkout() {
     const validate = async () => {
       try {
         const result = await validateCart(items);
-        const unavailable = result?.unavailable || [];
+        const unavailable = result.filter((i) => !i.available).map((i) => i.postId);
 
         if (unavailable.length > 0) {
           unavailable.forEach((postId) => {
