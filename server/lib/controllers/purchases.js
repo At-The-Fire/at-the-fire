@@ -196,6 +196,21 @@ module.exports = Router()
     }
   })
 
+  // GET /api/v1/purchases/seller - get seller's sales
+  .get('/seller', authenticateAWS, async (req, res, next) => {
+    try {
+      const { rows } = await pool.query(
+        'SELECT customer_id FROM stripe_customers WHERE aws_sub = $1',
+        [req.userAWSSub],
+      );
+      if (!rows[0]) return res.json([]);
+      const purchases = await Purchase.getBySellerCustomerId(rows[0].customer_id);
+      res.json(purchases);
+    } catch (e) {
+      next(e);
+    }
+  })
+
   // GET /api/v1/purchases - get user's purchase history
   .get('/', authenticateAWS, async (req, res, next) => {
     try {
