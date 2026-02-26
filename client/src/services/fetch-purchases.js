@@ -65,6 +65,21 @@ export async function createPaymentIntent(cartItems) {
   }
 }
 
+export async function getSellerPurchases() {
+  try {
+    const resp = await fetch(`${BASE_URL}/api/v1/purchases/seller`, {
+      credentials: 'include',
+    });
+    const data = await resp.json();
+    if (resp.ok) return data;
+    throw new Error(data.error || data.message || 'Failed to fetch seller purchases');
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Error fetching seller purchases:', error);
+    throw error;
+  }
+}
+
 export async function getPurchases() {
   try {
     const resp = await fetch(`${BASE_URL}/api/v1/purchases`, {
