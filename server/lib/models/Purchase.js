@@ -117,6 +117,30 @@ module.exports = class Purchase {
     return new Purchase(rows[0]);
   }
 
+  static async getBySellerCustomerId(customerid) {
+    const { rows } = await pool.query(
+      `
+      SELECT p.*, gp.title
+      FROM purchases p
+      LEFT JOIN gallery_posts gp ON p.item_type = 'gallery_post' AND p.item_id = gp.id
+      WHERE p.seller_customer_id = $1
+      ORDER BY p.created_at DESC
+      `,
+      [customerid],
+    );
+
+    return Promise.all(
+      rows.map(async (row) => {
+        const purchase = new Purchase(row);
+        if (row.item_type === 'gallery_post' && row.item_id) {
+          const imgs = await Post.getAdditionalImages(row.item_id);
+          purchase.imageUrls = imgs.map((i) => i.image_url);
+        }
+        return purchase;
+      }),
+    );
+  }
+
   static async updateTracking(id, trackingNumber) {
     const { rows } = await pool.query(
       `
