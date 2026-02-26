@@ -76,14 +76,15 @@ module.exports = class Bid {
     );
 
     if (!rows.length) return [];
-    return rows.map((row) => ({
-      ...new Bid(row),
-      title: row.title,
-      imageUrls: row.image_urls,
-      endTime: row.end_time,
-      currentBid: row.current_bid ? Number(row.current_bid) : null,
-      isActive: row.is_active,
-    }));
+    return rows.map((row) => {
+      const bid = new Bid(row);
+      bid.title = row.title;
+      bid.imageUrls = row.image_urls;
+      bid.endTime = row.end_time;
+      bid.currentBid = row.current_bid ? Number(row.current_bid) : null;
+      bid.isActive = row.is_active;
+      return bid;
+    });
   }
 
   static async deleteByAuctionId(auctionId) {
