@@ -10,8 +10,13 @@ export const useCartStore = create(
       // Actions
       addItem: (post) => {
         const { items } = get();
-        const alreadyInCart = items.some((i) => i.postId === post.postId);
-        if (alreadyInCart) return;
+        const existing = items.find((i) => i.postId === post.postId);
+        if (existing) {
+          if (existing.quantity >= existing.maxQuantity) return false;
+          const newQty = Math.min(existing.quantity + (post.quantity || 1), existing.maxQuantity);
+          set({ items: items.map((i) => (i.postId === post.postId ? { ...i, quantity: newQty } : i)) });
+          return 'updated';
+        }
 
         set({
           items: [
@@ -27,6 +32,7 @@ export const useCartStore = create(
             },
           ],
         });
+        return true;
       },
 
       removeItem: (postId) => {
