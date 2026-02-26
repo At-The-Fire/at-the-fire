@@ -118,3 +118,52 @@
   - [ ] Verify data entry
 - [ ] Edit goals
   - [ ] Test changes save correctly
+
+## Auctions
+
+- [ ] Create auction
+  - [ ] Test required fields (title, starting bid, end date)
+  - [ ] Upload auction images
+  - [ ] Verify auction appears in public auction listing
+- [ ] Bid on auction
+  - [ ] Place a valid bid above minimum
+  - [ ] Verify bid rejected if below minimum increment
+  - [ ] Test 5-minute extension rule (bid placed near end time extends auction)
+  - [ ] Verify highest bid updates correctly
+- [ ] Buy It Now
+  - [ ] Purchase at buy-it-now price
+  - [ ] Verify auction closes immediately
+  - [ ] Verify purchase appears in buyer's purchases
+- [ ] Auction end
+  - [ ] Verify auction result recorded on close
+  - [ ] Verify seller notified
+  - [ ] Verify winner notified
+- [ ] Archive auction
+  - [ ] Verify archived auction no longer appears in active listings
+
+## Cart & Checkout
+
+- [ ] Add item to cart
+  - [ ] Verify item appears in cart with correct price and quantity
+  - [ ] Test adding duplicate item (quantity update)
+- [ ] Cart validation
+  - [ ] Verify out-of-stock items are flagged
+  - [ ] Verify quantities don't exceed available inventory
+- [ ] Checkout
+  - [ ] Complete checkout with test card **4242424242424242**
+  - [ ] Verify payment intent created and confirmed
+  - [ ] Verify inventory decremented after purchase
+  - [ ] Verify purchase record created
+- [ ] Failed checkout
+  - [ ] Use card **4000000000000341** to test payment failure
+  - [ ] Verify inventory is not decremented on failure
+  - [ ] Verify error message displayed
+
+## My Purchases
+
+- [ ] View purchase history
+  - [ ] Verify all completed purchases appear
+  - [ ] Verify purchase details (item, price, date) are correct
+- [ ] Auction purchases
+  - [ ] Verify won auction appears in purchases
+  - [ ] Verify buy-it-now purchase appears in purchases
