@@ -61,6 +61,11 @@
   gap: 16px;
 }
 
+.auction-form input[type='datetime-local']::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+
 .auction-form .file-upload-label {
   border: 2px solid white;
   padding: 0.4rem;
