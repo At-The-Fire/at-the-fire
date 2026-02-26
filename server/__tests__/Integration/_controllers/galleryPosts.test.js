@@ -35,6 +35,7 @@ describe('posts/ post details/ cloudinary routes', () => {
         num_imgs: expect.any(String),
         price: expect.any(String),
         public_id: expect.any(String),
+        quantity: 1,
         title: expect.any(String),
         display_name: displayName,
         logo_image_url: logoImageUrl,
