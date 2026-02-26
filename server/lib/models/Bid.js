@@ -66,15 +66,24 @@ module.exports = class Bid {
   static async getByUserSub(sub) {
     const { rows } = await pool.query(
       `
-      SELECT * FROM bids
-      WHERE bidder_sub = $1
-      ORDER BY created_at DESC
+      SELECT b.*, a.title, a.image_urls, a.end_time, a.current_bid, a.is_active
+      FROM bids b
+      JOIN auctions a ON b.auction_id = a.id
+      WHERE b.bidder_sub = $1 AND a.is_active = true
+      ORDER BY b.created_at DESC
       `,
       [sub],
     );
 
     if (!rows.length) return [];
-    return rows.map((row) => new Bid(row));
+    return rows.map((row) => ({
+      ...new Bid(row),
+      title: row.title,
+      imageUrls: row.image_urls,
+      endTime: row.end_time,
+      currentBid: row.current_bid ? Number(row.current_bid) : null,
+      isActive: row.is_active,
+    }));
   }
 
   static async deleteByAuctionId(auctionId) {
