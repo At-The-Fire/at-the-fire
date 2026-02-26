@@ -239,7 +239,7 @@ export default function ResponsiveAppBar() {
               <Box
                 sx={{
                   display: isMobile && searchExpanded ? 'none' : 'flex',
-                  alignItems: 'center',
+                  gap: '10px',
                 }}
               >
                 {isAuthenticated && <CartIcon onClick={() => setCartOpen(true)} />}{' '}
