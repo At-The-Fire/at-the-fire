@@ -25,6 +25,16 @@ This document answers common questions and provides solutions to frequent issues
 
 - See error handling and logging docs for error code explanations
 
+### Why are auction bids being rejected?
+
+- Bids must exceed the current highest bid by the minimum increment
+- Auctions that have ended will reject new bids
+
+### Why did a checkout fail even though payment succeeded?
+
+- Inventory validation runs before payment; if an item became out of stock between add-to-cart and checkout, the order is rejected
+- Check server logs for the specific validation error
+
 ## How do I reset my password?
 
 - Use the "Forgot Password" flow on the login page (handled by AWS Cognito)
