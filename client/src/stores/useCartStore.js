@@ -7,14 +7,6 @@ export const useCartStore = create(
       // State
       items: [],
 
-      // Derived
-      get totalAmount() {
-        return get().items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-      },
-      get itemCount() {
-        return get().items.reduce((sum, item) => sum + item.quantity, 0);
-      },
-
       // Actions
       addItem: (post) => {
         const { items } = get();
@@ -55,6 +47,7 @@ export const useCartStore = create(
     }),
     {
       name: 'atf-cart',
+      partialize: (s) => ({ items: s.items }),
     }
   )
 );
