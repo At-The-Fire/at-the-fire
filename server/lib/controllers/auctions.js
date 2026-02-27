@@ -17,7 +17,14 @@ const s3Client = new S3Client({
 });
 
 const storage = multer.memoryStorage();
-const upload = multer({ storage });
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    cb(ALLOWED_MIME_TYPES.includes(file.mimetype) ? null : new Error('Invalid file type'), ALLOWED_MIME_TYPES.includes(file.mimetype));
+  },
+});
 
 module.exports = Router()
   // GET all auctions (public) ///////////////////////////////////////////
@@ -31,9 +38,9 @@ module.exports = Router()
   })
 
   // GET seller's own auctions (authenticated) ///////////////////////////////////////////
-  .get('/seller/:sub', [authenticateAWS], async (req, res, next) => {
+  .get('/seller', [authenticateAWS], async (req, res, next) => {
     try {
-      const auctions = await Auction.getBySeller(req.params.sub);
+      const auctions = await Auction.getBySeller(req.userAWSSub);
       res.json(auctions);
     } catch (e) {
       next(e);
@@ -61,9 +68,9 @@ module.exports = Router()
   })
 
   // GET all USER auctions (authenticated) ///////////////////////////////////////////
-  .get('/user-auctions/:sub', [authenticateAWS], async (req, res, next) => {
+  .get('/user-auctions', [authenticateAWS], async (req, res, next) => {
     try {
-      const sub = req.params.sub;
+      const sub = req.userAWSSub;
       const activeAuctionBids = await Bid.getByUserSub(sub);
       const wonAuctions = await Auction.getUserAuctionWins(sub);
       res.json({ activeAuctionBids, wonAuctions });

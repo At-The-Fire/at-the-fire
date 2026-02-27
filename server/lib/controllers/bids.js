@@ -56,12 +56,13 @@ module.exports = Router()
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      const { auctionId, bidderSub, bidAmount } = req.body;
+      const { auctionId, bidAmount } = req.body;
+      const bidderSub = req.userAWSSub;
 
-      if (!auctionId || !bidderSub || !bidAmount) {
+      if (!auctionId || !bidAmount) {
         await client.query('ROLLBACK');
         client.release();
-        return res.status(400).json({ error: 'auctionId, bidderSub, and bidAmount are required' });
+        return res.status(400).json({ error: 'auctionId and bidAmount are required' });
       }
 
       // get current highest bid
@@ -167,7 +168,8 @@ module.exports = Router()
   // POST buy-it-now
   .post('/buy-it-now', authenticateAWS, async (req, res, next) => {
     try {
-      const { auctionId, buyerSub } = req.body;
+      const { auctionId } = req.body;
+      const buyerSub = req.userAWSSub;
 
       // fetch the auction to confirm it's active
       const auction = await Auction.getById(auctionId);

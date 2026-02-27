@@ -24,9 +24,9 @@ export async function getAuctions() {
   }
 }
 
-export async function getUserAuctions(userId) {
+export async function getUserAuctions() {
   try {
-    const res = await fetch(`${BASE_URL}/api/v1/auctions/user-auctions/${userId}`, {
+    const res = await fetch(`${BASE_URL}/api/v1/auctions/user-auctions`, {
       method: 'GET',
       headers: {
         Accept: 'application/json',
@@ -48,8 +48,8 @@ export async function getUserAuctions(userId) {
   }
 }
 
-export async function getSellerAuctions(sellerSub) {
-  const resp = await fetch(`${BASE_URL}/api/v1/auctions/seller/${sellerSub}`, {
+export async function getSellerAuctions() {
+  const resp = await fetch(`${BASE_URL}/api/v1/auctions/seller`, {
     credentials: 'include',
   });
   if (!resp.ok) throw new Error(await resp.text());
