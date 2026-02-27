@@ -4,6 +4,7 @@ const pool = require('./lib/utils/pool');
 const http = require('http');
 const socketIo = require('socket.io');
 const jwt = require('jsonwebtoken');
+const { getSigningKey } = require('./lib/utils/jwks');
 const { initAuctionTimers } = require('./lib/jobs/auctionTimers');
 
 const API_URL = process.env.API_URL || 'http://localhost';
@@ -30,7 +31,6 @@ app.set('io', io);
 // Socket.IO authentication middleware
 io.use(async (socket, next) => {
   try {
-    // Extract token from cookie header
     const cookieHeader = socket.handshake.headers.cookie;
     if (!cookieHeader) {
       return next(new Error('Not authenticated'));
@@ -48,14 +48,20 @@ io.use(async (socket, next) => {
       return next(new Error('Not authenticated'));
     }
 
-    // Decode token to get sub (basic verification - full verification happens in HTTP middleware)
-    const decoded = jwt.decode(idToken);
-    if (!decoded || !decoded.sub) {
-      return next(new Error('Invalid token'));
-    }
+    // Verify token signature before trusting its claims
+    const verifyOptions = {
+      algorithms: ['RS256'],
+      issuer: `https://cognito-idp.us-west-2.amazonaws.com/${process.env.COGNITO_USER_POOL_ID}`,
+      audience: process.env.APP_CLIENT_ID,
+    };
 
-    socket.userSub = decoded.sub;
-    next();
+    jwt.verify(idToken, getSigningKey, verifyOptions, (err, decoded) => {
+      if (err || !decoded || !decoded.sub) {
+        return next(new Error('Not authenticated'));
+      }
+      socket.userSub = decoded.sub;
+      next();
+    });
   } catch (e) {
     next(new Error('Not authenticated'));
   }
