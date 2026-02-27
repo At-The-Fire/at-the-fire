@@ -81,7 +81,18 @@ export default function OrdersList({
 
   const printOrder = async (order) => {
     try {
-      const img = await preloadImage(bizProfile.logoImageUrl);
+      let img = null;
+      if (bizProfile.logoImageUrl) {
+        img = await preloadImage(bizProfile.logoImageUrl);
+      } else {
+        toast.info('No logo uploaded — printing without logo. Add one in your profile.', {
+          theme: 'colored',
+          draggable: true,
+          draggablePercent: 60,
+          toastId: 'ordersList-no-logo',
+          autoClose: 4000,
+        });
+      }
       const printWindow = window.open('', '_blank');
 
       // Wait for the window to be fully loaded
@@ -97,7 +108,7 @@ export default function OrdersList({
       printWindow.document.write('</head><body>');
       printWindow.document.write('<header>');
       printWindow.document.write(`<h1>${bizProfile.displayName || 'Your business name here'}</h1>`);
-      printWindow.document.write(`<img src="${img.src}" alt="Business Logo">`);
+      if (img) printWindow.document.write(`<img src="${img.src}" alt="Business Logo">`);
       printWindow.document.write('</header>');
       printWindow.document.write('<h3>Order Details</h3>');
       printWindow.document.write(`<p>Date: ${formatDate(order.date)}</p>`);
