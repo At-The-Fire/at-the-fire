@@ -21,11 +21,14 @@ const s3Client = new S3Client({
 
 // Configure multer to store files in memory
 const storage = multer.memoryStorage();
-const upload = multer({ storage }); // Memory storage to handle form-data
-
-module.exports = {
-  upload: multer({ storage }),
-};
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    cb(ALLOWED_MIME_TYPES.includes(file.mimetype) ? null : new Error('Invalid file type'), ALLOWED_MIME_TYPES.includes(file.mimetype));
+  },
+});
 const isValidUrl = (url) => {
   try {
     new URL(url);
@@ -172,7 +175,16 @@ module.exports = Router()
       const image_urls = JSON.parse(req.body.image_urls);
       const image_public_ids = JSON.parse(req.body.image_public_ids);
       const resource_types = JSON.parse(req.body.resource_types);
-      const sub = req.body.sub;
+      const sub = req.userAWSSub;
+
+      // Ownership check
+      const existingPost = await Post.getById(post_id);
+      if (!existingPost) {
+        return res.status(404).json({ error: 'Post not found' });
+      }
+      if (existingPost.customer_id !== req.customerId) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
 
       const post = await Post.addGalleryImages(
         post_id,
@@ -190,14 +202,21 @@ module.exports = Router()
   // POST transfer main image from gallery_posts to post_imgs for edit product => post creation
   .post('/transfer', async (req, res) => {
     try {
-      // Extract postId from the request body
       const postId = req.body.postId;
 
       if (!postId) {
         return res.status(400).json({ error: 'postId is required' });
       }
 
-      // Call the static method to transfer images
+      // Ownership check
+      const post = await Post.getById(postId);
+      if (!post) {
+        return res.status(404).json({ error: 'Post not found' });
+      }
+      if (post.customer_id !== req.customerId) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+
       const result = await Post.transferImagesToPostImgs(postId);
 
       res.status(200).json(result);
@@ -348,6 +367,16 @@ module.exports = Router()
       if (!isValidUrl(image_url)) {
         return res.status(400).json({ error: 'Invalid URL format' });
       }
+
+      // Ownership check
+      const post = await Post.getById(id);
+      if (!post) {
+        return res.status(404).json({ error: 'Post not found' });
+      }
+      if (post.customer_id !== req.customerId) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+
       const updatedPost = await Post.updateMainImage(id, image_url, public_id);
 
       const redisClient = await getRedisClient();

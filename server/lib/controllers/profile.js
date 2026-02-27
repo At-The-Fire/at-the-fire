@@ -22,11 +22,14 @@ const s3Client = new S3Client({
 
 // Configure multer to store files in memory
 const storage = multer.memoryStorage();
-const upload = multer({ storage }); // Memory storage to handle form-data
-
-module.exports = {
-  upload: multer({ storage }),
-};
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    cb(ALLOWED_MIME_TYPES.includes(file.mimetype) ? null : new Error('Invalid file type'), ALLOWED_MIME_TYPES.includes(file.mimetype));
+  },
+});
 
 const s3UploadHelper = async (file, folder) => {
   const timestamp = Date.now();
@@ -261,6 +264,19 @@ module.exports = Router()
       return;
     }
 
+    // Validate prefix and ownership
+    if (!public_id.startsWith('user-avatars')) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    try {
+      const user = await AWSUser.getCognitoUserBySub({ sub });
+      if (!user || user.publicId !== public_id) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+    } catch {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
     try {
       const key = public_id;
 
@@ -286,7 +302,8 @@ module.exports = Router()
       const redisClient = await getRedisClient();
       await redisClient.del(`profile:${sub}`);
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      console.error(error);
+      res.status(500).json({ error: 'Internal server error' });
     }
   })
 
@@ -339,6 +356,19 @@ module.exports = Router()
         return;
       }
 
+      // Validate prefix and ownership
+      if (!public_id.startsWith('subscriber-logos')) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+      try {
+        const bizProfile = await StripeCustomer.getStripeByAWSSub(sub);
+        if (!bizProfile || bizProfile.logoPublicId !== public_id) {
+          return res.status(403).json({ error: 'Forbidden' });
+        }
+      } catch {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+
       try {
         const key = public_id;
 
@@ -364,7 +394,8 @@ module.exports = Router()
         const redisClient = await getRedisClient();
         await redisClient.del(`profile:${sub}`);
       } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
       }
     }
   );
