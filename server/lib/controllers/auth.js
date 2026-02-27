@@ -4,6 +4,7 @@ const validator = require('validator');
 const authenticateAWS = require('../middleware/authenticateAWS.js');
 const AmazonCognitoIdentity = require('amazon-cognito-identity-js');
 const jwt = require('jsonwebtoken');
+const { getSigningKey } = require('../utils/jwks');
 
 const { getStripeByAWSSub } = require('../models/StripeCustomer.js');
 const { getSubscriptionByCustomerId } = require('../models/Subscriptions');
@@ -55,7 +56,7 @@ module.exports = Router()
         next(e);
       } else if (
         e.message.includes(
-          'duplicate key value violates unique constraint "cognito_users_email_key"'
+          'duplicate key value violates unique constraint "cognito_users_email_key"',
         )
       ) {
         res.status(409).json('Email already exists.');
@@ -82,7 +83,6 @@ module.exports = Router()
       Expires: '0',
     });
     try {
-      // Check if session data is provided
       if (!req.body || Object.keys(req.body).length === 0) {
         return res.status(400).json({ error: 'Session data is missing.' });
       }
@@ -95,11 +95,33 @@ module.exports = Router()
       const accessToken = session.accessToken.jwtToken;
       const refreshToken = session.refreshToken.token;
 
+      // Verify both tokens before setting cookies (H6)
+      const verifyToken = (token, isAccessToken = false) => {
+        return new Promise((resolve, reject) => {
+          const options = {
+            algorithms: ['RS256'],
+            issuer: `https://cognito-idp.us-west-2.amazonaws.com/${process.env.COGNITO_USER_POOL_ID}`,
+          };
+          if (!isAccessToken) options.audience = process.env.APP_CLIENT_ID;
+          jwt.verify(token, getSigningKey, options, (err) => {
+            if (err) reject(err);
+            else resolve(true);
+          });
+        });
+      };
+
+      try {
+        await Promise.all([verifyToken(accessToken, true), verifyToken(idToken, false)]);
+      } catch {
+        return res.status(401).json({ error: 'Invalid tokens' });
+      }
+
       const isSecure = process.env.SECURE_COOKIES === 'true';
       const cookieOpts = {
         httpOnly: true,
         secure: isSecure,
         sameSite: isSecure ? 'None' : 'Lax',
+        maxAge: 30 * 24 * 60 * 60 * 1000,
       };
 
       // bake the cookies with the tokens received from the session
@@ -112,7 +134,8 @@ module.exports = Router()
       if (e.message.includes('Cannot read properties')) {
         res.status(400).json({ error: 'One or more tokens are missing.' });
       } else {
-        res.status(500).json({ error: e.message });
+        res.status(500).json({ error: 'Internal server error' });
+        console.error(e);
       }
       next(e);
     }
@@ -138,7 +161,8 @@ module.exports = Router()
 
       res.status(204).send();
     } catch (e) {
-      res.status(500).json({ error: e.message });
+      res.status(500).json({ error: 'Internal server error' });
+      console.error(e);
       next(e);
     }
   })
@@ -180,7 +204,8 @@ module.exports = Router()
       if (e.message.includes('User not found')) {
         res.status(404).json({ error: e.message });
       } else {
-        res.status(500).json({ error: e.message });
+        res.status(500).json({ error: 'Internal server error' });
+        console.error(e);
         next(e);
       }
     }
@@ -197,16 +222,10 @@ module.exports = Router()
       const idToken = req.cookies['idToken'];
 
       if (!refreshTokenFromCookie) {
-        // eslint-disable-next-line no-console
-        console.log('No refresh token provided apparently???  ', refreshTokenFromCookie);
-
         return res.status(400).send('No refresh token provided');
       }
 
       if (!idToken) {
-        // eslint-disable-next-line no-console
-        console.log('No ID token provided apparently???  ', idToken);
-
         return res.status(400).send('No ID token provided');
       }
 
@@ -214,19 +233,11 @@ module.exports = Router()
       try {
         const decodedToken = jwt.decode(idToken);
         if (!decodedToken || !decodedToken.sub) {
-          // eslint-disable-next-line no-console
-          console.log('Invalid ID token  =======================');
-
-          // If the decoded token is null or doesn't have a 'sub' field, it's invalid
           return res.status(400).send('Invalid ID token');
         }
         sub = decodedToken.sub;
-      } catch (error) {
-        // Handle decoding errors (malformed tokens, etc.)
-        // eslint-disable-next-line no-console
-        console.log('Error decoding ID token  =======================', error);
-
-        return res.status(400).send('Error decoding ID token: ' + error.message);
+      } catch {
+        return res.status(400).send('Error decoding ID token');
       }
 
       const awsSub = sub;
@@ -248,12 +259,7 @@ module.exports = Router()
 
       cognitoUser.refreshSession(refreshToken, (err, session) => {
         if (err) {
-          //TODO need to make sure all error codes match real AWS errors so leaving logs in for now
           console.error('Refresh token error:', err);
-          // eslint-disable-next-line no-console
-          console.log('err.code', err.code);
-          // eslint-disable-next-line no-console
-          console.log('err.message', err.message);
 
           // Error handling for expired tokens
           if (err.code === 'TokenExpiredException') {
@@ -290,6 +296,7 @@ module.exports = Router()
           httpOnly: true,
           secure: isSecure,
           sameSite: isSecure ? 'None' : 'Lax',
+          maxAge: 30 * 24 * 60 * 60 * 1000,
         };
         res.cookie('accessToken', newAccessToken, refreshCookieOpts);
         res.cookie('idToken', newIdToken, refreshCookieOpts);
@@ -305,7 +312,7 @@ module.exports = Router()
         });
       });
     } catch (e) {
-      res.status(500).json({ error: e.message });
-      console.error('error message:', e.message);
+      console.error('Refresh token error:', e);
+      res.status(500).json({ error: 'Internal server error' });
     }
   });
