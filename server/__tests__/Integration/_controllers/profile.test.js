@@ -520,37 +520,39 @@ describe('Profile routes that use mocked middleware: /profile/user-update/:sub a
   });
 
   it('POST /profile/avatar-delete should handle S3 deletion failure', async () => {
-    // Get our mock function
     const { __mockS3Send } = require('@aws-sdk/client-s3');
+    const testPublicId = 'user-avatars/test-public-id';
 
-    // Set up the mock to reject for this test
+    const spy = jest.spyOn(AWSUser, 'getCognitoUserBySub').mockResolvedValueOnce({ publicId: testPublicId });
     __mockS3Send.mockRejectedValueOnce(new Error('S3 deletion failed'));
 
     const response = await request(app)
       .post('/api/v1/profile/avatar-delete')
-      .send({ public_id: 'test-public-id' });
+      .send({ public_id: testPublicId });
 
     expect(response.status).toBe(500);
-    // Update this expectation to match your actual error message
-    expect(response.body.error).toContain('S3 deletion failed');
+    expect(response.body.error).toBe('Internal server error');
 
-    // Clean up
+    spy.mockRestore();
     __mockS3Send.mockClear();
   });
 
   it('POST /profile/avatar-delete should successfully delete image from database', async () => {
-    // Get reference to the mocked client
     const { S3Client } = require('@aws-sdk/client-s3');
     const mockSend = S3Client().send;
+    const testPublicId = 'user-avatars/test-public-id';
+
+    const spy = jest.spyOn(AWSUser, 'getCognitoUserBySub').mockResolvedValueOnce({ publicId: testPublicId });
 
     const response = await request(app)
       .post('/api/v1/profile/avatar-delete')
-      .send({ public_id: 'test-public-id' });
+      .send({ public_id: testPublicId });
 
-    // Verify the mock was called
     expect(mockSend).toHaveBeenCalled();
     expect(response.status).toBe(200);
     expect(response.body.message).toContain('Image deleted successfully');
+
+    spy.mockRestore();
   });
 
   it('GET /profile/:sub should cache the response in Redis', async () => {
