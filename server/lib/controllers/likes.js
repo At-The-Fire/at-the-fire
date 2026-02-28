@@ -29,6 +29,9 @@ module.exports = Router()
       if (!Array.isArray(postIds)) {
         return res.status(400).json({ error: 'postIds must be an array' });
       }
+      if (postIds.length > 100) {
+        return res.status(400).json({ error: 'Too many postIds (max 100)' });
+      }
       const results = {};
       for (const postId of postIds) {
         const count = await Likes.getLikeCount(postId);
