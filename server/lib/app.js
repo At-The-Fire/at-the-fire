@@ -42,6 +42,16 @@ if (process.env.NODE_ENV === 'test') {
   app.use(productionLimiter);
 }
 
+// Tighter rate limit for auth endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { code: 429, message: 'Too many requests, slow down.' },
+});
+app.use('/api/v1/auth', authLimiter);
+
 app.use((_, res, next) => {
   res.locals.nonce = crypto.randomBytes(16).toString('base64');
   next();
