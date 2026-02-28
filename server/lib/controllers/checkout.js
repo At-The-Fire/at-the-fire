@@ -17,13 +17,7 @@ function validatePriceId(submittedPriceId) {
 
 module.exports = Router().post('/', async (req, res) => {
   try {
-    // eslint-disable-next-line
-    console.log('req.body >>>>>>>>>>>>>>>>>>>>>>>>>>>', req.body);
-
     const { billingEmail, firstName, lastName, priceId, customerId } = req.body;
-
-    // eslint-disable-next-line
-    console.log('customerId fresh from the request body:', customerId);
 
     if (!billingEmail || !firstName || !lastName || !priceId) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -35,60 +29,33 @@ module.exports = Router().post('/', async (req, res) => {
     } catch (validationError) {
       return res.status(400).json({ code: 400, message: validationError.message });
     }
-    // eslint-disable-next-line
-    console.log('customerId that is getting set to existingCustomer', customerId);
 
     let existingCustomer = customerId;
-    // eslint-disable-next-line
-    console.log('existingCustomer is now: ', existingCustomer);
-
     let session;
     let createdNewCustomer = false;
 
     try {
-      // Check if the customer exists in Stripe
-      // eslint-disable-next-line
-      console.log('Checking if the customer exists in Stripe with this customerId: ', customerId);
-      // eslint-disable-next-line
-      console.log('Which is set in existingCustomer:: ', existingCustomer);
-
       if (!existingCustomer) {
-        // eslint-disable-next-line
-        console.log('No existing customer (!existingCustomer)');
-
         const customers = await stripe.customers.list({ email: billingEmail });
-        // eslint-disable-next-line
-        console.log('customers from stripe api call ', customers);
 
         if (customers?.data?.length > 0) {
           existingCustomer = customers.data[0].id;
-          // eslint-disable-next-line
-          console.log('setting existing customer to: ', existingCustomer);
         }
       }
 
       let subscription;
       if (existingCustomer) {
-        // Fetch the subscription from database
         subscription = await getSubscriptionByCustomerId({
           customerId: existingCustomer,
         });
-        // eslint-disable-next-line
-        console.log('there is an existingCustomer now fetching this subscription: ', subscription);
       }
 
-      // if (subscription && subscription.id && subscription.isActive) {
       if (subscription && subscription.id) {
-        // Update the existing active subscription
-        // eslint-disable-next-line
-        console.log('subscription exists, it has an id, and isActive is true');
-
         await stripe.subscriptions.update(subscription.id, {
           items: [{ price: validatedPriceId }],
           proration_behavior: 'create_prorations',
         });
 
-        // Create a checkout session for the updated subscription
         session = await stripe.checkout.sessions.create({
           customer: existingCustomer,
           payment_method_types: ['card'],
@@ -98,7 +65,6 @@ module.exports = Router().post('/', async (req, res) => {
           cancel_url: `${process.env.CLIENT_URL}/subscription/cancel`,
         });
       } else {
-        // Create a new customer if none exists
         if (!existingCustomer) {
           const newCustomer = await stripe.customers.create({
             metadata: { aws_id: req.userAWSSub },
@@ -113,7 +79,6 @@ module.exports = Router().post('/', async (req, res) => {
           createdNewCustomer = true;
         }
 
-        // Create a new subscription and checkout session
         const sessionParams = {
           customer: existingCustomer,
           payment_method_types: ['card'],
@@ -123,7 +88,6 @@ module.exports = Router().post('/', async (req, res) => {
           cancel_url: `${process.env.CLIENT_URL}/subscription/cancel`,
         };
 
-        // Only brand-new Stripe customers get the 60-day trial.
         if (createdNewCustomer) {
           sessionParams.subscription_data = {
             trial_period_days: 60,
@@ -137,15 +101,13 @@ module.exports = Router().post('/', async (req, res) => {
         throw new Error('Failed to create Stripe checkout session');
       }
 
-      // Only return if we got here successfully
       return res.json({ url: session.url });
     } catch (stripeError) {
       console.error('Stripe operation failed:', stripeError);
-      return res.status(500).json({ error: stripeError.message });
+      return res.status(500).json({ error: 'Internal server error' });
     }
   } catch (e) {
-    // This catch is now just for non-Stripe errors (like parsing body)
     console.error('Non-Stripe Error:', e);
-    return res.status(500).json({ error: e.message });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
