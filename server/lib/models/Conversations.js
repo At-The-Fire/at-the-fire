@@ -1,5 +1,11 @@
 const pool = require('../../lib/utils/pool.js');
-const { encrypt, decrypt } = require('../services/encryption.js');
+const { encrypt, decrypt, isEncrypted } = require('../services/encryption.js');
+
+const maybeDecrypt = (value) => {
+  if (value === null || value === undefined) return null;
+  if (!isEncrypted(value)) return value;
+  return decrypt(value);
+};
 
 module.exports = class Conversations {
   id;
@@ -15,7 +21,7 @@ module.exports = class Conversations {
     this.conversation_id = row.conversation_id;
     this.sender_sub = row.sender_sub;
     // this.content = row.content;
-    this.content = row.content ? decrypt(row.content) : null;
+    this.content = row.content ? maybeDecrypt(row.content) : null;
     this.created_at = row.created_at;
     this.is_read = row.is_read;
   }
@@ -30,7 +36,7 @@ module.exports = class Conversations {
         `INSERT INTO messages (conversation_id, sender_sub, content)
          VALUES ($1, $2, $3)
          RETURNING *`,
-        [conversation_id, sender_sub, encrypt(content)]
+        [conversation_id, sender_sub, encrypt(content)],
       );
 
       // Mark first message sent
@@ -41,7 +47,7 @@ module.exports = class Conversations {
         WHERE conversation_id = $1
 
           `,
-        [conversation_id]
+        [conversation_id],
       );
       // If any recipient had hidden the conversation, make it visible for them again
       await client.query(
@@ -50,7 +56,7 @@ module.exports = class Conversations {
          WHERE conversation_id = $1 
          AND user_sub != $2 
          AND is_visible = FALSE`,
-        [conversation_id, sender_sub]
+        [conversation_id, sender_sub],
       );
 
       await client.query('COMMIT');
@@ -72,22 +78,20 @@ module.exports = class Conversations {
       await client.query('BEGIN');
 
       // Create conversation
-      const { rows } = await client.query(
-        'INSERT INTO conversations DEFAULT VALUES RETURNING id'
-      );
+      const { rows } = await client.query('INSERT INTO conversations DEFAULT VALUES RETURNING id');
       const conversationId = rows[0].id;
 
       // Add participants and visibility records
       for (const sub of participantSubs) {
         await client.query(
           'INSERT INTO conversation_participants (conversation_id, user_sub) VALUES ($1, $2)',
-          [conversationId, sub]
+          [conversationId, sub],
         );
 
         const isSender = sub === senderSub;
         await client.query(
           'INSERT INTO conversation_visibility (conversation_id, user_sub, is_visible, sender) VALUES ($1, $2, TRUE, $3)',
-          [conversationId, sub, isSender]
+          [conversationId, sub, isSender],
         );
       }
 
@@ -156,7 +160,7 @@ GROUP BY c.id, cv.sender, cv.first_message_sent
 ORDER BY c.updated_at DESC;
 
     `,
-      [userSub]
+      [userSub],
     );
 
     // Decrypt and remove duplicates in Node
@@ -199,14 +203,10 @@ ORDER BY c.updated_at DESC;
           sender_logo,
         } = row.last_message;
 
-        const decryptedFirstName = sender_first_name
-          ? decrypt(sender_first_name)
-          : null;
-        const decryptedLastName = sender_last_name
-          ? decrypt(sender_last_name)
-          : null;
-        const decryptedEmail = sender_email ? decrypt(sender_email) : null;
-        const decryptedContent = content ? decrypt(content) : null;
+        const decryptedFirstName = sender_first_name ? maybeDecrypt(sender_first_name) : null;
+        const decryptedLastName = sender_last_name ? maybeDecrypt(sender_last_name) : null;
+        const decryptedEmail = sender_email ? maybeDecrypt(sender_email) : null;
+        const decryptedContent = content ? maybeDecrypt(content) : null;
 
         // Attach name or business name
         row.last_message.sender_display_user_name =
@@ -242,7 +242,7 @@ ORDER BY c.updated_at DESC;
       `SELECT hidden_at, is_visible
        FROM conversation_visibility 
        WHERE conversation_id = $1 AND user_sub = $2`,
-      [conversationId, userSub]
+      [conversationId, userSub],
     );
 
     // Get messages based on user's status
@@ -256,9 +256,7 @@ ORDER BY c.updated_at DESC;
        WHERE m.conversation_id = $1
        ${visibility?.hidden_at ? 'AND m.created_at > $2' : ''}
        ORDER BY m.created_at ASC`,
-      visibility?.hidden_at
-        ? [conversationId, visibility.hidden_at]
-        : [conversationId]
+      visibility?.hidden_at ? [conversationId, visibility.hidden_at] : [conversationId],
     );
     // Decrypt all message contents
     return rows.map((message) => ({
@@ -273,7 +271,7 @@ ORDER BY c.updated_at DESC;
        VALUES ($1, $2, FALSE, CURRENT_TIMESTAMP)
        ON CONFLICT (conversation_id, user_sub) 
        DO UPDATE SET is_visible = FALSE, hidden_at = CURRENT_TIMESTAMP`,
-      [conversationId, userSub]
+      [conversationId, userSub],
     );
   }
 
@@ -288,7 +286,7 @@ ORDER BY c.updated_at DESC;
        AND cv.user_sub = $1
        AND cv.is_visible = TRUE  -- Only count unread messages from visible conversations
       `,
-      [userSub]
+      [userSub],
     );
 
     return rows[0];
@@ -307,7 +305,7 @@ ORDER BY c.updated_at DESC;
       AND cv.user_sub = $2
       AND cv.is_visible = TRUE
       `,
-      [conversationId, userSub]
+      [conversationId, userSub],
     );
     return rowCount;
   }
@@ -316,7 +314,7 @@ ORDER BY c.updated_at DESC;
     const { rows } = await pool.query(
       `SELECT 1 FROM conversation_participants 
        WHERE conversation_id = $1 AND user_sub = $2`,
-      [conversationId, userSub]
+      [conversationId, userSub],
     );
 
     return rows.length > 0;
@@ -329,7 +327,7 @@ ORDER BY c.updated_at DESC;
       FROM conversation_participants 
       WHERE conversation_id = $1
       `,
-      [conversationId]
+      [conversationId],
     );
     return rows.map((row) => row.user_sub);
   }
@@ -369,7 +367,7 @@ LIMIT 1;
       AND conversation_id = $2
     
     `,
-      [senderSub, conversationId]
+      [senderSub, conversationId],
     );
 
     if (!rows) return null;
