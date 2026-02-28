@@ -26,8 +26,8 @@ import { getTrackingUrl } from '../../utils/tracking.js';
 
 const BASE_URL = process.env.REACT_APP_BASE_URL;
 
-async function getUserAuctions(sub) {
-  const resp = await fetch(`${BASE_URL}/api/v1/auctions/user-auctions/${sub}`, {
+async function getUserAuctions() {
+  const resp = await fetch(`${BASE_URL}/api/v1/auctions/user-auctions`, {
     credentials: 'include',
   });
   if (!resp.ok) throw new Error('Failed to fetch auctions');
@@ -122,7 +122,7 @@ export default function MyPurchases() {
     async function fetchAll() {
       try {
         setLoading(true);
-        const [purchasesData, auctionData] = await Promise.all([getPurchases(), getUserAuctions(sub)]);
+        const [purchasesData, auctionData] = await Promise.all([getPurchases(), getUserAuctions()]);
         setPurchases(purchasesData);
         setActiveBids(auctionData.activeAuctionBids || []);
         setWonAuctions(auctionData.wonAuctions || []);

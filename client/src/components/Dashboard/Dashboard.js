@@ -231,7 +231,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
   useEffect(() => {
     if (dashboardView !== 'sales') return;
     setSalesLoading(true);
-    Promise.all([getSellerPurchases(), user ? getSellerAuctions(user) : Promise.resolve([])])
+    Promise.all([getSellerPurchases(), user ? getSellerAuctions() : Promise.resolve([])])
       .then(([purchases, auctions]) => {
         setSellerPurchases(Array.isArray(purchases) ? purchases : []);
         setSellerAuctions(Array.isArray(auctions) ? auctions : []);
@@ -266,7 +266,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
   useEffect(() => {
     if (dashboardView !== 'auctions' || !user) return;
     setAuctionsLoading(true);
-    getSellerAuctions(user)
+    getSellerAuctions()
       .then((data) => {
         const all = Array.isArray(data) ? data : [];
         setSellerAuctions(all);
