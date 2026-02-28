@@ -22,7 +22,10 @@ const upload = multer({
   storage,
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    cb(ALLOWED_MIME_TYPES.includes(file.mimetype) ? null : new Error('Invalid file type'), ALLOWED_MIME_TYPES.includes(file.mimetype));
+    cb(
+      ALLOWED_MIME_TYPES.includes(file.mimetype) ? null : new Error('Invalid file type'),
+      ALLOWED_MIME_TYPES.includes(file.mimetype),
+    );
   },
 });
 
@@ -174,7 +177,7 @@ module.exports = Router()
       const auction = await Auction.getById(req.params.id);
       if (!auction) return res.status(404).json({ message: 'Auction not found' });
 
-      const isAdmin = req.userAWSSub === process.env.ADMIN_SUB;
+      const isAdmin = req.customerId === process.env.ADMIN_ID;
       const isOwner = req.userAWSSub === auction.sellerSub;
       if (!isAdmin && !isOwner) return res.status(403).json({ error: 'Forbidden' });
 
@@ -202,7 +205,7 @@ module.exports = Router()
       }
 
       // 2. Check ownership (seller or admin)
-      const isAdmin = req.userAWSSub === process.env.ADMIN_SUB;
+      const isAdmin = req.customerId === process.env.ADMIN_ID;
       const isOwner = req.userAWSSub === existingAuction.sellerSub;
       if (!isAdmin && !isOwner) {
         return res.status(403).json({ error: 'Forbidden' });
