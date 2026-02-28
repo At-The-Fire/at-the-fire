@@ -261,7 +261,7 @@ ORDER BY c.updated_at DESC;
     // Decrypt all message contents
     return rows.map((message) => ({
       ...message,
-      content: decrypt(message.content),
+      content: maybeDecrypt(message.content),
     }));
   }
 
