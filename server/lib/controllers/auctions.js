@@ -50,16 +50,6 @@ module.exports = Router()
     }
   })
 
-  // GET auction by id (authenticated) ///////////////////////////////////////////
-  .get('/:id', [authenticateAWS], async (req, res, next) => {
-    try {
-      const data = await Auction.getById(req.params.id);
-      res.json(data);
-    } catch (e) {
-      next(e);
-    }
-  })
-
   // GET auction results by id (public) ///////////////////////////////////////////
   .get('/results/:auctionId', async (req, res, next) => {
     try {
@@ -77,6 +67,16 @@ module.exports = Router()
       const activeAuctionBids = await Bid.getByUserSub(sub);
       const wonAuctions = await Auction.getUserAuctionWins(sub);
       res.json({ activeAuctionBids, wonAuctions });
+    } catch (e) {
+      next(e);
+    }
+  })
+
+  // GET auction by id (authenticated) ///////////////////////////////////////////
+  .get('/:id', [authenticateAWS], async (req, res, next) => {
+    try {
+      const data = await Auction.getById(req.params.id);
+      res.json(data);
     } catch (e) {
       next(e);
     }
