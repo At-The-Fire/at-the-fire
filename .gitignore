@@ -19,3 +19,4 @@ settings.local.json
 add_tracking_to_purchases.sql
 seed-kdog-seller.js
 write-retro.md
+.claude/reports/
