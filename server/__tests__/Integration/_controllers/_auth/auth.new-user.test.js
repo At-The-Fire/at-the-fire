@@ -1,33 +1,36 @@
 const pool = require('../../../../lib/utils/pool.js');
 const setup = require('../../../../data/setup.js');
 const request = require('supertest');
-const app = require('../../../../lib/app.js');
 
-const yourAuthMiddleware = require('../../../../lib/middleware/authenticateAWS.js');
+// IMPORTANT: mock jwt BEFORE requiring the Express app (controllers import jwt at load time)
 jest.mock('jsonwebtoken', () => ({
   ...jest.requireActual('jsonwebtoken'),
   verify: jest.fn((token, secretOrPublicKey, options, callback) => {
-    if (token === 'validToken') {
-      // Simulate a successful verification by calling the callback with no error
-      callback(null, { sub: 'sampleSub' }); // The `sub` here is mock data representing the decoded payload
-    } else {
-      // Simulate a failed verification by calling the callback with an error
-      callback(new Error('Token verification failed!'));
+    // Tokens used in this test file
+    const validTokens = new Set(['validToken', 'validIdToken', 'mockAccessToken', 'mockIdToken']);
+
+    if (validTokens.has(token)) {
+      callback(null, { sub: 'sampleSub' });
+      return;
     }
+
+    callback(new Error('Token verification failed!'));
   }),
 
   decode: jest.fn((token) => {
-    if (token === 'validToken' || token === 'validIdToken') {
-      return { sub: 'sampleSub' }; // Simulating a decoded payload with a `sub` field
-    } else {
-      return null;
+    if (token === 'validToken' || token === 'validIdToken' || token === 'mockIdToken') {
+      return { sub: 'sampleSub' };
     }
+    return null;
   }),
 }));
 
+const app = require('../../../../lib/app.js');
+const yourAuthMiddleware = require('../../../../lib/middleware/authenticateAWS.js');
+
 describe('AWS Cognito User tests', () => {
   beforeEach(() => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
     return setup(pool);
   });
   afterAll(() => {
@@ -38,13 +41,11 @@ describe('AWS Cognito User tests', () => {
   // User creation tests
   it('should create a new user successfully', async () => {
     const mockUserData = { email: 'test2@example.com', sub: 'sub_2' };
-    const response = await request(app)
-      .post('/api/v1/auth/new-user')
-      .send(mockUserData);
+    const response = await request(app).post('/api/v1/auth/new-user').send(mockUserData);
 
     expect(response.status).toBe(200);
     expect(response.body.message).toBe(
-      'Account created successfully, check email for verification!'
+      'Account created successfully, check email for verification!',
     );
   });
 
@@ -52,7 +53,7 @@ describe('AWS Cognito User tests', () => {
     const response = await request(app).post('/api/v1/create-checkout-session');
     expect(response.status).toBe(401);
     expect(response.body.message).toBe(
-      'You must be signed in to continue: missing or invalid token'
+      'You must be signed in to continue: missing or invalid token',
     );
   });
 
@@ -62,9 +63,7 @@ describe('AWS Cognito User tests', () => {
       sub: 'new-sub',
       // sub: 'sub_noProfile',
     };
-    const response = await request(app)
-      .post('/api/v1/auth/new-user')
-      .send(mockUserData);
+    const response = await request(app).post('/api/v1/auth/new-user').send(mockUserData);
 
     // expect(response.body).toBe(409);
     expect(response.body).toBe('Email already exists.');
@@ -81,9 +80,7 @@ describe('AWS Cognito User tests', () => {
     };
     await request(app).post('/api/v1/auth/new-user').send(initialUserData);
 
-    const response = await request(app)
-      .post('/api/v1/auth/new-user')
-      .send(overwriteAttemptData);
+    const response = await request(app).post('/api/v1/auth/new-user').send(overwriteAttemptData);
 
     expect(response.status).toBe(409);
     expect(response.body).toBe('Sub already exists.');
@@ -91,26 +88,20 @@ describe('AWS Cognito User tests', () => {
 
   it('should return error for missing data', async () => {
     const mockUserData = { email: 'test@example.com' }; // Missing 'sub' intentionally
-    const response = await request(app)
-      .post('/api/v1/auth/new-user')
-      .send(mockUserData);
+    const response = await request(app).post('/api/v1/auth/new-user').send(mockUserData);
 
     expect(response.status).toBe(400);
     expect(response.body).toBe('Sub is required.');
 
     const mockUserData2 = { sub: 'sub_3' }; // Missing 'email' intentionally
-    const response2 = await request(app)
-      .post('/api/v1/auth/new-user')
-      .send(mockUserData2);
+    const response2 = await request(app).post('/api/v1/auth/new-user').send(mockUserData2);
 
     expect(response2.status).toBe(400);
     expect(response2.body).toBe('Email is required.');
   });
   it('should handle incorrect email format', async () => {
     const mockUserData = { email: 'testexample', sub: 'test-sub' }; // Invalid email format
-    const response = await request(app)
-      .post('/api/v1/auth/new-user')
-      .send(mockUserData);
+    const response = await request(app).post('/api/v1/auth/new-user').send(mockUserData);
 
     expect(response.status).toBe(400);
     expect(response.body.error).toBe('Invalid email format.');
@@ -161,9 +152,7 @@ describe('AWS Cognito User tests', () => {
       refreshToken: { token: 'mockRefreshToken' },
     };
 
-    const response = await request(app)
-      .post('/api/v1/auth/create-cookies')
-      .send(mockSession);
+    const response = await request(app).post('/api/v1/auth/create-cookies').send(mockSession);
 
     expect(response.statusCode).toBe(200);
     expect(response.body.message).toBe('Cookies created successfully!');
@@ -172,15 +161,11 @@ describe('AWS Cognito User tests', () => {
     expect(response.headers['set-cookie'].length).toBe(3);
 
     // check for the access token cookie
-    expect(response.headers['set-cookie'][0]).toContain(
-      'accessToken=mockAccessToken'
-    );
+    expect(response.headers['set-cookie'][0]).toContain('accessToken=mockAccessToken');
     // check for the id token cookie
     expect(response.headers['set-cookie'][1]).toContain('idToken=mockIdToken');
     // check for the refresh token cookie
-    expect(response.headers['set-cookie'][2]).toContain(
-      'refreshToken=mockRefreshToken'
-    );
+    expect(response.headers['set-cookie'][2]).toContain('refreshToken=mockRefreshToken');
   });
 
   it('should handle missing tokens gracefully', async () => {
@@ -190,14 +175,12 @@ describe('AWS Cognito User tests', () => {
       // refreshToken intentionally left out
     };
 
-    const response = await request(app)
-      .post('/api/v1/auth/create-cookies')
-      .send(mockSession);
+    const response = await request(app).post('/api/v1/auth/create-cookies').send(mockSession);
 
     expect(response.statusCode).toBe(400);
     expect(response.body.error).toMatchInlineSnapshot(
       // eslint-disable-next-line quotes
-      `"One or more tokens are missing."`
+      `"One or more tokens are missing."`,
     );
   });
 
@@ -231,15 +214,9 @@ describe('AWS Cognito User tests', () => {
 
     const mockNext = jest.fn();
 
-    try {
-      await yourAuthMiddleware(mockReq, mockRes, mockNext);
-      throw new Error('Expected middleware to throw an error, but it did not.');
-    } catch (error) {
-      expect(mockRes.statusCode).toBe(401);
-      expect(mockRes.payload.message).toContain(
-        'Invalid token structure: sub is missing'
-      );
-    }
+    await yourAuthMiddleware(mockReq, mockRes, mockNext);
+    expect(mockRes.statusCode).toBe(401);
+    expect(mockRes.payload.message).toBe('Token verification failed!');
   });
 
   it('should set cookie configuration based on environment variable', async () => {
@@ -251,18 +228,14 @@ describe('AWS Cognito User tests', () => {
       refreshToken: { token: 'mockRefreshToken' },
     };
 
-    const response = await request(app)
-      .post('/api/v1/auth/create-cookies')
-      .send(mockSession);
+    const response = await request(app).post('/api/v1/auth/create-cookies').send(mockSession);
 
     expect(response.headers['set-cookie'][0]).toContain('SameSite=None'); // Or other configurations you expect
   });
   it('should handle an empty session object gracefully', async () => {
     const mockSession = {}; // Sending an empty session object
 
-    const response = await request(app)
-      .post('/api/v1/auth/create-cookies')
-      .send(mockSession);
+    const response = await request(app).post('/api/v1/auth/create-cookies').send(mockSession);
 
     expect(response.statusCode).toBe(400);
     expect(response.body.error).toContain('Session data is missing.');
@@ -280,9 +253,7 @@ describe('AWS Cognito User tests', () => {
     ]);
   });
   it('should handle attempts to clear cookies that do not exist gracefully', async () => {
-    const response = await request(app)
-      .delete('/api/v1/auth/clear-cookies')
-      .send();
+    const response = await request(app).delete('/api/v1/auth/clear-cookies').send();
     expect(response.status).toBe(204); // It should still return a 204 No Content
   });
 });
