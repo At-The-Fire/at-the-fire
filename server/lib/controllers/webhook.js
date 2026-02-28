@@ -42,7 +42,7 @@ module.exports = app.post(
     let event;
     const sig = request.headers['stripe-signature'];
     try {
-      if (process.env.NODE_ENV === 'test') {
+      if (process.env.STRIPE_WEBHOOK_TEST_BYPASS === 'true') {
         // Skip constructEvent and mock event directly in tests
         event = {
           type: 'invoice.payment_succeeded',
