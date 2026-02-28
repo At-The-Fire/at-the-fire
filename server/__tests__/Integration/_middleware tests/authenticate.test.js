@@ -1,13 +1,9 @@
 const pool = require('../../../lib/utils/pool.js');
 const setup = require('../../../data/setup.js');
 const request = require('supertest');
-const app = require('../../../lib/app.js');
 const StripeCustomer = require('../../../lib/models/StripeCustomer.js');
 const Subscriptions = require('../../../lib/models/Subscriptions.js');
 const Invoices = require('../../../lib/models/Invoices.js');
-
-// Importing jsonwebtoken to mock its verify function
-const jwt = require('jsonwebtoken');
 
 // Mocking the jsonwebtoken module to mock `verify` and `decode`
 jest.mock('jsonwebtoken', () => ({
@@ -19,7 +15,7 @@ jest.mock('jsonwebtoken', () => ({
       token === 'valid.free.user.refresh.token'
     ) {
       // Simulate a successful token verification
-      callback(null, { sub: 'free-user-sub' });
+      callback(null, { sub: 'sub_noProfile' });
     } else {
       // Simulate verification failure
       callback(new Error('Invalid token'));
@@ -28,12 +24,17 @@ jest.mock('jsonwebtoken', () => ({
   decode: jest.fn((token) => {
     if (token === 'valid.free.user.id.token') {
       // Return a mock decoded token with `sub`
-      return { sub: 'free-user-sub' };
+      return { sub: 'sub_noProfile' };
     } else {
       return null; // Invalid token case
     }
   }),
 }));
+
+const app = require('../../../lib/app.js');
+
+// Importing jsonwebtoken AFTER mocking so tests get the mocked module
+const jwt = require('jsonwebtoken');
 
 // Mocking the `StripeCustomer` module
 jest.mock('../../../lib/models/StripeCustomer', () => ({
@@ -52,7 +53,7 @@ jest.mock('../../../lib/models/Invoices', () => ({
 
 describe('authenticateAWS Middleware', () => {
   beforeEach(() => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
     return setup(pool);
   });
   afterAll(() => {
@@ -65,15 +66,14 @@ describe('authenticateAWS Middleware', () => {
     expect(response.body.code).toBe(401);
     expect(response.body.type).toBe('MissingOrInvalidToken');
     expect(response.body.message).toBe(
-      'You must be signed in to continue: missing or invalid token'
+      'You must be signed in to continue: missing or invalid token',
     );
   });
 
   it('should allow access with valid tokens', async () => {
-    const validAccessToken = 'valid.access.token';
-    const mockDecodedIdToken = { sub: 'user-subject-123' };
-    const validIdToken = jwt.sign(mockDecodedIdToken, 'test-secret');
-    const validRefreshToken = 'valid.refresh.token';
+    const validAccessToken = 'valid.free.user.access.token';
+    const validIdToken = 'valid.free.user.id.token';
+    const validRefreshToken = 'valid.free.user.refresh.token';
 
     const sessionData = {
       accessToken: { jwtToken: validAccessToken },
@@ -125,7 +125,8 @@ describe('authenticateAWS Middleware', () => {
 
     // Expecting the middleware to reject access due to verification failure
     expect(response.status).toBe(401);
-    expect(response.body.message).toBe('User does not exist');
+    expect(response.body.message).toBe('Token verification failed!');
+    expect(response.body.type).toBe('TokenVerificationError');
   });
 
   it('should reject access with expired tokens', async () => {
@@ -158,7 +159,8 @@ describe('authenticateAWS Middleware', () => {
 
     // Expecting the middleware to reject access and the route to return a 401 status
     expect(response.status).toBe(401);
-    expect(response.body.message).toBe('User does not exist');
+    expect(response.body.message).toBe('Token has expired!');
+    expect(response.body.type).toBe('TokenExpiredError');
   });
 
   it('should handle verification errors gracefully', async () => {
@@ -182,7 +184,8 @@ describe('authenticateAWS Middleware', () => {
 
     // Expecting the middleware to handle the error and respond appropriately
     expect(response.status).toBe(401); // Expecting a 401 status for token verification errors
-    expect(response.body.message).toContain('Invalid token structure: sub is missing');
+    expect(response.body.message).toBe('Token verification failed!');
+    expect(response.body.type).toBe('TokenVerificationError');
   });
 
   it('should reject access when the sub field is missing from the token', async () => {
@@ -191,7 +194,7 @@ describe('authenticateAWS Middleware', () => {
       {
         /* other fields but no 'sub' */
       },
-      'test-secret'
+      'test-secret',
     );
 
     // Make the request with the token that lacks 'sub'
@@ -202,7 +205,7 @@ describe('authenticateAWS Middleware', () => {
     // Expecting the middleware to reject access due to missing 'sub' in the token
     expect(response.status).toBe(401); // Assuming your middleware responds with 401 for missing 'sub'
     expect(response.body.message).toContain(
-      'You must be signed in to continue: missing or invalid token'
+      'You must be signed in to continue: missing or invalid token',
     ); // Adjust the error message based on your actual middleware response
   });
 
@@ -227,7 +230,7 @@ describe('authenticateAWS Middleware', () => {
         token === 'valid.free.user.refresh.token'
       ) {
         // Simulate a valid token verification
-        callback(null, { sub: 'free-user-sub' }); // Return an object with `sub` after successful verification
+        callback(null, { sub: 'sub_noProfile' }); // Return an object with `sub` after successful verification
       } else {
         callback(new Error('Invalid token')); // Simulate failed verification
       }
