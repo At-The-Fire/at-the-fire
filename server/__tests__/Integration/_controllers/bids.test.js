@@ -177,7 +177,7 @@ describe('Bids routes', () => {
       const response = await request(app).post('/api/v1/bids').send({ auctionId: testAuctionId });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toMatch(/auctionId, bidderSub, and bidAmount are required/);
+      expect(response.body.error).toMatch(/auctionId and bidAmount are required/);
     });
 
     it('returns 409 if bid is not higher than the current highest bid', async () => {
