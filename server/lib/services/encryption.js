@@ -72,11 +72,25 @@ function decrypt(ciphertext) {
 
 function isEncrypted(data) {
   if (!data) return false;
-  // New format: three colon-separated hex segments
-  if (data.split(':').length === 3) return true;
-  // Legacy CryptoJS format
+
+  // Legacy CryptoJS format (base64, starts with "U2FsdGVk" = "Salted__")
   if (data.startsWith('U2FsdGVk')) return true;
-  return false;
+
+  // New format: iv:authTag:ciphertext (all hex, colon-separated)
+  const parts = data.split(':');
+  if (parts.length !== 3) return false;
+
+  const [ivHex, authTagHex, encryptedHex] = parts;
+  const isHex = (s) => typeof s === 'string' && s.length > 0 && /^[0-9a-f]+$/i.test(s);
+
+  // AES-256-GCM expects a 16-byte IV (32 hex chars) and 16-byte authTag (32 hex chars)
+  if (ivHex.length !== 32 || authTagHex.length !== 32) return false;
+  if (!isHex(ivHex) || !isHex(authTagHex)) return false;
+
+  // Ciphertext can vary in length, but must be valid hex and even-length
+  if (!isHex(encryptedHex) || encryptedHex.length % 2 !== 0) return false;
+
+  return true;
 }
 
 module.exports = { encrypt, decrypt, isEncrypted };
