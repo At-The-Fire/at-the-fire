@@ -3,8 +3,21 @@ const crypto = require('crypto');
 
 // Derive a 32-byte key from the string ENCRYPTION_KEY using scrypt
 // Salt is fixed so the same key is derived consistently across restarts
+let cachedKeyBuffer;
+let cachedKeySource;
 function getKeyBuffer() {
-  return crypto.scryptSync(process.env.ENCRYPTION_KEY, 'atf-salt-v1', 32);
+  const keySource = process.env.ENCRYPTION_KEY;
+  if (!keySource) {
+    throw new Error('ENCRYPTION_KEY is not set');
+  }
+
+  if (cachedKeyBuffer && cachedKeySource === keySource) {
+    return cachedKeyBuffer;
+  }
+
+  cachedKeySource = keySource;
+  cachedKeyBuffer = crypto.scryptSync(keySource, 'atf-salt-v1', 32);
+  return cachedKeyBuffer;
 }
 
 function encrypt(text) {
