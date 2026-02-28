@@ -84,6 +84,10 @@ module.exports = Router()
         return res.status(400).send({ message: 'Message length can not be 0.' });
       }
 
+      if (content.length > 5000) {
+        return res.status(400).send({ message: 'Message is too long (max 5000 characters).' });
+      }
+
       // Check cache first for conversations
       const cacheKey = `conversation:${senderSub}`;
       let conversations;
