@@ -117,9 +117,9 @@ describe('Auction routes', () => {
     });
   });
 
-  describe('GET /api/v1/auctions/seller/:sub', () => {
+  describe('GET /api/v1/auctions/seller', () => {
     it('returns auctions created by the seller', async () => {
-      const res = await request(app).get(`/api/v1/auctions/seller/${mockUser.sub}`);
+      const res = await request(app).get('/api/v1/auctions/seller');
 
       expect(res.status).toBe(200);
       expect(Array.isArray(res.body)).toBe(true);
@@ -128,7 +128,9 @@ describe('Auction routes', () => {
     });
 
     it('returns empty array when seller has no auctions', async () => {
-      const res = await request(app).get('/api/v1/auctions/seller/sub_nobody');
+      authState.user = { sub: 'sub_nobody' };
+      const res = await request(app).get('/api/v1/auctions/seller');
+      authState.user = mockUser;
       expect(res.status).toBe(200);
       expect(res.body).toEqual([]);
     });
@@ -185,9 +187,9 @@ describe('Auction routes', () => {
     });
   });
 
-  describe('GET /api/v1/auctions/user-auctions/:sub', () => {
+  describe('GET /api/v1/auctions/user-auctions', () => {
     it('should return user auction bids and wins', async () => {
-      const response = await request(app).get('/api/v1/auctions/user-auctions/sub_fullCustomer');
+      const response = await request(app).get('/api/v1/auctions/user-auctions');
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('activeAuctionBids');
