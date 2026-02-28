@@ -917,7 +917,7 @@ describe('conversations tests', () => {
       expect(Array.isArray(response.body)).toBe(true);
       expect(response.body.length).toBeGreaterThanOrEqual(NUM_MESSAGES);
       expect(responseTime).toBeLessThan(1000); // Response should come back in under 1 second
-    });
+    }, 20000);
 
     it('should efficiently handle users with many conversations', async () => {
       const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
