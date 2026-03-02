@@ -17,6 +17,22 @@ app.use(cookieParser());
 
 app.set('trust proxy', 1);
 
+// CORS must be registered before rate limiters so that 429 responses
+// still carry Access-Control-Allow-Origin headers (otherwise the browser
+// misreports the rate-limit error as a CORS failure).
+app.use(
+  cors({
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:7890',
+      'https://www.atthefire.com',
+      'https://at-the-fire.herokuapp.com', //! production server
+      'https://at-the-fire-dev-68560297982b.herokuapp.com', //^ development server
+    ],
+    credentials: true,
+  })
+);
+
 // Rate limiting - helps prevent brute force attacks
 // Testing
 const testLimiter = rateLimit({
@@ -50,7 +66,8 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
   message: { code: 429, message: 'Too many requests, slow down.' },
 });
-app.use('/api/v1/auth', authLimiter);
+app.use('/api/v1/auth/create-cookies', authLimiter);
+app.use('/api/v1/auth/new-user', authLimiter);
 
 app.use((_, res, next) => {
   res.locals.nonce = crypto.randomBytes(16).toString('base64');
@@ -105,20 +122,6 @@ app.use(
         frameSrc: ["'self'", 'js.stripe.com', 'docs.google.com', 'hooks.stripe.com'],
       },
     },
-  })
-);
-
-// CORS configuration
-app.use(
-  cors({
-    origin: [
-      'http://localhost:3000',
-      'http://localhost:7890',
-      'https://www.atthefire.com',
-      'https://at-the-fire.herokuapp.com', //! production server
-      'https://at-the-fire-dev-68560297982b.herokuapp.com', //^ development server
-    ],
-    credentials: true,
   })
 );
 
