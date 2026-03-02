@@ -6,6 +6,8 @@
 
 ## New User Creation
 
+> **Claude Code: SKIP this entire section.** New user creation requires access to a real email inbox (AWS Cognito sends a confirmation email). This section must be tested manually.
+
 - [ ] Sign up with AWS
   - [ ] Verify required fields validation
   - [ ] Handle invalid input cases
@@ -29,6 +31,8 @@
   - [ ] Verify changes persist
 
 ## Subscription Purchase
+
+> **Claude Code: SKIP the initial purchase and the "Return to dashboard" block.** Purchasing a new subscription requires a real Stripe account and cannot be automated. Test users (`USER1`, `USER2`) already have active subscriptions. Start this section from "Change subscription" onwards.
 
 - [ ] Purchase subscription
   - [ ] Verify payment flow
@@ -149,6 +153,8 @@
 
 ## Cart & Checkout
 
+> **Claude Code note:** The checkout uses a placeholder payment processor — no real payment provider is integrated yet. Any card details entered will result in a successful transaction. Do not use Stripe test card numbers; they have no meaning here. The "Failed checkout" block cannot be tested until a real payment processor is integrated.
+
 - [ ] Add item to cart
   - [ ] Verify item appears in cart with correct price and quantity
   - [ ] Test adding duplicate item (quantity update)
@@ -156,12 +162,12 @@
   - [ ] Verify out-of-stock items are flagged
   - [ ] Verify quantities don't exceed available inventory
 - [ ] Checkout
-  - [ ] Complete checkout with test card **4242424242424242**
-  - [ ] Verify payment intent created and confirmed
+  - [ ] Complete checkout (placeholder processor — any card details will succeed)
+  - [ ] Verify order confirmation is shown
   - [ ] Verify inventory decremented after purchase
   - [ ] Verify purchase record created
 - [ ] Failed checkout
-  - [ ] Use card **4000000000000341** to test payment failure
+  - [ ] **Claude Code: SKIP — placeholder processor always succeeds; no failure path exists until a real payment processor is integrated**
   - [ ] Verify inventory is not decremented on failure
   - [ ] Verify error message displayed
 
