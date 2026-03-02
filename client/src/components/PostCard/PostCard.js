@@ -182,6 +182,11 @@ export default function PostCard({ id, post, posts, setPosts, products, setProdu
             sx={{ textAlign: 'left', display: 'block', '&.MuiTypography-root': { display: 'inline' } }}
           >
             ${Number(post.price).toLocaleString()}
+            {post.quantity > 1 && (
+              <span style={{ color: 'lightblue', fontSize: '0.75rem', marginLeft: '6px', fontWeight: 'normal' }}>
+                Qty: {post.quantity}
+              </span>
+            )}
             {isMobile &&
               (post.sold === true ? (
                 <span
