@@ -218,6 +218,7 @@ describe('posts/ post details/ S3 routes', () => {
       customer_id: expect.any(String),
       num_imgs: expect.any(String),
       public_id: expect.any(String),
+      quantity: 1,
       sold: expect.any(Boolean),
       date_sold: null,
     });
@@ -250,12 +251,13 @@ describe('posts/ post details/ S3 routes', () => {
       customer_id: 'stripe-customer-id_noProfile',
       num_imgs: expect.any(String),
       public_id: expect.any(String),
+      quantity: null,
       sold: true,
       date_sold: '1720594800000',
     });
   });
 
-  it('PUT/dashboard/:id updates a post and checks for the updated values', async () => {
+  it('PUT/dashboard/:id sets quantity to 0 when sold is true', async () => {
     const resp = await request(app)
       .put('/api/v1/dashboard/1')
       .send({ id: 1 })
@@ -269,6 +271,7 @@ describe('posts/ post details/ S3 routes', () => {
           price: 'test price is updated',
           num_imgs: 1,
           public_id: 'test public id',
+          quantity: 1,
           sold: true,
           date_sold: '1720594800000',
         },
@@ -287,8 +290,49 @@ describe('posts/ post details/ S3 routes', () => {
       customer_id: expect.any(String),
       num_imgs: expect.any(String),
       public_id: expect.any(String),
+      quantity: 0,
       sold: true,
       date_sold: '1720594800000',
+    });
+  });
+
+  it('PUT/dashboard/:id preserves quantity when sold is false', async () => {
+    const resp = await request(app)
+      .put('/api/v1/dashboard/1')
+      .send({ id: 1 })
+      .send({
+        post: {
+          title: 'Test title is updated again',
+          description: 'test description is updated again',
+          image_url:
+            'https://res.cloudinary.com/dzodr2cdk/image/upload/v1731739453/at-the-fire/UPDATED_IMAGE.jpg',
+          category: 'test category is updated again',
+          price: 'test price is updated again',
+          num_imgs: 1,
+          public_id: 'test public id',
+          quantity: 3,
+          sold: false,
+          date_sold: null,
+        },
+      });
+
+    expect(resp.status).toBe(200);
+    expect(resp.body).toEqual({
+      id: expect.any(String),
+      created_at: expect.any(String),
+      title: 'Test title is updated again',
+      description: 'test description is updated again',
+      image_url:
+        'https://res.cloudinary.com/dzodr2cdk/image/upload/v1731739453/at-the-fire/UPDATED_IMAGE.jpg',
+      category: 'test category is updated again',
+      price: 'test price is updated again',
+      customer_id: expect.any(String),
+      num_imgs: expect.any(String),
+      public_id: expect.any(String),
+
+      quantity: 3,
+      sold: false,
+      date_sold: null,
     });
   });
 
