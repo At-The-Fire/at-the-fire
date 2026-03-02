@@ -5,12 +5,14 @@ import { useCartStore } from '../../stores/useCartStore.js';
 import { validateCart, confirmPurchase } from '../../services/fetch-purchases.js';
 import PaymentWidget from './PaymentWidget.js';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '../../context/QueryContext.js';
 
 export default function Checkout() {
   const items = useCartStore((s) => s.items);
   const removeItem = useCartStore((s) => s.removeItem);
   const clearCart = useCartStore((s) => s.clearCart);
   const totalAmount = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const { setNewPostCreated } = useQuery();
 
   const [validating, setValidating] = useState(true);
   const [orderConfirmed, setOrderConfirmed] = useState(false);
@@ -64,6 +66,7 @@ export default function Checkout() {
     try {
       await confirmPurchase(intentId, items, payment);
       clearCart();
+      setNewPostCreated((prev) => !prev);
       setOrderConfirmed(true);
       toast.success('Order placed successfully!', {
         theme: 'colored',
