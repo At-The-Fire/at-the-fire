@@ -30,6 +30,7 @@ import imageCompression from 'browser-image-compression';
 import FlamePipe from '../FlamePipe/FlamePipe.js';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_QUANTITY_DIGITS = 10;
 
 export default function PostForm({
   title = '',
@@ -311,6 +312,29 @@ export default function PostForm({
     }
   };
 
+  const handleQuantityEdit = (value) => {
+    if (value === '') {
+      setQuantityInput('');
+      return;
+    }
+
+    if (!/^\d+$/.test(value)) {
+      return;
+    }
+
+    if (value.length <= MAX_QUANTITY_DIGITS) {
+      setQuantityInput(value);
+    } else {
+      toast.warn(`Limit of ${MAX_QUANTITY_DIGITS} digits`, {
+        theme: 'colored',
+        draggable: true,
+        draggablePercent: 60,
+        toastId: 'postForm-4',
+        autoClose: true,
+      });
+    }
+  };
+
   const getDateSoldValue = () => {
     if (!dateSoldInput) return null;
     // If we have a title, we're in edit mode (since title is only passed in edit mode)
@@ -470,7 +494,7 @@ export default function PostForm({
                 name="quantity"
                 inputProps={{ min: 1, step: 1 }}
                 value={quantityInput}
-                onChange={(e) => setQuantityInput(e.target.value)}
+                onChange={(e) => handleQuantityEdit(e.target.value)}
               />
             </div>
 
