@@ -53,9 +53,19 @@ export default function GalleryPostDetail() {
       sellerCustomerId: postDetail.customer_id,
     });
     if (result === true) {
-      toast.success(`"${postDetail.title}" added to cart`, { theme: 'colored', autoClose: 2000 });
+      toast.success(`"${postDetail.title}" added to cart`, {
+        theme: 'dark',
+        draggable: true,
+        draggablePercent: 60,
+        autoClose: 2000,
+      });
     } else if (result === 'updated') {
-      toast.info(`"${postDetail.title}" cart quantity updated`, { theme: 'colored', autoClose: 2000 });
+      toast.info(`"${postDetail.title}" cart quantity updated`, {
+        theme: 'dark',
+        draggable: true,
+        draggablePercent: 60,
+        autoClose: 2000,
+      });
     } else {
       toast.warning(`"${postDetail.title}" is already at max quantity`, { theme: 'colored', autoClose: 2000 });
     }
