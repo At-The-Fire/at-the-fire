@@ -8,6 +8,7 @@ const { parse } = require('json2csv');
 const getRedisClient = require('../../redisClient.js');
 const multer = require('multer');
 const Gallery = require('../models/Gallery.js');
+const QuotaProduct = require('../models/QuotaProduct.js');
 
 //# Configure S3 client
 const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
@@ -298,7 +299,8 @@ module.exports = Router()
         req.body.public_id,
         req.body.num_imgs,
         req.body.sold,
-        req.body.date_sold
+        req.body.date_sold,
+        req.body.quantity
       );
 
       const redisClient = await getRedisClient();
@@ -328,6 +330,7 @@ module.exports = Router()
         return res.status(404).json({ message: 'Post not found' });
       }
 
+      const quantity = req.body.post.quantity;
       const data = await Post.updateById(
         req.body.id,
         req.body.post.title,
@@ -339,8 +342,13 @@ module.exports = Router()
         req.body.post.public_id,
         req.body.post.num_imgs,
         req.body.post.sold,
-        req.body.post.date_sold
+        req.body.post.date_sold,
+        quantity
       );
+
+      if (quantity) {
+        await QuotaProduct.updateQtyByPostId(data.id, quantity);
+      }
 
       const redisClient = await getRedisClient();
       await redisClient.del('gallery:main');
