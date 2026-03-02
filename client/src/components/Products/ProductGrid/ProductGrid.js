@@ -765,7 +765,9 @@ const ProductGrid = ({
         <DialogTitle id="alert-dialog-title">{'Are you sure?'}</DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-            Deleting this product will remove it permanently. This action cannot be undone.
+            {productToDelete?.sold
+              ? 'This product has been sold. It will be hidden from your dashboard, but purchase history and images will be preserved.'
+              : 'Deleting this product will remove it permanently. This action cannot be undone.'}
           </DialogContentText>
           {productToDelete?.post_id && (
             <>
