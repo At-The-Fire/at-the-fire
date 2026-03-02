@@ -90,7 +90,7 @@ INSERT INTO cognito_users (sub, email, email_hash)
     const { rows } = await pool.query(
       `
     SELECT * FROM gallery_posts
-    WHERE customer_id=$1
+    WHERE customer_id=$1 AND deleted_at IS NULL
     ORDER BY created_at DESC;
     
   `,
