@@ -359,7 +359,12 @@ export default function Dashboard({ products, setProducts, customerId }) {
 
         {/* Edit button */}
         <Box sx={{ pr: 1.5 }}>
-          <Button size="small" variant="outlined" disabled={!auction.isActive} onClick={() => navigate(`/dashboard/auctions/${auction.id}/edit`)}>
+          <Button
+            size="small"
+            variant="outlined"
+            disabled={!auction.isActive}
+            onClick={() => navigate(`/dashboard/auctions/${auction.id}/edit`)}
+          >
             Edit
           </Button>
         </Box>
