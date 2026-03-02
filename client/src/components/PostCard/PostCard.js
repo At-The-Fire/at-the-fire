@@ -71,15 +71,13 @@ export default function PostCard({ id, post, posts, setPosts, products, setProdu
 
   // delete the post and corresponding Product post from the database
   const handleDelete = async (shouldDeleteProduct = false) => {
-    navigate(`/dashboard/`);
-
     setIsDeleting(true);
     try {
       setDeletedRowId(id);
       // grab urls out of my database
       const postUrls = await getAdditionalImageUrlsPublicIds(id);
 
-      // delete all images from S3
+      // delete all images from S3 (skip for sold posts — purchase history must keep images)
       let filteredPostUrls = postUrls;
       const postId = id;
       const matchingProduct = products.find((product) => product.post_id === postId);
@@ -87,8 +85,10 @@ export default function PostCard({ id, post, posts, setPosts, products, setProdu
         filteredPostUrls = postUrls.filter((img) => img.image_url !== matchingProduct.image_url);
       }
 
-      for (let i = 0; i < filteredPostUrls.length; i++) {
-        await deleteImage(filteredPostUrls[i].public_id, filteredPostUrls[i].resource_type);
+      if (!post.sold) {
+        for (let i = 0; i < filteredPostUrls.length; i++) {
+          await deleteImage(filteredPostUrls[i].public_id, filteredPostUrls[i].resource_type);
+        }
       }
 
       // delete corresponding Product post from database
@@ -334,7 +334,9 @@ export default function PostCard({ id, post, posts, setPosts, products, setProdu
         <DialogTitle id="alert-dialog-title">Are you sure?</DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-            Deleting this post will remove it permanently. This action cannot be undone.
+            {post.sold
+              ? 'This post has been sold. It will be hidden from your gallery, but purchase history and images will be preserved.'
+              : 'Deleting this post will remove it permanently. This action cannot be undone.'}
           </DialogContentText>
 
           {products.length !== 0 && showCheckboxForDeleteProduct && (
