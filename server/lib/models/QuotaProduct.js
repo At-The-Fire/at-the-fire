@@ -185,6 +185,10 @@ module.exports = class QuotaProduct {
     return new QuotaProduct(rows[0]);
   }
 
+  static async updateQtyByPostId(postId, qty) {
+    await pool.query('UPDATE quota_tracking SET qty = $2 WHERE post_id = $1', [postId, qty]);
+  }
+
   static async deleteProduct(id) {
     const { rows } = await pool.query(
       `
