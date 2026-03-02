@@ -51,12 +51,18 @@
 
 - [ ] Create new post
   - [ ] Test required fields
+  - [ ] Enter a valid quantity
+    - [ ] Verify quantity accepts only positive integers
+    - [ ] Verify quantity field rejects 0, negative numbers, and non-numeric input
   - [ ] Verify post displays in _Dashboard_ tab
-  - [ ] Verify post displays in _Quota Tracking_ tab
+  - [ ] Verify post displays in _Quota Tracking_ tab with matching quantity
   - [ ] Verify post displays in _Gallery_
   - [ ] Verify post has all text & images displaying correctly
 - [ ] Edit post
   - [ ] Edit text fields
+  - [ ] Edit quantity
+    - [ ] Verify updated quantity saves correctly
+    - [ ] Verify updated quantity syncs to corresponding product in _Quota Tracking_
   - [ ] Add image
     - [ ] Test supported formats
   - [ ] Remove image(s)
