@@ -204,8 +204,8 @@ export default function Products({ products, setProducts, loadingProducts, setLo
     setIsDeleting(true);
     try {
       if (shouldDeleteGalleryPost) {
-        // Delete image from S3 if it exists
-        if (product.public_id) {
+        // Delete image from S3 if it exists (skip for sold products — purchase history must keep images)
+        if (!product.sold && product.public_id) {
           await deleteImage(product.public_id, 'image');
         }
         // Delete the product
@@ -219,11 +219,14 @@ export default function Products({ products, setProducts, loadingProducts, setLo
         }
         // Delete corresponding post if it exists
         if (product.post_id) {
-          const postUrls = await getAdditionalImageUrlsPublicIds(product.post_id);
-          for (let i = 0; i < postUrls.length; i++) {
-            await deleteImage(postUrls[i].public_id, postUrls[i].resource_type);
+          const linkedPost = posts.find((p) => p.id === product.post_id);
+          if (linkedPost && !linkedPost.sold) {
+            const postUrls = await getAdditionalImageUrlsPublicIds(product.post_id);
+            for (const img of postUrls) {
+              await deleteImage(img.public_id, img.resource_type);
+            }
           }
-          await deleteById(product.post_id);
+          await deleteById(product.post_id); // server decides hard vs soft based on sold status
           const updatedPosts = posts.filter((p) => p.id !== product.post_id);
           setPosts(updatedPosts);
           setNewPostCreated((prevState) => !prevState);
