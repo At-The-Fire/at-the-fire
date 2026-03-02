@@ -119,7 +119,8 @@ CREATE TABLE gallery_posts (
   FOREIGN KEY (customer_id) REFERENCES stripe_customers(customer_id) ON DELETE CASCADE ,
   sold BOOLEAN DEFAULT FALSE,
   date_sold VARCHAR,
-  quantity INTEGER DEFAULT 1
+  quantity INTEGER DEFAULT 1,
+  deleted_at TIMESTAMPTZ DEFAULT NULL
 );
 
 CREATE TABLE posts_imgs (
@@ -146,9 +147,10 @@ CREATE TABLE quota_tracking (
   num_days BIGINT NOT NULL,
   post_id BIGINT,
   sold BOOLEAN DEFAULT false,
-  date_sold VARCHAR, 
-  qty INTEGER DEFAULT 1,   
-  FOREIGN KEY (customer_id) REFERENCES stripe_customers(customer_id) ON DELETE CASCADE 
+  date_sold VARCHAR,
+  qty INTEGER DEFAULT 1,
+  deleted_at TIMESTAMPTZ DEFAULT NULL,
+  FOREIGN KEY (customer_id) REFERENCES stripe_customers(customer_id) ON DELETE CASCADE
   );
 
 CREATE TABLE product_sales (
