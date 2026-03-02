@@ -15,6 +15,7 @@ module.exports = class Post {
   sold;
   logo_image_url;
   date_sold;
+  quantity;
 
   constructor(row) {
     this.id = row.id;
@@ -31,6 +32,7 @@ module.exports = class Post {
     this.sold = row.sold;
     this.logo_image_url = row.logo_image_url;
     this.date_sold = row.date_sold;
+    this.quantity = row.quantity;
   }
 
   // post a new post
@@ -44,10 +46,11 @@ module.exports = class Post {
     public_id,
     num_imgs,
     sold,
-    date_sold
+    date_sold,
+    quantity
   ) {
     const { rows } = await pool.query(
-      'INSERT INTO gallery_posts (title, description, image_url, category, price, customer_id, public_id, num_imgs,sold, date_sold) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
+      'INSERT INTO gallery_posts (title, description, image_url, category, price, customer_id, public_id, num_imgs,sold, date_sold, quantity) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *',
       [
         title,
         description,
@@ -59,6 +62,7 @@ module.exports = class Post {
         num_imgs,
         sold,
         date_sold,
+        quantity || null,
       ]
     );
 
@@ -100,7 +104,8 @@ module.exports = class Post {
     public_id,
     num_imgs,
     sold,
-    date_sold
+    date_sold,
+    quantity
   ) {
     const { rows } = await pool.query(
       `
@@ -115,7 +120,7 @@ module.exports = class Post {
           num_imgs = $9,
           sold = $10,
           date_sold = $11,
-          quantity = CASE WHEN $10 = true THEN 0 ELSE quantity END
+          quantity = CASE WHEN $10 = true THEN 0 ELSE $12 END
       WHERE id = $1
       RETURNING *;
       `,
@@ -131,6 +136,7 @@ module.exports = class Post {
         num_imgs,
         sold,
         date_sold,
+        quantity || null,
       ]
     );
 
@@ -264,6 +270,10 @@ module.exports = class Post {
       console.error('Error transferring images to posts_imgs:', error);
       throw error;
     }
+  }
+
+  static async updateQuantityById(postId, qty) {
+    await pool.query('UPDATE gallery_posts SET quantity = $2 WHERE id = $1', [postId, qty]);
   }
 
   static async getAllPosts() {
