@@ -185,6 +185,14 @@ module.exports = class Post {
     return new Post(rows[0]);
   }
 
+  static async softDeleteById(id) {
+    const { rows } = await pool.query(
+      'UPDATE gallery_posts SET deleted_at = NOW() WHERE id = $1 RETURNING *',
+      [id]
+    );
+    return rows[0] ? new Post(rows[0]) : null;
+  }
+
   static async deleteById(post) {
     const data = await Post.getById(post);
     if (!data) {
@@ -279,7 +287,7 @@ module.exports = class Post {
   static async getAllPosts() {
     const { rows } = await pool.query(
       `
-    SELECT * FROM gallery_posts
+    SELECT * FROM gallery_posts WHERE deleted_at IS NULL
     `
     );
 
@@ -309,7 +317,7 @@ SELECT
 FROM gallery_posts posts
 JOIN stripe_customers sc ON posts.customer_id = sc.customer_id
 JOIN followers f ON sc.aws_sub = f.followed_id
-WHERE f.follower_id = $1
+WHERE f.follower_id = $1 AND posts.deleted_at IS NULL
 ORDER BY posts.created_at DESC
 LIMIT 50;
 
