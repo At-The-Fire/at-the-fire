@@ -23,7 +23,7 @@ jest.mock('jsonwebtoken', () => ({
     }
   }),
   decode: jest.fn((token) =>
-    token === 'valid.free.user.id.token' ? { sub: process.env.TEST_SUB_FULL_CUSTOMER } : null
+    token === 'valid.free.user.id.token' ? { sub: process.env.TEST_SUB_FULL_CUSTOMER } : null,
   ),
 }));
 
@@ -43,7 +43,7 @@ jest.mock('../../../lib/models/Invoices', () => ({
 describe('authorize Middleware', () => {
   const setupTokensAndMocks = (accessToken, idToken, refreshToken, isActive) => {
     jwt.decode.mockImplementation((token) =>
-      token === idToken ? { sub: 'sub_fullCustomer' } : null
+      token === idToken ? { sub: 'sub_fullCustomer' } : null,
     );
     jwt.verify.mockImplementation((token, getKey, options, callback) => {
       if ([accessToken, idToken, refreshToken].includes(token)) {
@@ -83,7 +83,7 @@ describe('authorize Middleware', () => {
       'valid.subscriber.access.token',
       'valid.subscriber.id.token',
       'valid.subscriber.refresh.token',
-      true
+      true,
     );
     const response = await request(app)
       .get('/api/v1/dashboard')
@@ -106,6 +106,7 @@ describe('authorize Middleware', () => {
           num_imgs: '1',
           price: 'SamplePrice3',
           public_id: 'publicID_post_3',
+          quantity: 1,
           sold: false,
           date_sold: null,
           title: 'SampleTitle3',
@@ -120,6 +121,7 @@ describe('authorize Middleware', () => {
           num_imgs: '2',
           price: 'SamplePrice4',
           public_id: 'publicID_post_4',
+          quantity: 1,
           sold: false,
           date_sold: null,
           title: 'SampleTitle4',
@@ -135,7 +137,7 @@ describe('authorize Middleware', () => {
       'valid.subscriber.access.token',
       'valid.subscriber.id.token',
       'valid.subscriber.refresh.token',
-      false
+      false,
     );
     const response = await request(app)
       .get('/api/v1/dashboard')
@@ -158,6 +160,7 @@ describe('authorize Middleware', () => {
           num_imgs: '1',
           price: 'SamplePrice3',
           public_id: 'publicID_post_3',
+          quantity: 1,
           sold: false,
           date_sold: null,
           title: 'SampleTitle3',
@@ -172,6 +175,7 @@ describe('authorize Middleware', () => {
           num_imgs: '2',
           price: 'SamplePrice4',
           public_id: 'publicID_post_4',
+          quantity: 1,
           sold: false,
           date_sold: null,
           title: 'SampleTitle4',
@@ -189,7 +193,7 @@ describe('authorize Middleware', () => {
       'sub_fullCustomer.access.token',
       'sub_fullCustomer.id.token',
       'sub_fullCustomer.refresh.token',
-      false
+      false,
     );
 
     // Mock StripeCustomer to return a different customerId than what setupTokensAndMocks uses
@@ -216,7 +220,7 @@ describe('authorize Middleware', () => {
 
     expect(resp.status).toBe(403);
     expect(resp.body.message).toBe(
-      'You are not a current customer or your subscription is not active'
+      'You are not a current customer or your subscription is not active',
     );
   });
 });
