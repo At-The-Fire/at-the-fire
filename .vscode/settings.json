@@ -17,5 +17,23 @@
         "titleBar.activeForeground": "#e7e7e7",
         "titleBar.inactiveBackground": "#411add99",
         "titleBar.inactiveForeground": "#e7e7e799"
+    },
+    "files.autoSave": "off",
+    "editor.formatOnSave": true,
+    "editor.formatOnSaveMode": "file",
+    "editor.formatOnSaveTimeout": 5000,
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll": "never",
+        "source.fixAll.eslint": "never"
+    },
+    "eslint.format.enable": false,
+    "eslint.run": "onType",
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[javascriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
     }
 }
