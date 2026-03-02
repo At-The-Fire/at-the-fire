@@ -3,6 +3,7 @@ const authenticateAWS = require('../middleware/authenticateAWS');
 const Purchase = require('../models/Purchase');
 const paymentService = require('../services/paymentService');
 const pool = require('../utils/pool');
+const getRedisClient = require('../../redisClient');
 
 module.exports = Router()
   // POST /api/v1/purchases/intent
@@ -170,6 +171,9 @@ module.exports = Router()
 
       await client.query('COMMIT');
       transactionStarted = false;
+
+      const redisClient = await getRedisClient();
+      await redisClient.del('gallery:main');
 
       res.json({ purchaseIds, summary });
     } catch (e) {
