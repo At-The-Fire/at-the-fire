@@ -80,10 +80,16 @@ module.exports = Router()
 
   .delete('/:id', authDelUp, async (req, res, next) => {
     try {
-      const deletedProduct = await QuotaProduct.deleteProduct(req.params.id);
+      const product = await QuotaProduct.getQuotaProductById(req.params.id);
 
-      if (!deletedProduct) {
+      if (!product) {
         return res.status(404).send({ error: 'Product not found' });
+      }
+
+      if (product.sold) {
+        await QuotaProduct.softDeleteProduct(product.id);
+      } else {
+        await QuotaProduct.deleteProduct(req.params.id);
       }
 
       res.status(204).send();

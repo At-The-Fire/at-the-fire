@@ -401,10 +401,16 @@ module.exports = Router()
   .delete('/:id', [authDelUp], async (req, res, next) => {
     try {
       const sub = req.userAWSSub;
-      const data = await Post.deleteById(req.params.id);
+      const post = await Post.getById(req.params.id);
 
-      if (!data) {
+      if (!post) {
         return res.status(404).json({ message: 'Post not found' });
+      }
+
+      if (post.sold) {
+        await Post.softDeleteById(post.id);
+      } else {
+        await Post.deleteById(req.params.id);
       }
 
       const redisClient = await getRedisClient();
