@@ -3,6 +3,7 @@ import { createCookies, deleteCookies } from '../services/cookieAPI';
 import { toast } from 'react-toastify';
 import { AmazonCognitoIdentity, userPool } from '../services/userPool.js';
 import usePostStore from './usePostStore.js';
+import useCartStore from './useCartStore.js';
 import { websocketService } from '../services/websocketService.js';
 
 const BASE_URL = process.env.REACT_APP_BASE_URL;
@@ -223,6 +224,7 @@ export const useAuthStore = create((set, get) => ({
       });
 
       usePostStore.getState().reset();
+      useCartStore.getState().clearCart();
       get().clearSelectiveStorage();
     } catch (e) {
       set({ signingOut: false });
@@ -351,6 +353,7 @@ export const useAuthStore = create((set, get) => ({
         } else {
           // Only proceed with the Stripe customer check if the user is fully authenticated
           const customerData = type === 'sign-in' ? await get().checkStripeCustomer() : null;
+          useCartStore.getState().clearCart();
           set({
             isAuthenticated: true,
             isConfirmed: customerData?.data?.confirmed,
