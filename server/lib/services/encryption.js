@@ -21,7 +21,7 @@ function getKeyBuffer() {
 }
 
 function encrypt(text) {
-  if (text === null || text === '') {
+  if (text === null || text === undefined || text === '') {
     return null;
   }
   const keyBuffer = getKeyBuffer();
