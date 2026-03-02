@@ -72,11 +72,11 @@ export default function NewPost() {
 
   const submitHandler = async (newPost) => {
     try {
-      const { title, description, image_url, category, price, public_id, num_imgs, sold, date_sold } = newPost;
+      const { title, description, image_url, category, price, public_id, num_imgs, sold, date_sold, quantity } = newPost;
 
       // create new post with fetch call to db
       // TODO refactor to just use object- change function definition in fetch-utils
-      const post = await postPost(title, description, image_url, category, price, public_id, num_imgs, sold, date_sold);
+      const post = await postPost(title, description, image_url, category, price, public_id, num_imgs, sold, date_sold, quantity);
 
       // send image urls and public ids to db
       await postAddImages(newPost.additionalImages, post.id);
