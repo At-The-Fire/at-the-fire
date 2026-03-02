@@ -46,7 +46,7 @@ module.exports = class QuotaProduct {
       `
       SELECT *
       FROM quota_tracking
-      WHERE customer_id=$1
+      WHERE customer_id=$1 AND deleted_at IS NULL
       ORDER BY date DESC, id ASC
       `,
       [customerId]
@@ -63,7 +63,7 @@ module.exports = class QuotaProduct {
     const { rows } = await pool.query(
       `
       SELECT * FROM quota_tracking
-      WHERE id=$1
+      WHERE id=$1 AND deleted_at IS NULL
       `,
       [id]
     );
@@ -187,6 +187,14 @@ module.exports = class QuotaProduct {
 
   static async updateQtyByPostId(postId, qty) {
     await pool.query('UPDATE quota_tracking SET qty = $2 WHERE post_id = $1', [postId, qty]);
+  }
+
+  static async softDeleteProduct(id) {
+    const { rows } = await pool.query(
+      'UPDATE quota_tracking SET deleted_at = NOW() WHERE id = $1 RETURNING *',
+      [id]
+    );
+    return rows[0] ? new QuotaProduct(rows[0]) : null;
   }
 
   static async deleteProduct(id) {
