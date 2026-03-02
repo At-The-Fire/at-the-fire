@@ -3,7 +3,7 @@ import { createCookies, deleteCookies } from '../services/cookieAPI';
 import { toast } from 'react-toastify';
 import { AmazonCognitoIdentity, userPool } from '../services/userPool.js';
 import usePostStore from './usePostStore.js';
-import useCartStore from './useCartStore.js';
+import { useCartStore } from './useCartStore.js';
 import { websocketService } from '../services/websocketService.js';
 
 const BASE_URL = process.env.REACT_APP_BASE_URL;
