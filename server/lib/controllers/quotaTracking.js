@@ -40,6 +40,11 @@ module.exports = Router()
         ...req.body,
         customer_id,
       });
+
+      if (data.post_id && data.qty) {
+        await Post.updateQuantityById(data.post_id, data.qty);
+      }
+
       res.json(data);
     } catch (e) {
       next(e);
@@ -58,6 +63,10 @@ module.exports = Router()
 
       if (!data) {
         return res.status(404).send({ error: 'Product not found' });
+      }
+
+      if (data.post_id && data.qty) {
+        await Post.updateQuantityById(data.post_id, data.qty);
       }
 
       // Add sales array for the updated product, matching GET behavior
