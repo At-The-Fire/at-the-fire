@@ -54,9 +54,10 @@ module.exports = class Gallery {
         s.display_name,
         s.logo_image_url
     FROM
-        gallery_posts AS g 
+        gallery_posts AS g
     JOIN
-        stripe_customers AS s ON g.customer_id = s.customer_id ORDER BY created_at DESC;
+        stripe_customers AS s ON g.customer_id = s.customer_id
+    WHERE g.deleted_at IS NULL ORDER BY created_at DESC;
 
             `
     );
@@ -89,8 +90,8 @@ module.exports = class Gallery {
   JOIN
       cognito_users AS cu ON s.aws_sub = cu.sub
   WHERE
-      g.customer_id= $1
-  ORDER BY 
+      g.customer_id= $1 AND g.deleted_at IS NULL
+  ORDER BY
       created_at DESC;
   
       `,
@@ -126,8 +127,8 @@ module.exports = class Gallery {
   JOIN
       cognito_users AS cu ON s.aws_sub = cu.sub
   WHERE
-      g.id= $1
-  ORDER BY 
+      g.id= $1 AND g.deleted_at IS NULL
+  ORDER BY
       created_at DESC;
             `,
       [id]
