@@ -40,6 +40,7 @@ export default function PostForm({
   imageUrls,
   sold = false,
   date_sold = null,
+  quantity = '',
 }) {
   // form wasn't showing current values in edit mode, this fixed it
   useEffect(() => {
@@ -51,8 +52,9 @@ export default function PostForm({
       setCurrentImages(imageUrls);
       setSoldInput(sold);
       setDateSoldInput(date_sold);
+      setQuantityInput(quantity || '');
     }
-  }, [title, description, price, category, imageUrls, sold, date_sold]);
+  }, [title, description, price, category, imageUrls, sold, date_sold, quantity]);
   const { restricted } = usePostStore();
 
   const [titleInput, setTitleInput] = useState(title);
@@ -66,6 +68,7 @@ export default function PostForm({
   const [deletedImages, setDeletedImages] = useState([]);
 
   const [soldInput, setSoldInput] = useState(sold);
+  const [quantityInput, setQuantityInput] = useState(quantity || '');
 
   const isMobile = useMediaQuery('(max-width:767px)');
 
@@ -220,6 +223,7 @@ export default function PostForm({
         num_imgs: files.length,
         sold: soldInput,
         date_sold: dateSoldInput,
+        quantity: quantityInput !== '' ? Number(quantityInput) : null,
       };
 
       // Upload new images to S3 and get their URLs + post details
@@ -455,6 +459,19 @@ export default function PostForm({
                   $
                 </TextField>
               </div>
+            </div>
+
+            <div className="desk-quantity-input">
+              <br />
+              <TextField
+                placeholder="Quantity (optional)"
+                className="image-input"
+                type="number"
+                name="quantity"
+                inputProps={{ min: 1, step: 1 }}
+                value={quantityInput}
+                onChange={(e) => setQuantityInput(e.target.value)}
+              />
             </div>
 
             <FormControl component="fieldset" className="sold-radio-group " sx={{ marginTop: '20px' }}>
