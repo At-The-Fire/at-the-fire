@@ -5,6 +5,7 @@ const BASE_URL = process.env.REACT_APP_BASE_URL;
 
 export const useAuctionNotificationStore = create((set) => ({
   unreadWonCount: 0,
+  unreadOutbidCount: 0,
 
   fetchUnreadCount: async () => {
     const { isAuthenticated } = useAuthStore.getState();
@@ -23,7 +24,12 @@ export const useAuctionNotificationStore = create((set) => ({
       if (!response.ok) throw new Error('Failed to fetch auction notifications');
 
       const data = await response.json();
-      set({ unreadWonCount: Array.isArray(data) ? data.length : 0 });
+      if (!Array.isArray(data)) return;
+
+      set({
+        unreadWonCount: data.filter((n) => n.type === 'won').length,
+        unreadOutbidCount: data.filter((n) => n.type === 'outbid').length,
+      });
     } catch (e) {
       if (process.env.REACT_APP_APP_ENV === 'development') {
         // eslint-disable-next-line no-console
@@ -38,7 +44,7 @@ export const useAuctionNotificationStore = create((set) => ({
         method: 'PATCH',
         credentials: 'include',
       });
-      set({ unreadWonCount: 0 });
+      set({ unreadWonCount: 0, unreadOutbidCount: 0 });
     } catch (e) {
       if (process.env.REACT_APP_APP_ENV === 'development') {
         // eslint-disable-next-line no-console
@@ -47,5 +53,6 @@ export const useAuctionNotificationStore = create((set) => ({
     }
   },
 
-  incrementCount: () => set((state) => ({ unreadWonCount: state.unreadWonCount + 1 })),
+  incrementWonCount: () => set((state) => ({ unreadWonCount: state.unreadWonCount + 1 })),
+  incrementOutbidCount: () => set((state) => ({ unreadOutbidCount: state.unreadOutbidCount + 1 })),
 }));
