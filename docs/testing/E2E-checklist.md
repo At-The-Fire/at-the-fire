@@ -1,9 +1,5 @@
 # End-to-End Testing Checklist
 
-## Updated Checklist in Google Docs:
-
-[End to End Testing Checklist](https://docs.google.com/document/d/1eJF8kxKujJvzi54orGLwJX1w0CpwypjI5HTmj9R3uR0/edit?usp=sharing)
-
 ## New User Creation
 
 > **Claude Code: SKIP this entire section.** New user creation requires access to a real email inbox (AWS Cognito sends a confirmation email). This section must be tested manually.
