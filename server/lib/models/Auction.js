@@ -14,6 +14,10 @@ module.exports = class Auction {
   sellerSub;
   createdAt;
   updatedAt;
+  winnerSub;
+  finalBid;
+  closedAt;
+  closedReason;
   isPaid;
   trackingNumber;
 
@@ -31,8 +35,12 @@ module.exports = class Auction {
     this.sellerSub = row.seller_sub;
     this.createdAt = row.created_at;
     this.updatedAt = row.updated_at;
-    this.isPaid = row.is_paid;
-    this.trackingNumber = row.tracking_number;
+    this.winnerSub = row.winner_sub ?? null;
+    this.finalBid = row.final_bid ?? null;
+    this.closedAt = row.closed_at ?? null;
+    this.closedReason = row.closed_reason ?? null;
+    this.isPaid = row.is_paid ?? null;
+    this.trackingNumber = row.tracking_number ?? null;
   }
 
   static async insert({
@@ -95,7 +103,14 @@ module.exports = class Auction {
 
   static async getBySeller(sellerSub) {
     const { rows } = await pool.query(
-      `SELECT * FROM auctions WHERE seller_sub = $1 ORDER BY end_time DESC`,
+      `
+      SELECT a.*, ar.winner_sub, ar.final_bid, ar.closed_at, ar.closed_reason,
+             ar.is_paid, ar.tracking_number
+      FROM auctions a
+      LEFT JOIN auction_results ar ON ar.auction_id = a.id
+      WHERE a.seller_sub = $1
+      ORDER BY a.end_time DESC
+      `,
       [sellerSub],
     );
     return rows.map((row) => new Auction(row));
