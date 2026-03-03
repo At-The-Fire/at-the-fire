@@ -32,6 +32,7 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useAuthStore } from '../../stores/useAuthStore.js';
 import { getSellerAuctions, updateAuctionTracking } from '../../services/fetch-auctions.js';
+import { useAuctionEventsStore } from '../../stores/useAuctionEventsStore.js';
 import { getSellerPurchases, updatePurchaseTracking } from '../../services/fetch-purchases.js';
 import TrackingModal from '../shared/TrackingModal.js';
 import { getTrackingUrl } from '../../utils/tracking.js';
@@ -57,6 +58,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
   // Posts / Auctions toggle
   const location = useLocation();
   const [dashboardView, setDashboardView] = useState(location.state?.view === 'auctions' ? 'auctions' : 'posts');
+  const setPendingShipments = useAuctionEventsStore((s) => s.setPendingShipments);
   const [sellerAuctions, setSellerAuctions] = useState([]);
   const [auctionsLoading, setAuctionsLoading] = useState(false);
   const [auctionFilter, setAuctionFilter] = useState('all');
@@ -234,7 +236,9 @@ export default function Dashboard({ products, setProducts, customerId }) {
     Promise.all([getSellerPurchases(), user ? getSellerAuctions() : Promise.resolve([])])
       .then(([purchases, auctions]) => {
         setSellerPurchases(Array.isArray(purchases) ? purchases : []);
-        setSellerAuctions(Array.isArray(auctions) ? auctions : []);
+        const auctionList = Array.isArray(auctions) ? auctions : [];
+        setSellerAuctions(auctionList);
+        setPendingShipments(auctionList.filter((a) => !a.isActive && !a.trackingNumber).length);
       })
       .catch((err) => {
         // eslint-disable-next-line no-console
@@ -252,7 +256,11 @@ export default function Dashboard({ products, setProducts, customerId }) {
         setSellerPurchases((prev) => prev.map((p) => (p.id === trackingModal.id ? { ...p, trackingNumber } : p)));
       } else {
         await updateAuctionTracking(trackingModal.id, trackingNumber);
-        setSellerAuctions((prev) => prev.map((a) => (a.id === trackingModal.id ? { ...a, trackingNumber } : a)));
+        setSellerAuctions((prev) => {
+          const updated = prev.map((a) => (a.id === trackingModal.id ? { ...a, trackingNumber } : a));
+          setPendingShipments(updated.filter((a) => !a.isActive && !a.trackingNumber).length);
+          return updated;
+        });
       }
       toast.success('Tracking number saved');
       setTrackingModal({ open: false, type: null, id: null });
@@ -270,6 +278,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
       .then((data) => {
         const all = Array.isArray(data) ? data : [];
         setSellerAuctions(all);
+        setPendingShipments(all.filter((a) => !a.isActive && !a.trackingNumber).length);
       })
       .catch((err) => {
         // eslint-disable-next-line no-console
