@@ -35,7 +35,7 @@ module.exports = class AuctionNotification {
     const { rows } = await pool.query(
       `
       SELECT * FROM auction_notifications
-      WHERE user_sub = $1 AND is_read = false
+      WHERE user_sub = $1 AND is_read = false AND type IN ('won')
       ORDER BY created_at DESC, id DESC
       `,
       [userSub],
