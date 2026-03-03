@@ -21,6 +21,7 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useTheme } from '@mui/material/styles';
 import { useAuthStore } from '../../stores/useAuthStore.js';
+import { useAuctionNotificationStore } from '../../stores/useAuctionNotificationStore.js';
 import { getPurchases } from '../../services/fetch-purchases.js';
 import { getTrackingUrl } from '../../utils/tracking.js';
 
@@ -106,6 +107,7 @@ function TrackingDisplay({ trackingNumber }) {
 
 export default function MyPurchases() {
   const { user: sub } = useAuthStore();
+  const markAllRead = useAuctionNotificationStore((s) => s.markAllRead);
   const [purchases, setPurchases] = useState([]);
   const [activeBids, setActiveBids] = useState([]);
   const [wonAuctions, setWonAuctions] = useState([]);
@@ -115,6 +117,10 @@ export default function MyPurchases() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [expandedSection, setExpandedSection] = useState('gallery');
+
+  useEffect(() => {
+    markAllRead();
+  }, [markAllRead]);
 
   useEffect(() => {
     if (!sub) return;
