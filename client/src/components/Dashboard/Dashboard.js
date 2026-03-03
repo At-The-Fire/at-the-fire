@@ -1045,6 +1045,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
                               <Button
                                 size="small"
                                 variant="outlined"
+                                disabled={!auction.winnerSub}
                                 onClick={() => setTrackingModal({ open: true, type: 'auction', id: auction.id })}
                               >
                                 {auction.trackingNumber ? 'Update' : 'Add Tracking'}
