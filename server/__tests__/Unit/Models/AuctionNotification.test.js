@@ -72,13 +72,13 @@ describe('AuctionNotification Model', () => {
   });
 
   describe('getUnreadByUserSub', () => {
-    it('returns unread notifications for a user ordered by created_at DESC', async () => {
+    it('returns unread won notifications for a user ordered by created_at DESC', async () => {
       const mockRows = [
         {
           id: 2,
           user_sub: 'sub_123',
           auction_id: 20,
-          type: 'outbid',
+          type: 'won',
           created_at: '2024-01-02T00:00:00Z',
           is_read: false,
         },
@@ -86,7 +86,7 @@ describe('AuctionNotification Model', () => {
           id: 1,
           user_sub: 'sub_123',
           auction_id: 10,
-          type: 'outbid',
+          type: 'won',
           created_at: '2024-01-01T00:00:00Z',
           is_read: false,
         },
@@ -101,7 +101,9 @@ describe('AuctionNotification Model', () => {
       expect(results[0].id).toBe(2);
       expect(results[1].id).toBe(1);
       expect(pool.query).toHaveBeenCalledWith(
-        expect.stringContaining('WHERE user_sub = $1 AND is_read = false'),
+        expect.stringContaining(
+          "WHERE user_sub = $1 AND is_read = false AND type IN ('won', 'outbid')",
+        ),
         ['sub_123'],
       );
     });

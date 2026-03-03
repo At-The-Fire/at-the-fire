@@ -90,7 +90,7 @@ describe('AuctionNotification routes', () => {
         INSERT INTO auction_notifications (user_sub, auction_id, type)
         VALUES ($1, $2, $3)
         `,
-        [mockUser.sub, testAuctionId, 'outbid'],
+        [mockUser.sub, testAuctionId, 'won'],
       );
 
       const response = await request(app).get('/api/v1/auction-notifications');
@@ -101,7 +101,7 @@ describe('AuctionNotification routes', () => {
       expect(response.body[0]).toMatchObject({
         userSub: mockUser.sub,
         auctionId: testAuctionId,
-        type: 'outbid',
+        type: 'won',
         isRead: false,
       });
     });
@@ -179,7 +179,7 @@ describe('AuctionNotification routes', () => {
         INSERT INTO auction_notifications (user_sub, auction_id, type, created_at)
         VALUES ($1, $2, $3, $4)
         `,
-        [mockUser.sub, testAuctionId, 'outbid', new Date('2020-01-01T00:00:00.000Z')],
+        [mockUser.sub, testAuctionId, 'won', new Date('2020-01-01T00:00:00.000Z')],
       );
 
       await pool.query(
@@ -187,7 +187,7 @@ describe('AuctionNotification routes', () => {
         INSERT INTO auction_notifications (user_sub, auction_id, type, created_at)
         VALUES ($1, $2, $3, $4)
         `,
-        [mockUser.sub, secondAuctionId, 'outbid', new Date('2020-01-02T00:00:00.000Z')],
+        [mockUser.sub, secondAuctionId, 'won', new Date('2020-01-02T00:00:00.000Z')],
       );
 
       const response = await request(app).get('/api/v1/auction-notifications');
@@ -219,7 +219,7 @@ describe('AuctionNotification routes', () => {
       // Verify they are now read in the DB
       const { rows } = await pool.query(
         `
-        SELECT * FROM auction_notifications 
+        SELECT * FROM auction_notifications
         WHERE user_sub = $1 AND is_read = false
         `,
         [mockUser.sub],
@@ -249,7 +249,7 @@ describe('AuctionNotification routes', () => {
       // Other user's notification should still be unread
       const { rows } = await pool.query(
         `
-        SELECT * FROM auction_notifications 
+        SELECT * FROM auction_notifications
         WHERE user_sub = $1 AND is_read = false
         `,
         [mockOtherUser.sub],
