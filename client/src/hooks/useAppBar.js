@@ -79,7 +79,7 @@ export default function useAppBar({ setAnchorElNav, setAnchorElUser }) {
   };
 
   const handleCloseUserMenu = (e) => {
-    switch (e.target.textContent) {
+    switch (e.currentTarget.dataset.value ?? e.target.textContent) {
       case 'Logout':
         handleSignOut(email, setUser, setIsAuthenticated, setCustomerId);
         setEmail('');
