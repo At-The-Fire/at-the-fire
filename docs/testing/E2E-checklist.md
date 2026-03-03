@@ -146,14 +146,21 @@
   - [ ] Purchase at buy-it-now price
   - [ ] Verify auction closes immediately
   - [ ] Verify purchase appears in buyer's purchases
-- [ ] Auction end
-  - [ ] Verify auction result recorded on close
-  - [ ] Verify seller notified — **not email — two notification layers expected:**
-    - [ ] **Real-time toast** (WebSocket): seller sees a toast notification when their auction closes
-    - [ ] **Persistent menu badge**: on next login, the Dashboard nav item or Auctions tab shows a badge prompting the seller to review the closed auction result
-  - [ ] Verify winner notified — **not email — two notification layers expected:**
-    - [ ] **Real-time toast** (WebSocket): winner sees a toast notification when they win
-    - [ ] **Persistent menu badge**: the _Purchases_ menu item shows a badge/count on next login, prompting the buyer to visit My Purchases and view their win and tracking info
+- [ ] Outbid notification (buyer)
+  - [ ] Warning toast appears if on-site when outbid
+  - [ ] _Purchases_ menu shows orange "N outbid" count on next login if offline when outbid
+  - [ ] Badge clears on navigating to _My Purchases_
+- [ ] Auction end — winner (buyer)
+  - [ ] Success toast appears if on-site when auction closes
+  - [ ] _Purchases_ menu shows green "N won" shimmer/count on next login
+  - [ ] Avatar badge shows combined total (messages + won + outbid)
+  - [ ] Badge clears on navigating to _My Purchases_
+- [ ] Auction end — seller
+  - [ ] _Workspace_ button shows numeric orange badge for unshipped won auctions
+  - [ ] Badge is accurate immediately on page load/refresh (not only after visiting Dashboard)
+  - [ ] Badge decrements when tracking is entered; disappears when all auctions are tracked
+  - [ ] Closed auction rows without tracking show an orange border in Dashboard > Sales tab
+  - [ ] Gallery sale rows without tracking show an orange border in Dashboard > Sales tab
 - [ ] Archive auction — **automatic, not a user action**
   - > **Claude Code note:** Archiving is automatic — closed auctions move to an archive page on a timed cycle (approximately 48 hours after closing), not instantly, so sellers can still see the auction close in real time. There is no archive button. To test: verify a closed auction still appears on the live auctions page immediately after closing.
   - [ ] Closed auction remains visible on live auction page immediately after closing (not instant-removed)
@@ -188,3 +195,7 @@
 - [ ] Auction purchases
   - [ ] Verify won auction appears in purchases
   - [ ] Verify buy-it-now purchase appears in purchases
+- [ ] Won/outbid badge clears on visit
+  - [ ] _Purchases_ shimmer/count is visible before navigating here
+  - [ ] Badge disappears on arrival (mark-as-read fires on mount)
+  - [ ] Log out and back in — badge does not reappear
