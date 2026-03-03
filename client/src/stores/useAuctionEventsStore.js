@@ -13,6 +13,10 @@ export const useAuctionEventsStore = create((set, get) => ({
   lastAuctionPaid: null,
   lastTrackingUpdate: null,
 
+  // seller badge
+  pendingShipmentsCount: 0,
+  setPendingShipments: (count) => set({ pendingShipmentsCount: count }),
+
   // actions
   setBid: (auctionId) => set({ lastBidUpdate: { id: Number(auctionId), t: Date.now() } }),
   setBuyNow: (auctionId) => set({ lastBuyNowId: Number(auctionId) }),
