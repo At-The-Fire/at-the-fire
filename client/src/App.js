@@ -30,6 +30,8 @@ import UserGuide from './components/UserGuide/UserGuide.js';
 import AboutProject from './components/About/AboutProject.js';
 import MessagingContainer from './components/Messaging/MessagingContainer.js';
 import { useNotificationStore } from './stores/useNotificationStore.js';
+import { useAuctionNotificationStore } from './stores/useAuctionNotificationStore.js';
+import AuctionToastHandler from './components/Auctions/AuctionToastHandler.js';
 import PasswordChange from './components/Auth/AuthForms.js/PasswordChange.js';
 import AuctionList from './components/Auctions/AuctionList.js';
 import AuctionArchive from './components/Auctions/AuctionArchive.js';
@@ -132,6 +134,7 @@ function App() {
   const authenticateUser = useAuthStore((state) => state.authenticateUser);
   const hasAuthChecked = useAuthStore((state) => state.hasAuthChecked);
   const fetchUnreadCount = useNotificationStore((state) => state.fetchUnreadCount);
+  const fetchAuctionUnreadCount = useAuctionNotificationStore((state) => state.fetchUnreadCount);
 
   // Hydrate auth state on full page refresh / initial load
   useEffect(() => {
@@ -144,8 +147,9 @@ function App() {
   useEffect(() => {
     if (isAuthenticated) {
       fetchUnreadCount();
+      fetchAuctionUnreadCount();
     }
-  }, [isAuthenticated, fetchUnreadCount]);
+  }, [isAuthenticated, fetchUnreadCount, fetchAuctionUnreadCount]);
 
   const location = useLocation();
   const clearActiveConversationId = useNotificationStore((state) => state.clearActiveConversationId);
@@ -161,6 +165,7 @@ function App() {
     <>
       {' '}
       <ToastContainer position="top-center" />
+      {isAuthenticated && <AuctionToastHandler />}
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <Box className={'App'}>
