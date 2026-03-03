@@ -238,7 +238,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
         setSellerPurchases(Array.isArray(purchases) ? purchases : []);
         const auctionList = Array.isArray(auctions) ? auctions : [];
         setSellerAuctions(auctionList);
-        setPendingShipments(auctionList.filter((a) => !a.isActive && !a.trackingNumber).length);
+        setPendingShipments(auctionList.filter((a) => a.winnerSub && !a.trackingNumber).length);
       })
       .catch((err) => {
         // eslint-disable-next-line no-console
@@ -258,11 +258,11 @@ export default function Dashboard({ products, setProducts, customerId }) {
         await updateAuctionTracking(trackingModal.id, trackingNumber);
         setSellerAuctions((prev) => {
           const updated = prev.map((a) => (a.id === trackingModal.id ? { ...a, trackingNumber } : a));
-          setPendingShipments(updated.filter((a) => !a.isActive && !a.trackingNumber).length);
+          setPendingShipments(updated.filter((a) => a.winnerSub && !a.trackingNumber).length);
           return updated;
         });
       }
-      toast.success('Tracking number saved');
+      toast.success('Tracking number saved', { theme: 'dark' });
       setTrackingModal({ open: false, type: null, id: null });
     } catch (err) {
       toast.error(err.message || 'Failed to save tracking');
@@ -278,7 +278,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
       .then((data) => {
         const all = Array.isArray(data) ? data : [];
         setSellerAuctions(all);
-        setPendingShipments(all.filter((a) => !a.isActive && !a.trackingNumber).length);
+        setPendingShipments(all.filter((a) => a.winnerSub && !a.trackingNumber).length);
       })
       .catch((err) => {
         // eslint-disable-next-line no-console
@@ -692,7 +692,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
                               variant="body2"
                               sx={{ color: 'text.secondary', textAlign: 'right', marginRight: '.5rem' }}
                             >
-                              {sellerAuctions.filter((a) => !a.isActive && !a.trackingNumber).length}
+                              {sellerAuctions.filter((a) => a.winnerSub && !a.trackingNumber).length}
                             </Typography>
                           </Box>
                         </Box>
@@ -746,7 +746,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
                             },
                             alignItems: 'center',
                             border: '1px solid',
-                            borderColor: 'divider',
+                            borderColor: sale.trackingNumber ? 'divider' : 'warning.main',
                             mb: 1,
                             borderRadius: 1,
                             backgroundColor: 'rgba(255,255,255,0.05)',
@@ -915,7 +915,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
                               },
                               alignItems: 'center',
                               border: '1px solid',
-                              borderColor: 'divider',
+                              borderColor: auction.winnerSub && !auction.trackingNumber ? 'warning.main' : 'divider',
                               mb: 1,
                               borderRadius: 1,
                               backgroundColor: 'rgba(255,255,255,0.05)',
@@ -1124,7 +1124,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
                             Need tracking:
                           </Typography>
                           <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'right' }}>
-                            {sellerAuctions.filter((a) => !a.isActive && !a.trackingNumber).length}
+                            {sellerAuctions.filter((a) => a.winnerSub && !a.trackingNumber).length}
                           </Typography>
                         </Box>
                       </Box>
