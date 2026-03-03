@@ -101,10 +101,12 @@
 
 ### Quota Tracking
 
-- [ ] Create new product
-  - [ ] Auction/direct sale/inventory
-  - [ ] Prep-other
-  - [ ] Test required fields
+- [ ] Create new product — test each type individually:
+  - [ ] **Auction** type — create, verify it appears in product list
+  - [ ] **Direct Sale** type — create, verify it appears in product list
+  - [ ] **Inventory** type — create, verify it appears in product list
+  - [ ] **Prep-Other** type — create, verify it appears in product list
+  - [ ] Test required fields (submit empty form, verify validation)
 - [ ] Edit product
   - [ ] Change text fields
   - [ ] Change image
@@ -146,10 +148,17 @@
   - [ ] Verify purchase appears in buyer's purchases
 - [ ] Auction end
   - [ ] Verify auction result recorded on close
-  - [ ] Verify seller notified
-  - [ ] Verify winner notified
-- [ ] Archive auction
-  - [ ] Verify archived auction no longer appears in active listings
+  - [ ] Verify seller notified — **not email — two notification layers expected:**
+    - [ ] **Real-time toast** (WebSocket): seller sees a toast notification when their auction closes
+    - [ ] **Persistent menu badge**: on next login, the Dashboard nav item or Auctions tab shows a badge prompting the seller to review the closed auction result
+  - [ ] Verify winner notified — **not email — two notification layers expected:**
+    - [ ] **Real-time toast** (WebSocket): winner sees a toast notification when they win
+    - [ ] **Persistent menu badge**: the _Purchases_ menu item shows a badge/count on next login, prompting the buyer to visit My Purchases and view their win and tracking info
+- [ ] Archive auction — **automatic, not a user action**
+  - > **Claude Code note:** Archiving is automatic — closed auctions move to an archive page on a timed cycle (approximately 48 hours after closing), not instantly, so sellers can still see the auction close in real time. There is no archive button. To test: verify a closed auction still appears on the live auctions page immediately after closing.
+  - [ ] Closed auction remains visible on live auction page immediately after closing (not instant-removed)
+  - [ ] Closed auction eventually appears on the archive page
+  - [ ] Closed auction no longer appears in active listings after archive cycle runs
 
 ## Cart & Checkout
 
