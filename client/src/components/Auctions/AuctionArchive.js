@@ -10,7 +10,11 @@ export default function AuctionArchive() {
   useEffect(() => {
     async function load() {
       const all = await getAuctions();
-      const archive = all.filter((a) => !a.isActive);
+      const GRACE_PERIOD_MS = 2 * 60 * 60 * 1000;
+      const now = Date.now();
+      const archive = all.filter(
+        (a) => !a.isActive && now - new Date(a.endTime).getTime() >= GRACE_PERIOD_MS
+      );
       setAuctions(archive);
     }
     load();

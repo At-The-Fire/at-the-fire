@@ -153,7 +153,7 @@ export default function AuctionList() {
   const now = Date.now();
   const active = auctions.filter((a) => a.isActive);
   const ended = auctions.filter((a) => !a.isActive);
-  const recentEnded = ended.filter((a) => now - new Date(a.endTime).getTime() < 48 * 60 * 60 * 1000);
+  const recentEnded = ended.filter((a) => now - new Date(a.endTime).getTime() < 2 * 60 * 60 * 1000);
   const displayAuctions = [...active, ...recentEnded];
 
   return (
