@@ -231,13 +231,28 @@ module.exports = Router()
 
       let sub;
       try {
-        const decodedToken = jwt.decode(idToken);
-        if (!decodedToken || !decodedToken.sub) {
+        const verifiedToken = await new Promise((resolve, reject) => {
+          jwt.verify(
+            idToken,
+            getSigningKey,
+            {
+              algorithms: ['RS256'],
+              issuer: `https://cognito-idp.us-west-2.amazonaws.com/${process.env.COGNITO_USER_POOL_ID}`,
+              audience: process.env.APP_CLIENT_ID,
+              ignoreExpiration: true, // token may be expired — that's why we're refreshing
+            },
+            (err, decoded) => {
+              if (err) reject(err);
+              else resolve(decoded);
+            }
+          );
+        });
+        if (!verifiedToken || !verifiedToken.sub) {
           return res.status(400).send('Invalid ID token');
         }
-        sub = decodedToken.sub;
+        sub = verifiedToken.sub;
       } catch {
-        return res.status(400).send('Error decoding ID token');
+        return res.status(400).send('Error verifying ID token');
       }
 
       const awsSub = sub;
