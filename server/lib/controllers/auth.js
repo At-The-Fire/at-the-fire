@@ -36,6 +36,11 @@ module.exports = Router()
         return;
       }
 
+      // Validate sub is a UUID v4 (Cognito sub format)
+      if (!validator.isUUID(sub, '4')) {
+        return res.status(400).json({ error: 'Invalid sub format.' });
+      }
+
       // Validate email format
       // there is an optional "options" object that can be passed to the validator
       // to specify a list of allowed formats... not sure if we need it
