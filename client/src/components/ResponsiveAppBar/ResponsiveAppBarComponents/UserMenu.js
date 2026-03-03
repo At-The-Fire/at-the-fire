@@ -76,7 +76,7 @@ export default function UserMenu({ anchorElUser, userMenuItems, setAnchorElNav, 
               const isPurchasesItem = (unreadWonCount > 0 || unreadOutbidCount > 0) && setting === 'Purchases';
               const purchasesColor = unreadWonCount > 0 ? 'success.light' : 'warning.light';
               return (
-                <MenuItem key={setting} value={setting} onClick={(e) => handleCloseUserMenu(e)}>
+                <MenuItem key={setting} value={setting} data-value={setting} onClick={(e) => handleCloseUserMenu(e)}>
                   <Typography
                     textAlign="center"
                     className={isMessageItem || isPurchasesItem ? 'shimmer' : ''}
