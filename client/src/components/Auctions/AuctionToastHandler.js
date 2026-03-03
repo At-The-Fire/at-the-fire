@@ -10,7 +10,7 @@ export default function AuctionToastHandler() {
         toastId: `won-${auctionId}`,
         autoClose: 8000,
       });
-      useAuctionNotificationStore.getState().incrementCount();
+      useAuctionNotificationStore.getState().incrementWonCount();
     };
 
     const handleOutbid = ({ auctionId, newBidAmount }) => {
@@ -18,6 +18,7 @@ export default function AuctionToastHandler() {
         toastId: `outbid-${auctionId}`,
         autoClose: 8000,
       });
+      useAuctionNotificationStore.getState().incrementOutbidCount();
     };
 
     websocketService.on('user-won', handleWon);
