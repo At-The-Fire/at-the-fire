@@ -22,6 +22,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useTheme } from '@emotion/react';
 import { useAuthStore } from '../../stores/useAuthStore.js';
 import { useNotificationStore } from '../../stores/useNotificationStore.js';
+import { useAuctionEventsStore } from '../../stores/useAuctionEventsStore.js';
+import { Badge } from '@mui/material';
 import './ResponsiveAppBar.css';
 import { useMessagingSocket } from '../../hooks/useMessagingSocket.js'; //! often looks unused due to commenting out socket for local dev DO NOT DELETE
 import CartIcon from '../Cart/CartIcon.js';
@@ -52,6 +54,7 @@ export default function ResponsiveAppBar() {
   const { query, setQuery } = useQuery();
   const navigate = useNavigate();
   const { unreadCount } = useNotificationStore();
+  const pendingShipmentsCount = useAuctionEventsStore((s) => s.pendingShipmentsCount);
 
   // TODO clean up this comment marker for not forgetting
   // TODO to turn this off/ on- AND REFRESH THE BROWSER IF YOU
@@ -194,18 +197,24 @@ export default function ResponsiveAppBar() {
               {!loadingCustomerId ? (
                 customerId && isAuthenticated && isConfirmed ? (
                   <Box sx={{ display: 'grid' }}>
-                    <Button
-                      onClick={handleHomeDashboard}
-                      style={{
-                        margin: '0 10px',
-                        color: 'white',
-                        display: isTablet && searchExpanded ? 'none' : 'flex',
-                        padding: '0',
-                      }}
-                      variant="outlined"
+                    <Badge
+                      badgeContent={pendingShipmentsCount > 0 ? pendingShipmentsCount : null}
+                      color="warning"
+                      sx={{ display: isTablet && searchExpanded ? 'none' : 'block' }}
                     >
-                      {admin ? '🔥   Admin    🔥' : 'Workspace'}
-                    </Button>
+                      <Button
+                        onClick={handleHomeDashboard}
+                        style={{
+                          margin: '0 10px',
+                          color: 'white',
+                          display: isTablet && searchExpanded ? 'none' : 'flex',
+                          padding: '0',
+                        }}
+                        variant="outlined"
+                      >
+                        {admin ? '🔥   Admin    🔥' : 'Workspace'}
+                      </Button>
+                    </Badge>
 
                     <Typography
                       sx={{
