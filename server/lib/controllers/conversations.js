@@ -130,7 +130,7 @@ module.exports = Router()
 
         if (participantSub !== senderSub) {
           const updatedUnreadCount = await Conversations.getIsReadCount(participantSub);
-          io.emit('new message', {
+          io.to(`user_${participantSub}`).emit('new message', {
             recipient: participantSub, // Identifies the intended recipient.
             unreadCount: updatedUnreadCount.unread_count, // The recipient's current unread count.
             conversationId,
