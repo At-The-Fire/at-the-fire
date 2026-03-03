@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-At The Fire is an artist/maker business platform (gallery, inventory management, subscriptions, messaging). React 18 SPA built with Create React App, deployed to Heroku.
+At The Fire is an artist/maker business platform (gallery, inventory management, subscriptions, messaging, auctions, and e-commerce cart/purchases). React 18 SPA built with Create React App, deployed to Heroku.
 
 ## Commands
 
@@ -34,6 +34,8 @@ Enforced via `.eslintrc` and `.prettierrc`:
 - `useNotificationStore` — messaging notifications, unread counts
 - `useQuotaStore`, `useSnapshotStore` — production quota/inventory snapshots
 - `useStripeStore` — payment state
+- `useAuctionStore` (if present) — auction list and bid state
+- `useCartStore` or local state — cart items (no server persistence)
 
 **React Context** (`src/context/`) is used for `LoadingContext`, `ProfileContext`, `QueryContext` (legacy pattern, coexists with Zustand).
 
@@ -62,6 +64,13 @@ React Router v6 in `src/App.js`. Key routes:
 - `/subscription/:result?` — Stripe subscription management
 - `/profile/:sub` — user profiles
 - `/at-the-bon-fire` — admin dashboard
+- `/auctions` — browse active auctions (public)
+- `/auctions/:id` — auction detail with live bid history
+- `/auctions/new`, `/auctions/edit/:id` — seller creates/edits auction
+- `/auctions/my-auctions` — seller's listings and results
+- `/cart` or cart drawer — shopping cart (gallery posts)
+- `/checkout` — payment flow (intent → capture)
+- `/purchases` — buyer's order history
 
 ### UI
 
@@ -73,6 +82,12 @@ Material-UI v5 with dark (default) and light themes defined in `App.js`. Brand g
 - Products have a `sales` array tracking individual sale entries with `quantitySold`
 - Image uploads go through browser-image-compression then XHR to S3 with progress tracking
 - Inventory snapshots capture point-in-time product state
+- **Auctions** are a separate domain from gallery posts — different tables, different upload flow (S3 direct), different purchase path
+- **Cart** state lives in the browser only (Zustand or local state); validated server-side at checkout time via `POST /cart/validate`
+- **Auction notifications** (`outbid`/`won`) are separate from the messaging notification system; polled via `/auction-notifications`
+- **Checkout payment flow**: `POST /purchases/intent` → embedded payment widget → `POST /purchases/confirm` (atomically captures payment + decrements inventory)
+- **Real-time auction updates** via Socket.IO: `bid-placed`, `user-outbid`, `auction-extended`, `auction-ended`, `user-won`, `auction-paid`, `tracking-info`
+- **AuctionToastHandler** — component that listens for WebSocket events and surfaces toasts for outbid/won/tracking updates
 
 ## Environment Variables
 
