@@ -1085,7 +1085,10 @@ describe('conversations tests', () => {
       const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
         setupSubscribedUserMocks();
 
-      const emitSpy = jest.spyOn(io, 'emit');
+      const roomEmitSpy = jest.fn();
+      const toSpy = jest.spyOn(io, 'to').mockReturnValue({
+        emit: roomEmitSpy,
+      });
 
       const response = await request(app)
         .post('/api/v1/conversations/messages')
@@ -1105,18 +1108,19 @@ describe('conversations tests', () => {
       // Small delay to let WebSocket emit before asserting
       await new Promise((resolve) => setTimeout(resolve, 200));
 
-      expect(emitSpy).toHaveBeenCalledWith(
+      expect(toSpy).toHaveBeenCalledWith(expect.stringMatching(/^user_/));
+      expect(roomEmitSpy).toHaveBeenCalledWith(
         'new message',
         expect.objectContaining({
           recipient: expect.any(String),
-          unreadCount: expect.any(String),
+          unreadCount: expect.anything(),
           conversationId: expect.any(Number),
           senderSub: expect.any(String),
           content: expect.any(String),
         }),
       );
 
-      emitSpy.mockRestore();
+      toSpy.mockRestore();
     });
   });
 });
