@@ -17,7 +17,8 @@ export default function UserMenu({ anchorElUser, userMenuItems, setAnchorElNav, 
   });
   const unreadCount = useNotificationStore((state) => state.unreadCount);
   const unreadWonCount = useAuctionNotificationStore((state) => state.unreadWonCount);
-  const totalBadgeCount = unreadCount + unreadWonCount;
+  const unreadOutbidCount = useAuctionNotificationStore((state) => state.unreadOutbidCount);
+  const totalBadgeCount = unreadCount + unreadWonCount + unreadOutbidCount;
 
   return (
     <>
@@ -72,7 +73,8 @@ export default function UserMenu({ anchorElUser, userMenuItems, setAnchorElNav, 
           >
             {userMenuItems.map((setting) => {
               const isMessageItem = unreadCount > 0 && setting === `Messages (${unreadCount})`;
-              const isPurchasesItem = unreadWonCount > 0 && setting === 'Purchases';
+              const isPurchasesItem = (unreadWonCount > 0 || unreadOutbidCount > 0) && setting === 'Purchases';
+              const purchasesColor = unreadWonCount > 0 ? 'success.light' : 'warning.light';
               return (
                 <MenuItem key={setting} value={setting} onClick={(e) => handleCloseUserMenu(e)}>
                   <Typography
@@ -80,17 +82,25 @@ export default function UserMenu({ anchorElUser, userMenuItems, setAnchorElNav, 
                     className={isMessageItem || isPurchasesItem ? 'shimmer' : ''}
                     sx={{
                       fontWeight: isMessageItem || isPurchasesItem ? 'bold' : '',
-                      color: isMessageItem ? 'secondary.light' : isPurchasesItem ? 'success.light' : '',
+                      color: isMessageItem ? 'secondary.light' : isPurchasesItem ? purchasesColor : '',
                       textShadow: isMessageItem || isPurchasesItem ? '0 0 1px black' : '',
                     }}
                   >
                     {setting}
-                    {isPurchasesItem && (
+                    {isPurchasesItem && unreadWonCount > 0 && (
                       <Typography
                         component="span"
                         sx={{ color: 'lightgreen', fontWeight: 'bold', marginLeft: '.5rem' }}
                       >
-                        ({unreadWonCount})
+                        {unreadWonCount} won
+                      </Typography>
+                    )}
+                    {isPurchasesItem && unreadOutbidCount > 0 && (
+                      <Typography
+                        component="span"
+                        sx={{ color: 'orange', fontWeight: 'bold', marginLeft: '.5rem' }}
+                      >
+                        {unreadOutbidCount} outbid
                       </Typography>
                     )}
                   </Typography>
