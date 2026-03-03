@@ -1,5 +1,8 @@
 import { create } from 'zustand';
 import websocketService from '../services/websocketService.js';
+import { useAuthStore } from './useAuthStore.js';
+
+const BASE_URL = process.env.REACT_APP_BASE_URL;
 
 let listenersAttached = false;
 
@@ -16,6 +19,22 @@ export const useAuctionEventsStore = create((set, get) => ({
   // seller badge
   pendingShipmentsCount: 0,
   setPendingShipments: (count) => set({ pendingShipmentsCount: count }),
+  fetchPendingShipments: async () => {
+    const { isAuthenticated } = useAuthStore.getState();
+    if (!isAuthenticated) return;
+    try {
+      const resp = await fetch(`${BASE_URL}/api/v1/auctions/seller`, { credentials: 'include' });
+      if (!resp.ok) return;
+      const auctions = await resp.json();
+      const count = Array.isArray(auctions) ? auctions.filter((a) => a.winnerSub && !a.trackingNumber).length : 0;
+      set({ pendingShipmentsCount: count });
+    } catch (e) {
+      if (process.env.REACT_APP_APP_ENV === 'development') {
+        // eslint-disable-next-line no-console
+        console.error('Error fetching pending shipments:', e);
+      }
+    }
+  },
 
   // actions
   setBid: (auctionId) => set({ lastBidUpdate: { id: Number(auctionId), t: Date.now() } }),
