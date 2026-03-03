@@ -4,6 +4,7 @@ import { Avatar, Box, IconButton, Menu, MenuItem, Tooltip, Typography } from '@m
 import useProfileStore from '../../../stores/useProfileStore.js';
 import { useAuthStore } from '../../../stores/useAuthStore.js';
 import { useNotificationStore } from '../../../stores/useNotificationStore.js';
+import { useAuctionNotificationStore } from '../../../stores/useAuctionNotificationStore.js';
 import { Badge } from '@mui/material';
 
 export default function UserMenu({ anchorElUser, userMenuItems, setAnchorElNav, setAnchorElUser }) {
@@ -15,6 +16,8 @@ export default function UserMenu({ anchorElUser, userMenuItems, setAnchorElNav, 
     setAnchorElUser,
   });
   const unreadCount = useNotificationStore((state) => state.unreadCount);
+  const unreadWonCount = useAuctionNotificationStore((state) => state.unreadWonCount);
+  const totalBadgeCount = unreadCount + unreadWonCount;
 
   return (
     <>
@@ -31,9 +34,9 @@ export default function UserMenu({ anchorElUser, userMenuItems, setAnchorElNav, 
               {' '}
               <Badge
                 badgeContent={
-                  unreadCount > 0 ? (
+                  totalBadgeCount > 0 ? (
                     <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                      {unreadCount}
+                      {totalBadgeCount}
                     </Typography>
                   ) : null
                 }
@@ -44,8 +47,8 @@ export default function UserMenu({ anchorElUser, userMenuItems, setAnchorElNav, 
                   alt={email.toUpperCase()}
                   src={`${profilePicture}`}
                   sx={{
-                    border: unreadCount > 0 ? 'solid 2px green' : '',
-                    boxShadow: unreadCount > 0 ? '0 0 5px 1px white' : '',
+                    border: totalBadgeCount > 0 ? 'solid 2px green' : '',
+                    boxShadow: totalBadgeCount > 0 ? '0 0 5px 1px white' : '',
                   }}
                 />
               </Badge>
@@ -67,35 +70,47 @@ export default function UserMenu({ anchorElUser, userMenuItems, setAnchorElNav, 
             open={Boolean(anchorElUser)}
             onClose={handleCloseUserMenu}
           >
-            {userMenuItems.map((setting) => (
-              <MenuItem key={setting} value={setting} onClick={(e) => handleCloseUserMenu(e)}>
-                <Typography
-                  textAlign="center"
-                  className={unreadCount > 0 && setting === `Messages (${unreadCount})` ? 'shimmer' : ''}
-                  sx={{
-                    fontWeight: unreadCount > 0 && setting === `Messages (${unreadCount})` ? 'bold' : '',
-                    color: unreadCount > 0 && setting === `Messages (${unreadCount})` ? 'secondary.light' : '',
-                    textShadow: unreadCount > 0 && setting === `Messages (${unreadCount})` ? '0 0 1px black' : '',
-                  }}
-                >
-                  {setting}
-                </Typography>
-                {unreadCount > 0 && setting === 'Messages' ? (
+            {userMenuItems.map((setting) => {
+              const isMessageItem = unreadCount > 0 && setting === `Messages (${unreadCount})`;
+              const isPurchasesItem = unreadWonCount > 0 && setting === 'Purchases';
+              return (
+                <MenuItem key={setting} value={setting} onClick={(e) => handleCloseUserMenu(e)}>
                   <Typography
-                    variant="span"
+                    textAlign="center"
+                    className={isMessageItem || isPurchasesItem ? 'shimmer' : ''}
                     sx={{
-                      color: unreadCount > 0 && setting === 'Messages' ? 'lightgreen' : '',
-                      fontWeight: unreadCount > 0 && setting === 'Messages' ? 'bold' : '',
-                      marginLeft: '.5rem',
+                      fontWeight: isMessageItem || isPurchasesItem ? 'bold' : '',
+                      color: isMessageItem ? 'secondary.light' : isPurchasesItem ? 'success.light' : '',
+                      textShadow: isMessageItem || isPurchasesItem ? '0 0 1px black' : '',
                     }}
                   >
-                    ({unreadCount})
+                    {setting}
+                    {isPurchasesItem && (
+                      <Typography
+                        component="span"
+                        sx={{ color: 'lightgreen', fontWeight: 'bold', marginLeft: '.5rem' }}
+                      >
+                        ({unreadWonCount})
+                      </Typography>
+                    )}
                   </Typography>
-                ) : (
-                  ''
-                )}
-              </MenuItem>
-            ))}
+                  {unreadCount > 0 && setting === 'Messages' ? (
+                    <Typography
+                      variant="span"
+                      sx={{
+                        color: 'lightgreen',
+                        fontWeight: 'bold',
+                        marginLeft: '.5rem',
+                      }}
+                    >
+                      ({unreadCount})
+                    </Typography>
+                  ) : (
+                    ''
+                  )}
+                </MenuItem>
+              );
+            })}
           </Menu>
         </Box>
       ) : null}
