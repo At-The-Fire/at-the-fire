@@ -77,6 +77,26 @@ PostgreSQL via `pg`. No migration framework — schema managed by `sql/setup.sql
 
 Tests live in `__tests__/` with `Unit/` and `Integration/` subdirectories, further organized by layer (`Models/`, `_controllers/`, `_middleware/`). Integration tests use `supertest`. Test templates in `__tests__/_templates/`.
 
+### Test Fixture Data — Use `.env` Variables, Never Hardcode
+
+All test fixture identifiers (Cognito subs, emails, Stripe customer IDs) **must** come from `process.env.*`. Never hardcode literal strings for these values in test files — a single `.env` change must be sufficient to update all tests.
+
+**Available test env variables:**
+
+| Variable | Purpose |
+|---|---|
+| `TEST_SUB` | Generic authenticated test user Cognito sub |
+| `TEST_SUB_FULL_CUSTOMER` | Full/paid subscriber Cognito sub |
+| `TEST_SUB_NO_PROFILE` | User with no profile (used for 403/ownership tests) |
+| `TEST_EMAIL_FULL_CUSTOMER` | Email for the full customer seed user |
+| `TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER` | Stripe customer ID for the full customer |
+
+**Rules:**
+- Never use hardcoded sub strings (e.g., `'other_sub_456'`) or email literals in test files.
+- If a test requires a second/non-owner user, use an existing env var for a distinct seed user rather than inventing a literal string.
+- If a genuinely new test identity is needed, add it to `.env` (and `.env.example` / CI secrets) and seed it in `sql/setup.sql` — then reference it via `process.env.*` in tests.
+- The seed data in `sql/setup.sql` must always match the values defined in `.env`.
+
 ## Code Style
 
 - ESLint: `eslint:recommended`, 2-space indent, single quotes, semicolons, `prefer-const`, `no-var`, `no-console` (warn, allows `console.info`/`console.error`)

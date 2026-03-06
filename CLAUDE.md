@@ -62,6 +62,10 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on push/PR to `main`:
 
 Client tests are **not** in CI — only server tests run automatically.
 
+## Test Data Conventions
+
+**Never hardcode user identifiers in tests.** All Cognito subs, emails, and Stripe customer IDs used in test files must reference `process.env.*` variables. This ensures a single `.env` update propagates everywhere — avoiding the need to edit dozens of files. See `server/CLAUDE.md` → *Test Fixture Data* for the full variable list and rules.
+
 ## Key Architectural Decisions
 
 - **No shared code** between client and server — they communicate only via HTTP (`/api/v1/`) and WebSocket.
