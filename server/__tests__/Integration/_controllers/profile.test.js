@@ -167,7 +167,7 @@ describe('Profile routes that use mocked middleware: /profile/user-update/:sub a
         num_imgs: '1',
         price: 'SamplePrice1',
         public_id: 'publicID_post_1',
-        sub: 'sub_customerNoProfile',
+        sub: process.env.TEST_SUB_CUSTOMER_NO_PROFILE,
         title: 'SampleTitle1',
       },
       {
@@ -182,7 +182,7 @@ describe('Profile routes that use mocked middleware: /profile/user-update/:sub a
         num_imgs: '2',
         price: 'SamplePrice2',
         public_id: 'publicID_post_2',
-        sub: 'sub_customerNoProfile',
+        sub: process.env.TEST_SUB_CUSTOMER_NO_PROFILE,
         title: 'SampleTitle2',
       },
     ]);
@@ -231,7 +231,7 @@ describe('Profile routes that use mocked middleware: /profile/user-update/:sub a
         num_imgs: '1',
         price: 'SamplePrice3',
         public_id: 'publicID_post_3',
-        sub: 'sub_fullCustomer',
+        sub: process.env.TEST_SUB_FULL_CUSTOMER,
         title: 'SampleTitle3',
       },
       {
@@ -246,7 +246,7 @@ describe('Profile routes that use mocked middleware: /profile/user-update/:sub a
         num_imgs: '2',
         price: 'SamplePrice4',
         public_id: 'publicID_post_4',
-        sub: 'sub_fullCustomer',
+        sub: process.env.TEST_SUB_FULL_CUSTOMER,
         title: 'SampleTitle4',
       },
     ]);

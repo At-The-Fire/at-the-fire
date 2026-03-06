@@ -8,7 +8,7 @@ const app = require('../../../lib/app');
 // Buyer is a seeded user with a stripe_customers row (customer_id present)
 const mockBuyer = {
   email: 'fullCustomer@example.com',
-  sub: 'sub_fullCustomer',
+  sub: process.env.TEST_SUB_FULL_CUSTOMER,
   customer_id: 'stripe-customer-id_full',
 };
 

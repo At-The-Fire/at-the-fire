@@ -5,7 +5,7 @@ const app = require('../../../lib/app');
 
 const mockUser = {
   email: 'fullCustomer@example.com',
-  sub: 'sub_fullCustomer',
+  sub: process.env.TEST_SUB_FULL_CUSTOMER,
   customer_id: 'stripe-customer-id_full',
 };
 

@@ -16,7 +16,7 @@ jest.mock('jsonwebtoken', () => ({
       token === 'valid.free.user.refresh.token'
     ) {
       // Simulate a successful token verification
-      callback(null, { sub: 'sub_noProfile' });
+      callback(null, { sub: process.env.TEST_SUB_NO_PROFILE });
     } else {
       // Simulate verification failure
       callback(new Error('Invalid token'));
@@ -24,7 +24,7 @@ jest.mock('jsonwebtoken', () => ({
   }),
   decode: jest.fn((token) => {
     if (token === 'valid.free.user.id.token') {
-      return { sub: 'sub_noProfile' }; // Simulated structure of a valid decoded JWT
+      return { sub: process.env.TEST_SUB_NO_PROFILE }; // Simulated structure of a valid decoded JWT
     }
     return null; // Invalid token case
   }),
@@ -38,7 +38,7 @@ const setupSubscribedUserMocks = () => {
 
   jwt.decode.mockImplementation((token) => {
     if (token === 'valid.subscriber.id.token') {
-      return { sub: 'sub_withProfile' };
+      return { sub: process.env.TEST_SUB_WITH_PROFILE };
     }
     return null;
   });
@@ -49,7 +49,7 @@ const setupSubscribedUserMocks = () => {
       token === 'valid.subscriber.id.token' ||
       token === 'valid.subscriber.refresh.token'
     ) {
-      callback(null, { sub: 'sub_withProfile' });
+      callback(null, { sub: process.env.TEST_SUB_WITH_PROFILE });
     } else {
       callback(new Error('Invalid token'));
     }

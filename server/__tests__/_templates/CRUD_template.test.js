@@ -35,7 +35,7 @@ jest.mock('jsonwebtoken', () => ({
   decode: jest.fn((token) => {
     if (token === 'valid.free.user.id.token') {
       // Return a mock decoded token with `sub`
-      return { sub: 'free-user-sub' };
+      return { sub: process.env.TEST_SUB };
     } else {
       return null; // Invalid token case
     }
@@ -67,7 +67,7 @@ const setupSubscribedUserMocks = () => {
   // Mock the `jwt.decode` function to decode the idToken and return a token with `sub`
   jwt.decode.mockImplementation((token) => {
     if (token === 'valid.subscriber.id.token') {
-      return { sub: 'sub_fullCustomer' }; // Simulated structure of a valid decoded JWT
+      return { sub: process.env.TEST_SUB }; // Simulated structure of a valid decoded JWT
     }
     return null; // Return null for anything else (token is invalid)
   });
@@ -80,7 +80,7 @@ const setupSubscribedUserMocks = () => {
       token === 'valid.subscriber.refresh.token'
     ) {
       // Simulate a valid token verification with a `sub` field
-      callback(null, { sub: 'sub_fullCustomer' });
+      callback(null, { sub: process.env.TEST_SUB_FULL_CUSTOMER });
     } else {
       callback(new Error('Invalid token'));
     }
@@ -89,7 +89,7 @@ const setupSubscribedUserMocks = () => {
   // Mock the database call to return a valid customer ID for a subscribed user
   StripeCustomer.getStripeByAWSSub.mockResolvedValue({
     customerId: 'stripe-customer-id_full',
-    awsSub: 'sub_fullCustomer',
+    awsSub: process.env.TEST_SUB_FULL_CUSTOMER,
     confirmed: true,
   });
 
@@ -150,7 +150,7 @@ describe('authenticateAWS Middleware', () => {
           num_imgs: '1',
           price: 'SamplePrice3',
           public_id: 'publicID_post_3',
-          quantity:1,
+          quantity: 1,
           sold: false,
           date_sold: null,
           title: 'SampleTitle3',
@@ -165,7 +165,7 @@ describe('authenticateAWS Middleware', () => {
           num_imgs: '2',
           price: 'SamplePrice4',
           public_id: 'publicID_post_4',
-          quantity:1,
+          quantity: 1,
           sold: false,
           date_sold: null,
           title: 'SampleTitle4',

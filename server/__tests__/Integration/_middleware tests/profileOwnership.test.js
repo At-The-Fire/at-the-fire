@@ -19,7 +19,7 @@ jest.mock('jsonwebtoken', () => ({
       token === 'valid.free.user.refresh.token'
     ) {
       // Simulate a successful token verification
-      callback(null, { sub: 'sub_noProfile' });
+      callback(null, { sub: process.env.TEST_SUB_NO_PROFILE });
     } else {
       // Simulate verification failure
       callback(new Error('Invalid token'));
@@ -28,7 +28,7 @@ jest.mock('jsonwebtoken', () => ({
   decode: jest.fn((token) => {
     if (token === 'valid.free.user.id.token') {
       // Return a mock decoded token with `sub`
-      return { sub: 'sub_noProfile' };
+      return { sub: process.env.TEST_SUB_NO_PROFILE };
     } else {
       return null; // Invalid token case
     }
@@ -61,7 +61,7 @@ const setupFailedSubscribedUserMocks = () => {
   // Mock the `jwt.decode` function to decode the idToken and return a token with `sub`
   jwt.decode.mockImplementation((token) => {
     if (token === 'valid.subscriber.id.token') {
-      return { sub: 'sub_noProfile' }; // Simulated structure of a valid decoded JWT
+      return { sub: process.env.TEST_SUB_NO_PROFILE }; // Simulated structure of a valid decoded JWT
     }
     return null; // Return null for anything else (token is invalid)
   });
@@ -74,7 +74,7 @@ const setupFailedSubscribedUserMocks = () => {
       token === 'valid.subscriber.refresh.token'
     ) {
       // Simulate a valid token verification with a `sub` field
-      callback(null, { sub: 'sub_noProfile' });
+      callback(null, { sub: process.env.TEST_SUB_NO_PROFILE });
     } else {
       callback(new Error('Invalid token'));
     }
@@ -113,7 +113,7 @@ const setupSuccessSubscribedUserMocks = () => {
   // Mock the `jwt.decode` function to decode the idToken and return a token with `sub`
   jwt.decode.mockImplementation((token) => {
     if (token === 'valid.subscriber.id.token') {
-      return { sub: 'sub_noProfile' }; // Simulated structure of a valid decoded JWT
+      return { sub: process.env.TEST_SUB_NO_PROFILE }; // Simulated structure of a valid decoded JWT
     }
     return null; // Return null for anything else (token is invalid)
   });
@@ -126,7 +126,7 @@ const setupSuccessSubscribedUserMocks = () => {
       token === 'valid.subscriber.refresh.token'
     ) {
       // Simulate a valid token verification with a `sub` field
-      callback(null, { sub: 'sub_noProfile' });
+      callback(null, { sub: process.env.TEST_SUB_NO_PROFILE });
     } else {
       callback(new Error('Invalid token'));
     }
@@ -214,7 +214,7 @@ describe('authenticateAWS Middleware', () => {
     // Mock matching customer ID scenario
     StripeCustomer.getStripeByAWSSub.mockResolvedValue({
       customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
-      awsSub: 'sub_noProfile',
+      awsSub: process.env.TEST_SUB_NO_PROFILE,
       confirmed: true,
     });
 
@@ -284,7 +284,7 @@ describe('authenticateAWS Middleware', () => {
     // Mock mismatched customer ID scenario
     StripeCustomer.getStripeByAWSSub.mockResolvedValue({
       customerId: 'actual-customer-id',
-      awsSub: 'sub_noProfile',
+      awsSub: process.env.TEST_SUB_NO_PROFILE,
       confirmed: true,
     });
 

@@ -10,7 +10,7 @@ jest.mock('jsonwebtoken', () => ({
     const validTokens = new Set(['validToken', 'validIdToken', 'mockAccessToken', 'mockIdToken']);
 
     if (validTokens.has(token)) {
-      callback(null, { sub: 'sampleSub' });
+      callback(null, { sub: process.env.TEST_SUB });
       return;
     }
 
@@ -19,7 +19,7 @@ jest.mock('jsonwebtoken', () => ({
 
   decode: jest.fn((token) => {
     if (token === 'validToken' || token === 'validIdToken' || token === 'mockIdToken') {
-      return { sub: 'sampleSub' };
+      return { sub: process.env.TEST_SUB };
     }
     return null;
   }),
@@ -40,7 +40,7 @@ describe('AWS Cognito User tests', () => {
 
   // User creation tests
   it('should create a new user successfully', async () => {
-    const mockUserData = { email: 'test2@example.com', sub: 'sub_2' };
+    const mockUserData = { email: 'test-email@email.com', sub: process.env.TEST_SUB };
     const response = await request(app).post('/api/v1/auth/new-user').send(mockUserData);
 
     expect(response.status).toBe(200);
@@ -59,9 +59,9 @@ describe('AWS Cognito User tests', () => {
 
   it('should return error for an existing email', async () => {
     const mockUserData = {
-      email: 'noProfile@example.com',
-      sub: 'new-sub',
-      // sub: 'sub_noProfile',
+      email: process.env.TEST_EMAIL,
+      sub: process.env.TEST_SUB,
+      // sub: process.env.TEST_SUB_NO_PROFILE,
     };
     const response = await request(app).post('/api/v1/auth/new-user').send(mockUserData);
 
@@ -72,11 +72,11 @@ describe('AWS Cognito User tests', () => {
   it('should not overwrite existing user data with same sub', async () => {
     const initialUserData = {
       email: 'initial@example.com',
-      sub: 'duplicate-sub',
+      sub: process.env.TEST_SUB,
     };
     const overwriteAttemptData = {
       email: 'overwrite@example.com',
-      sub: 'duplicate-sub',
+      sub: process.env.TEST_SUB,
     };
     await request(app).post('/api/v1/auth/new-user').send(initialUserData);
 
@@ -100,7 +100,7 @@ describe('AWS Cognito User tests', () => {
     expect(response2.body).toBe('Email is required.');
   });
   it('should handle incorrect email format', async () => {
-    const mockUserData = { email: 'testexample', sub: 'test-sub' }; // Invalid email format
+    const mockUserData = { email: 'testexample', sub: process.env.TEST_SUB }; // Invalid email format
     const response = await request(app).post('/api/v1/auth/new-user').send(mockUserData);
 
     expect(response.status).toBe(400);

@@ -43,18 +43,18 @@ jest.mock('../../../lib/models/Invoices', () => ({
 describe('authorize Middleware', () => {
   const setupTokensAndMocks = (accessToken, idToken, refreshToken, isActive) => {
     jwt.decode.mockImplementation((token) =>
-      token === idToken ? { sub: 'sub_fullCustomer' } : null,
+      token === idToken ? { sub: process.env.TEST_SUB_FULL_CUSTOMER } : null,
     );
     jwt.verify.mockImplementation((token, getKey, options, callback) => {
       if ([accessToken, idToken, refreshToken].includes(token)) {
-        callback(null, { sub: 'sub_fullCustomer' });
+        callback(null, { sub: process.env.TEST_SUB_FULL_CUSTOMER });
       } else {
         callback(new Error('Invalid token'));
       }
     });
     StripeCustomer.getStripeByAWSSub.mockResolvedValue({
       customerId: 'stripe-customer-id_full',
-      awsSub: 'sub_fullCustomer',
+      awsSub: process.env.TEST_SUB_FULL_CUSTOMER,
       confirmed: true,
     });
 
@@ -190,16 +190,16 @@ describe('authorize Middleware', () => {
   it('PUT /profile/customer-update should return a 403 if user is not authorized to update profile due to incorrect customerId ', async () => {
     // Setup the mocks with one customerId
     setupTokensAndMocks(
-      'sub_fullCustomer.access.token',
-      'sub_fullCustomer.id.token',
-      'sub_fullCustomer.refresh.token',
+      `${process.env.TEST_SUB_FULL_CUSTOMER}.access.token`,
+      `${process.env.TEST_SUB_FULL_CUSTOMER}.id.token`,
+      `${process.env.TEST_SUB_FULL_CUSTOMER}.refresh.token`,
       false,
     );
 
     // Mock StripeCustomer to return a different customerId than what setupTokensAndMocks uses
     StripeCustomer.getStripeByAWSSub.mockResolvedValue({
       customerId: 'different-customer-id', // This is the key change
-      awsSub: 'sub_fullCustomer',
+      awsSub: process.env.TEST_SUB_FULL_CUSTOMER,
       confirmed: true,
     });
 
@@ -213,9 +213,9 @@ describe('authorize Middleware', () => {
         publicId: 'publicID_profile',
       })
       .set('Cookie', [
-        'accessToken=sub_fullCustomer.access.token;',
-        'idToken=sub_fullCustomer.id.token;',
-        'refreshToken=sub_fullCustomer.refresh.token;',
+        `accessToken=${process.env.TEST_SUB_FULL_CUSTOMER}.access.token;`,
+        `idToken=${process.env.TEST_SUB_FULL_CUSTOMER}.id.token;`,
+        `refreshToken=${process.env.TEST_SUB_FULL_CUSTOMER}.refresh.token;`,
       ]);
 
     expect(resp.status).toBe(403);

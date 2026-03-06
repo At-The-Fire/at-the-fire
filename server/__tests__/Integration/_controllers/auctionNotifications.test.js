@@ -6,7 +6,7 @@ const app = require('../../../lib/app');
 // Mock user who will receive notifications
 const mockUser = {
   email: 'withProfile@example.com',
-  sub: 'sub_withProfile',
+  sub: process.env.TEST_SUB_WITH_PROFILE,
   customer_id: null,
 };
 
@@ -71,7 +71,7 @@ describe('AuctionNotification routes', () => {
         new Date(),
         new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         true,
-        'sub_fullCustomer',
+        process.env.TEST_SUB_FULL_CUSTOMER,
       ],
     );
     testAuctionId = rows[0].id;
@@ -167,7 +167,7 @@ describe('AuctionNotification routes', () => {
           new Date(),
           new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
           true,
-          'sub_fullCustomer',
+          process.env.TEST_SUB_FULL_CUSTOMER,
         ],
       );
 

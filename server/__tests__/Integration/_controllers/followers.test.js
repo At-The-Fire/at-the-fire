@@ -16,7 +16,7 @@ jest.mock('jsonwebtoken', () => ({
       token === 'valid.free.user.refresh.token'
     ) {
       // Simulate a successful token verification
-      callback(null, { sub: 'sub_noProfile' });
+      callback(null, { sub: process.env.TEST_SUB_NO_PROFILE });
     } else {
       // Simulate verification failure
       callback(new Error('Invalid token'));
@@ -24,7 +24,7 @@ jest.mock('jsonwebtoken', () => ({
   }),
   decode: jest.fn((token) => {
     if (token === 'valid.free.user.id.token') {
-      return { sub: 'sub_noProfile' }; // Simulated structure of a valid decoded JWT
+      return { sub: process.env.TEST_SUB_NO_PROFILE }; // Simulated structure of a valid decoded JWT
     }
     return null; // Invalid token case
   }),
@@ -38,7 +38,7 @@ const setupSubscribedUserMocks = () => {
 
   jwt.decode.mockImplementation((token) => {
     if (token === 'valid.subscriber.id.token') {
-      return { sub: 'sub_withProfile' };
+      return { sub: process.env.TEST_SUB_WITH_PROFILE };
     }
     return null;
   });
@@ -49,7 +49,7 @@ const setupSubscribedUserMocks = () => {
       token === 'valid.subscriber.id.token' ||
       token === 'valid.subscriber.refresh.token'
     ) {
-      callback(null, { sub: 'sub_withProfile' });
+      callback(null, { sub: process.env.TEST_SUB_WITH_PROFILE });
     } else {
       callback(new Error('Invalid token'));
     }
@@ -86,13 +86,13 @@ describe('Follower Routes', () => {
         `idToken=${subscribedUserIdToken};`,
         `refreshToken=${subscribedUserRefreshToken};`,
       ])
-      .send({ followedId: 'sub_customerNoProfile' });
+      .send({ followedId: process.env.TEST_SUB_CUSTOMER_NO_PROFILE });
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
       success: true,
-      followerId: 'sub_withProfile',
-      followedId: 'sub_customerNoProfile',
+      followerId: process.env.TEST_SUB_WITH_PROFILE,
+      followedId: process.env.TEST_SUB_CUSTOMER_NO_PROFILE,
     });
   });
 
@@ -104,7 +104,7 @@ describe('Follower Routes', () => {
     } = setupSubscribedUserMocks();
 
     const response = await request(app)
-      .delete('/api/v1/followers/sub_fullCustomer')
+      .delete(`/api/v1/followers/${process.env.TEST_SUB_FULL_CUSTOMER}`)
       .set('Cookie', [
         `accessToken=${subscribedUserAccessToken};`,
         `idToken=${subscribedUserIdToken};`,
@@ -117,7 +117,7 @@ describe('Follower Routes', () => {
 
   it('should get follower and following counts for a user', async () => {
     const response = await request(app).get(
-      '/api/v1/followers/count/sub_fullCustomer'
+      `/api/v1/followers/count/${process.env.TEST_SUB_FULL_CUSTOMER}`
     );
 
     expect(response.status).toBe(200);
@@ -130,7 +130,7 @@ describe('Follower Routes', () => {
   it('should return 401 when trying to create follower relationship without auth', async () => {
     const response = await request(app)
       .post('/api/v1/followers')
-      .send({ followedId: 'sub_fullCustomer' });
+      .send({ followedId: process.env.TEST_SUB_FULL_CUSTOMER });
 
     expect(response.status).toBe(401);
   });
@@ -139,14 +139,14 @@ describe('Follower Routes', () => {
     const response = await request(app)
       .post('/api/v1/followers')
       .set('Cookie', ['accessToken=invalid.token;', 'idToken=invalid.token;'])
-      .send({ followedId: 'sub_fullCustomer' });
+      .send({ followedId: process.env.TEST_SUB_FULL_CUSTOMER });
 
     expect(response.status).toBe(401);
   });
 
   it('should return an empty list if user has no followers', async () => {
     const response = await request(app).get(
-      '/api/v1/followers/followers/sub_withProfile'
+      `/api/v1/followers/followers/${process.env.TEST_SUB_WITH_PROFILE}`
     );
 
     expect(response.status).toBe(200);
@@ -167,7 +167,7 @@ describe('Follower Routes', () => {
         `idToken=${subscribedUserIdToken};`,
         `refreshToken=${subscribedUserRefreshToken};`,
       ])
-      .send({ followedId: 'sub_withProfile' });
+      .send({ followedId: process.env.TEST_SUB_WITH_PROFILE });
 
     expect(response.status).toBe(400);
     expect(response.body.message).toBe('You cannot follow yourself.');
@@ -189,7 +189,7 @@ describe('Follower Routes', () => {
       subscribedUserRefreshToken,
     } = setupSubscribedUserMocks();
     const response = await request(app)
-      .get('/api/v1/followers/sub_fullCustomer/status')
+      .get(`/api/v1/followers/${process.env.TEST_SUB_FULL_CUSTOMER}/status`)
       .set('Cookie', [
         `accessToken=${subscribedUserAccessToken};`,
         `idToken=${subscribedUserIdToken};`,
@@ -225,7 +225,7 @@ describe('Follower Routes', () => {
         `idToken=${subscribedUserIdToken};`,
         `refreshToken=${subscribedUserRefreshToken};`,
       ])
-      .send({ followedId: 'sub_customerNoProfile' });
+      .send({ followedId: process.env.TEST_SUB_CUSTOMER_NO_PROFILE });
 
     expect(firstResponse.status).toBe(200);
 
@@ -237,7 +237,7 @@ describe('Follower Routes', () => {
         `idToken=${subscribedUserIdToken};`,
         `refreshToken=${subscribedUserRefreshToken};`,
       ])
-      .send({ followedId: 'sub_customerNoProfile' });
+      .send({ followedId: process.env.TEST_SUB_CUSTOMER_NO_PROFILE });
 
     expect(response.status).toBe(400);
     expect(response.body.message).toBe('Already following this user.');

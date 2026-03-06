@@ -8,13 +8,13 @@ const app = require('../../../lib/app');
 // which are required for the GET /:id profile JOIN.
 const mockBidder1 = {
   email: 'withProfile@example.com',
-  sub: 'sub_withProfile',
+  sub: process.env.TEST_SUB_WITH_PROFILE,
   customer_id: null,
 };
 
 const mockBidder2 = {
   email: 'partialProfile@example.com',
-  sub: 'sub_partialProfile',
+  sub: process.env.TEST_SUB_INCOMPLETE_PROFILE,
   customer_id: 'stripe-customer-id_partialProfile',
 };
 
@@ -62,7 +62,7 @@ describe('Bids routes', () => {
         new Date(),
         new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
         true,
-        'sub_fullCustomer',
+        process.env.TEST_SUB_FULL_CUSTOMER,
       ],
     );
     testAuctionId = rows[0].id;
@@ -78,10 +78,10 @@ describe('Bids routes', () => {
       // Seed a bid so there is something to return
       await pool.query(
         `
-        INSERT INTO bids (auction_id, bidder_sub, bid_amount) 
+        INSERT INTO bids (auction_id, bidder_sub, bid_amount)
         VALUES ($1, $2, $3)
         `,
-        [testAuctionId, 'sub_withProfile', 150],
+        [testAuctionId, process.env.TEST_SUB_WITH_PROFILE, 150],
       );
 
       const response = await request(app).get(`/api/v1/bids/${testAuctionId}`);
@@ -91,7 +91,7 @@ describe('Bids routes', () => {
         {
           id: '1',
           auctionId: '1',
-          bidderSub: 'sub_withProfile',
+          bidderSub: process.env.TEST_SUB_WITH_PROFILE,
           bidAmount: '150',
           createdAt: expect.any(String),
           updatedAt: expect.any(String),
@@ -110,10 +110,16 @@ describe('Bids routes', () => {
     it('returns bids sorted by bid_amount descending', async () => {
       await pool.query(
         `
-        INSERT INTO bids (auction_id, bidder_sub, bid_amount) 
+        INSERT INTO bids (auction_id, bidder_sub, bid_amount)
         VALUES ($1, $2, $3), ($1, $4, $5)
         `,
-        [testAuctionId, 'sub_withProfile', 150, 'sub_partialProfile', 250],
+        [
+          testAuctionId,
+          process.env.TEST_SUB_WITH_PROFILE,
+          150,
+          process.env.TEST_SUB_INCOMPLETE_PROFILE,
+          250,
+        ],
       );
 
       const response = await request(app).get(`/api/v1/bids/${testAuctionId}`);
@@ -123,7 +129,7 @@ describe('Bids routes', () => {
         {
           id: expect.any(String),
           auctionId: expect.any(String),
-          bidderSub: 'sub_partialProfile',
+          bidderSub: process.env.TEST_SUB_INCOMPLETE_PROFILE,
           bidAmount: '250',
           createdAt: expect.any(String),
           updatedAt: expect.any(String),
@@ -132,7 +138,7 @@ describe('Bids routes', () => {
         {
           id: expect.any(String),
           auctionId: expect.any(String),
-          bidderSub: 'sub_withProfile',
+          bidderSub: process.env.TEST_SUB_WITH_PROFILE,
           bidAmount: '150',
           createdAt: expect.any(String),
           updatedAt: expect.any(String),
@@ -146,7 +152,11 @@ describe('Bids routes', () => {
     it('places a bid successfully and returns 201', async () => {
       const response = await request(app)
         .post('/api/v1/bids')
-        .send({ auctionId: testAuctionId, bidderSub: 'sub_withProfile', bidAmount: 150 });
+        .send({
+          auctionId: testAuctionId,
+          bidderSub: process.env.TEST_SUB_WITH_PROFILE,
+          bidAmount: 150,
+        });
 
       expect(response.status).toBe(201);
       expect(response.body).toEqual({
@@ -154,7 +164,7 @@ describe('Bids routes', () => {
         bid: {
           id: expect.any(String),
           auctionId: testAuctionId,
-          bidderSub: 'sub_withProfile',
+          bidderSub: process.env.TEST_SUB_WITH_PROFILE,
           bidAmount: '150',
           createdAt: expect.any(String),
           updatedAt: expect.any(String),
@@ -165,7 +175,11 @@ describe('Bids routes', () => {
     it('updates the auction current_bid after a successful bid', async () => {
       await request(app)
         .post('/api/v1/bids')
-        .send({ auctionId: testAuctionId, bidderSub: 'sub_withProfile', bidAmount: 200 });
+        .send({
+          auctionId: testAuctionId,
+          bidderSub: process.env.TEST_SUB_WITH_PROFILE,
+          bidAmount: 200,
+        });
 
       const { rows } = await pool.query('SELECT current_bid FROM auctions WHERE id = $1', [
         testAuctionId,
@@ -186,13 +200,17 @@ describe('Bids routes', () => {
         `
         INSERT INTO bids (auction_id, bidder_sub, bid_amount) VALUES ($1, $2, $3)
         `,
-        [testAuctionId, 'sub_withProfile', 300],
+        [testAuctionId, process.env.TEST_SUB_WITH_PROFILE, 300],
       );
 
       // Try to place a lower bid
       const response = await request(app)
         .post('/api/v1/bids')
-        .send({ auctionId: testAuctionId, bidderSub: 'sub_partialProfile', bidAmount: 200 });
+        .send({
+          auctionId: testAuctionId,
+          bidderSub: process.env.TEST_SUB_INCOMPLETE_PROFILE,
+          bidAmount: 200,
+        });
 
       expect(response.status).toBe(409);
       expect(response.body).toEqual({
@@ -204,15 +222,19 @@ describe('Bids routes', () => {
     it('returns 409 if bid equals the current highest bid', async () => {
       await pool.query(
         `
-        INSERT INTO bids (auction_id, bidder_sub, bid_amount) 
+        INSERT INTO bids (auction_id, bidder_sub, bid_amount)
         VALUES ($1, $2, $3)
         `,
-        [testAuctionId, 'sub_withProfile', 300],
+        [testAuctionId, process.env.TEST_SUB_WITH_PROFILE, 300],
       );
 
       const response = await request(app)
         .post('/api/v1/bids')
-        .send({ auctionId: testAuctionId, bidderSub: 'sub_partialProfile', bidAmount: 300 });
+        .send({
+          auctionId: testAuctionId,
+          bidderSub: process.env.TEST_SUB_INCOMPLETE_PROFILE,
+          bidAmount: 300,
+        });
 
       expect(response.status).toBe(409);
     });
@@ -231,9 +253,9 @@ describe('Bids routes', () => {
 
       const { rows } = await pool.query(
         `
-        SELECT * FROM auction_notifications 
-        WHERE user_sub = $1 
-        AND auction_id = $2 
+        SELECT * FROM auction_notifications
+        WHERE user_sub = $1
+        AND auction_id = $2
         AND type = 'outbid'
         `,
         [mockBidder1.sub, testAuctionId],
@@ -246,7 +268,7 @@ describe('Bids routes', () => {
       // Same user raises their own bid
       await pool.query(
         `
-        INSERT INTO bids (auction_id, bidder_sub, bid_amount) 
+        INSERT INTO bids (auction_id, bidder_sub, bid_amount)
         VALUES ($1, $2, $3)
         `,
         [testAuctionId, mockBidder1.sub, 150],
@@ -258,7 +280,7 @@ describe('Bids routes', () => {
 
       const { rows } = await pool.query(
         `
-        SELECT * FROM auction_notifications 
+        SELECT * FROM auction_notifications
         WHERE user_sub = $1 AND type = 'outbid'
         `,
         [mockBidder1.sub],
@@ -271,7 +293,7 @@ describe('Bids routes', () => {
       const shortEndTime = new Date(Date.now() + 30 * 1000);
       await pool.query(
         `
-        UPDATE auctions SET end_time = $1 
+        UPDATE auctions SET end_time = $1
         WHERE id = $2
         `,
         [shortEndTime, testAuctionId],

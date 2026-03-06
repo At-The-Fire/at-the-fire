@@ -68,7 +68,7 @@ describe('posts/ post details/ cloudinary routes', () => {
       price: 'SamplePrice1',
       public_id: 'publicID_post_1',
       sold: false,
-      sub: 'sub_customerNoProfile',
+      sub: process.env.TEST_SUB_CUSTOMER_NO_PROFILE,
       title: 'SampleTitle1',
     });
   });
@@ -80,7 +80,7 @@ describe('posts/ post details/ cloudinary routes', () => {
   });
 
   it('should return a feed of posts for a valid user', async () => {
-    const response = await request(app).get('/api/v1/gallery-posts/feed/sub_withProfile');
+    const response = await request(app).get(`/api/v1/gallery-posts/feed/${process.env.TEST_SUB_WITH_PROFILE}`);
 
     expect(response.status).toBe(200);
     expect(Array.isArray(response.body)).toBe(true);
@@ -104,12 +104,12 @@ describe('posts/ post details/ cloudinary routes', () => {
     jest.spyOn(pool, 'query').mockImplementation(async (query) => {
       if (query.includes('FROM cognito_users')) {
         // Allow authentication query to run successfully
-        return { rows: [{ sub: 'sub_withProfile' }] };
+        return { rows: [{ sub: process.env.TEST_SUB_WITH_PROFILE }] };
       }
       throw new Error('Database error'); // Mock failure only for post fetching
     });
 
-    const response = await request(app).get('/api/v1/gallery-posts/feed/sub_withProfile');
+    const response = await request(app).get(`/api/v1/gallery-posts/feed/${process.env.TEST_SUB_WITH_PROFILE}`);
 
     expect(response.status).toBe(500);
     expect(response.body.message).toBe('Database error');

@@ -178,7 +178,7 @@ describe('Stripe checkout session controller', () => {
 
   it('should handle missing fields', async () => {
     const response = await request(app).post('/api/v1/create-checkout-session').send({
-      awsSub: 'sub_noProfile',
+      awsSub: process.env.TEST_SUB_NO_PROFILE,
       billingEmail: '   ',
       firstName: 'Test',
       priceId: 'price_12345',

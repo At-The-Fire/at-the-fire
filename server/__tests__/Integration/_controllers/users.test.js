@@ -27,7 +27,7 @@ jest.mock('jsonwebtoken', () => ({
       token === 'valid.free.user.refresh.token'
     ) {
       // Simulate a successful token verification
-      callback(null, { sub: 'sub_fullCustomer' });
+      callback(null, { sub: process.env.TEST_SUB_FULL_CUSTOMER });
     } else {
       // Simulate verification failure
       callback(new Error('Invalid token'));
@@ -36,7 +36,7 @@ jest.mock('jsonwebtoken', () => ({
   decode: jest.fn((token) => {
     if (token === 'valid.free.user.id.token') {
       // Return a mock decoded token with `sub`
-      return { sub: 'sub_fullCustomer' };
+      return { sub: process.env.TEST_SUB_FULL_CUSTOMER };
     } else {
       return null; // Invalid token case
     }
@@ -68,7 +68,7 @@ const setupSubscribedUserMocks = () => {
   // Mock the `jwt.decode` function to decode the idToken and return a token with `sub`
   jwt.decode.mockImplementation((token) => {
     if (token === 'valid.subscriber.id.token') {
-      return { sub: 'sub_fullCustomer' }; // Simulated structure of a valid decoded JWT
+      return { sub: process.env.TEST_SUB_FULL_CUSTOMER }; // Simulated structure of a valid decoded JWT
     }
     return null; // Return null for anything else (token is invalid)
   });
@@ -81,7 +81,7 @@ const setupSubscribedUserMocks = () => {
       token === 'valid.subscriber.refresh.token'
     ) {
       // Simulate a valid token verification with a `sub` field
-      callback(null, { sub: 'sub_fullCustomer' });
+      callback(null, { sub: process.env.TEST_SUB_FULL_CUSTOMER });
     } else {
       callback(new Error('Invalid token'));
     }
@@ -90,7 +90,7 @@ const setupSubscribedUserMocks = () => {
   //   Mock the database call to return a valid customer ID for a subscribed user
   StripeCustomer.getStripeByAWSSub.mockResolvedValue({
     customerId: 'stripe-customer-id_full',
-    awsSub: 'sub_fullCustomer',
+    awsSub: process.env.TEST_SUB_FULL_CUSTOMER,
     confirmed: true,
   });
 

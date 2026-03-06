@@ -17,7 +17,7 @@ jest.mock('jsonwebtoken', () => ({
       token === 'valid.free.user.refresh.token'
     ) {
       // Simulate a successful token verification
-      callback(null, { sub: 'sub_noProfile' });
+      callback(null, { sub: process.env.TEST_SUB_NO_PROFILE });
     } else {
       // Simulate verification failure
       callback(new Error('Invalid token'));
@@ -25,7 +25,7 @@ jest.mock('jsonwebtoken', () => ({
   }),
   decode: jest.fn((token) => {
     if (token === 'valid.free.user.id.token') {
-      return { sub: 'sub_noProfile' }; // Simulated structure of a valid decoded JWT
+      return { sub: process.env.TEST_SUB_NO_PROFILE }; // Simulated structure of a valid decoded JWT
     }
     return null; // Invalid token case
   }),
@@ -39,7 +39,7 @@ const setupSubscribedUserMocks = () => {
 
   jwt.decode.mockImplementation((token) => {
     if (token === 'valid.subscriber.id.token') {
-      return { sub: 'sub_withProfile' };
+      return { sub: process.env.TEST_SUB_WITH_PROFILE };
     }
     return null;
   });
@@ -50,7 +50,7 @@ const setupSubscribedUserMocks = () => {
       token === 'valid.subscriber.id.token' ||
       token === 'valid.subscriber.refresh.token'
     ) {
-      callback(null, { sub: 'sub_withProfile' });
+      callback(null, { sub: process.env.TEST_SUB_WITH_PROFILE });
     } else {
       callback(new Error('Invalid token'));
     }
@@ -98,7 +98,7 @@ describe('Likes Routes', () => {
       expect(res.status).toBe(200);
       expect(res.body).toEqual({ liked: true, count: 5 });
       expect(Likes.toggleLike).toHaveBeenCalledWith({
-        sub: 'sub_withProfile',
+        sub: process.env.TEST_SUB_WITH_PROFILE,
         post_id: 1,
       });
     });
@@ -124,7 +124,7 @@ describe('Likes Routes', () => {
       expect(res.status).toBe(200);
       expect(res.body).toEqual({ liked: false, count: 10 });
       expect(Likes.toggleLike).toHaveBeenCalledWith({
-        sub: 'sub_withProfile',
+        sub: process.env.TEST_SUB_WITH_PROFILE,
         post_id: 2,
       });
     });
@@ -182,11 +182,11 @@ describe('Likes Routes', () => {
         2: { liked: false, count: 6 },
       });
       expect(Likes.getPostLikeStatus).toHaveBeenCalledWith({
-        sub: 'sub_withProfile',
+        sub: process.env.TEST_SUB_WITH_PROFILE,
         post_id: 1,
       });
       expect(Likes.getPostLikeStatus).toHaveBeenCalledWith({
-        sub: 'sub_withProfile',
+        sub: process.env.TEST_SUB_WITH_PROFILE,
         post_id: 2,
       });
     });
@@ -230,7 +230,7 @@ describe('Likes Routes', () => {
       expect(res.status).toBe(200);
       expect(res.body).toEqual({ isLiked: true });
       expect(Likes.getPostLikeStatus).toHaveBeenCalledWith({
-        sub: 'sub_withProfile',
+        sub: process.env.TEST_SUB_WITH_PROFILE,
         post_id: 1,
       });
     });

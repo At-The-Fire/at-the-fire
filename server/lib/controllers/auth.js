@@ -249,7 +249,7 @@ module.exports = Router()
             (err, decoded) => {
               if (err) reject(err);
               else resolve(decoded);
-            }
+            },
           );
         });
         if (!verifiedToken || !verifiedToken.sub) {

@@ -31,7 +31,7 @@ jest.mock('@aws-sdk/client-s3', () => {
 // Mock user data
 const mockUser = {
   email: 'seller@example.com',
-  sub: 'sub_fullCustomer',
+  sub: process.env.TEST_SUB_FULL_CUSTOMER,
   customer_id: 'stripe-customer-id_full',
 };
 
@@ -93,7 +93,7 @@ describe('Auction routes', () => {
         new Date(),
         new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
         true,
-        'sub_fullCustomer',
+        process.env.TEST_SUB_FULL_CUSTOMER,
       ],
     );
     testAuctionId = rows[0].id;
@@ -143,7 +143,7 @@ describe('Auction routes', () => {
       expect(response.status).toBe(200);
       expect(response.body.id).toBe(testAuctionId);
       expect(response.body.title).toBe('Test Auction');
-      expect(response.body.sellerSub).toBe('sub_fullCustomer');
+      expect(response.body.sellerSub).toBe(process.env.TEST_SUB_FULL_CUSTOMER);
     });
 
     it('should return null for non-existent auction', async () => {
@@ -169,7 +169,7 @@ describe('Auction routes', () => {
         INSERT INTO auction_results (auction_id, winner_sub, final_bid, closed_reason)
         VALUES ($1, $2, $3, $4)
         `,
-        [testAuctionId, 'sub_fullCustomer', 250, 'buy_now'],
+        [testAuctionId, process.env.TEST_SUB_FULL_CUSTOMER, 250, 'buy_now'],
       );
 
       const response = await request(app).get(`/api/v1/auctions/results/${testAuctionId}`);
@@ -233,7 +233,7 @@ describe('Auction routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.title).toBe('New Auction');
-      expect(response.body.sellerSub).toBe('sub_fullCustomer'); // Auto-set from req.userAWSSub
+      expect(response.body.sellerSub).toBe(process.env.TEST_SUB_FULL_CUSTOMER); // Auto-set from req.userAWSSub
     });
 
     it('should return 400 if auctionDetails missing', async () => {
@@ -288,7 +288,7 @@ describe('Auction routes', () => {
       await pool.query(
         `INSERT INTO auction_results (auction_id, winner_sub, final_bid, closed_reason)
          VALUES ($1, $2, $3, $4)`,
-        [testAuctionId, 'sub_fullCustomer', 250, 'expired'],
+        [testAuctionId, process.env.TEST_SUB_FULL_CUSTOMER, 250, 'expired'],
       );
     });
 
@@ -361,7 +361,7 @@ describe('Auction routes', () => {
       await pool.query(
         `INSERT INTO auction_results (auction_id, winner_sub, final_bid, closed_reason)
          VALUES ($1, $2, $3, $4)`,
-        [testAuctionId, 'sub_fullCustomer', 250, 'expired'],
+        [testAuctionId, process.env.TEST_SUB_FULL_CUSTOMER, 250, 'expired'],
       );
     });
 

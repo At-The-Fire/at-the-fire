@@ -31,7 +31,7 @@ jest.mock('jsonwebtoken', () => ({
       token === 'valid.free.user.refresh.token'
     ) {
       // Simulate a successful token verification
-      callback(null, { sub: 'sub_noProfile' });
+      callback(null, { sub: process.env.TEST_SUB_NO_PROFILE });
     } else {
       // Simulate verification failure
       callback(new Error('Invalid token'));
@@ -40,7 +40,7 @@ jest.mock('jsonwebtoken', () => ({
   decode: jest.fn((token) => {
     if (token === 'valid.free.user.id.token') {
       // Return a mock decoded token with `sub`
-      return { sub: 'sub_noProfile' };
+      return { sub: process.env.TEST_SUB_NO_PROFILE };
     } else {
       return null; // Invalid token case
     }
@@ -72,7 +72,7 @@ const setupSubscribedUserMocks = () => {
   // Mock the `jwt.decode` function to decode the idToken and return a token with `sub`
   jwt.decode.mockImplementation((token) => {
     if (token === 'valid.subscriber.id.token') {
-      return { sub: 'sub_fullCustomer' }; // Simulated structure of a valid decoded JWT
+      return { sub: process.env.TEST_SUB_FULL_CUSTOMER }; // Simulated structure of a valid decoded JWT
     }
     return null; // Return null for anything else (token is invalid)
   });
@@ -85,7 +85,7 @@ const setupSubscribedUserMocks = () => {
       token === 'valid.subscriber.refresh.token'
     ) {
       // Simulate a valid token verification with a `sub` field
-      callback(null, { sub: 'sub_fullCustomer' });
+      callback(null, { sub: process.env.TEST_SUB_FULL_CUSTOMER });
     } else {
       callback(new Error('Invalid token'));
     }
@@ -94,7 +94,7 @@ const setupSubscribedUserMocks = () => {
   // Mock the database call to return a valid customer ID for a subscribed user
   StripeCustomer.getStripeByAWSSub.mockResolvedValue({
     customerId: 'stripe-customer-id_full',
-    awsSub: 'sub_fullCustomer',
+    awsSub: process.env.TEST_SUB_FULL_CUSTOMER,
     confirmed: true,
   });
 
@@ -164,7 +164,7 @@ describe('conversations tests', () => {
           `refreshToken=${subscribedUserRefreshToken};`,
         ])
         .send({
-          participantSubs: ['sub_withProfile'],
+          participantSubs: [process.env.TEST_SUB_WITH_PROFILE],
         });
 
       expect(response.status).toBe(200);
@@ -315,7 +315,7 @@ describe('conversations tests', () => {
           `refreshToken=${subscribedUserRefreshToken};`,
         ])
         .send({
-          participantSubs: ['sub_partialProfile'],
+          participantSubs: [process.env.TEST_SUB_INCOMPLETE_PROFILE],
         });
 
       // Add a message to first conversation
@@ -340,7 +340,7 @@ describe('conversations tests', () => {
           `refreshToken=${subscribedUserRefreshToken};`,
         ])
         .send({
-          participantSubs: ['sub_noProfile'],
+          participantSubs: [process.env.TEST_SUB_NO_PROFILE],
         });
 
       await request(app)
@@ -485,7 +485,7 @@ describe('conversations tests', () => {
           `refreshToken=${subscribedUserRefreshToken};`,
         ])
         .send({
-          participantSubs: ['sub_partialProfile'],
+          participantSubs: [process.env.TEST_SUB_INCOMPLETE_PROFILE],
         });
 
       const response = await request(app)
@@ -710,7 +710,7 @@ describe('conversations tests', () => {
           `refreshToken=${subscribedUserRefreshToken};`,
         ])
         .send({
-          participantSubs: ['sub_fullCustomer'], // sender sub not included
+          participantSubs: [process.env.TEST_SUB_FULL_CUSTOMER], // sender sub not included
         });
 
       // Verify success
@@ -761,10 +761,10 @@ describe('conversations tests', () => {
         ])
         .send({
           participantSubs: [
-            'sub_partialProfile',
-            'sub_partialProfile',
-            'sub_fullCustomer',
-            'sub_fullCustomer',
+            process.env.TEST_SUB_INCOMPLETE_PROFILE,
+            process.env.TEST_SUB_INCOMPLETE_PROFILE,
+            process.env.TEST_SUB_FULL_CUSTOMER,
+            process.env.TEST_SUB_FULL_CUSTOMER,
           ],
         });
 
@@ -934,7 +934,7 @@ describe('conversations tests', () => {
             `refreshToken=${subscribedUserRefreshToken};`,
           ])
           .send({
-            participantSubs: ['sub_partialProfile'],
+            participantSubs: [process.env.TEST_SUB_INCOMPLETE_PROFILE],
           });
       }
 
