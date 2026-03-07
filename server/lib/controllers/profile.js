@@ -158,7 +158,7 @@ module.exports = Router()
       return res.json({ profile, bizProfile, posts });
     } catch (err) {
       console.error(err);
-      return res.status(500).json(err.message);
+      return res.status(500).json({ error: 'Internal server error' });
     }
   })
 
