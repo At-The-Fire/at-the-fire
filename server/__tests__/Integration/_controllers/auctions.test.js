@@ -203,8 +203,8 @@ describe('Auction routes', () => {
     it('should upload images to S3', async () => {
       const response = await request(app)
         .post('/api/v1/auctions/upload')
-        .attach('imageFiles', Buffer.from('test image content'), 'test.jpg')
-        .attach('imageFiles', Buffer.from('test image 2'), 'test2.jpg');
+        .attach('imageFiles', Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01]), 'test.jpg')
+        .attach('imageFiles', Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01]), 'test2.jpg');
 
       expect(response.status).toBe(200);
       expect(Array.isArray(response.body)).toBe(true);

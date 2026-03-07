@@ -436,8 +436,8 @@ describe('Profile routes that use mocked middleware: /profile/user-update/:sub a
 
   // test upload user avatar image to S3
   it('POST /profile/avatar-upload should upload user avatar image to S3', async () => {
-    // Create fake buffers to simulate image files
-    const fakeImageBuffer1 = Buffer.from('fake-image-content-1', 'base64');
+    // Minimal valid JPEG buffer (magic bytes + padding to satisfy 12-byte minimum)
+    const fakeImageBuffer1 = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01]);
 
     const response = await request(app)
       .post('/api/v1/profile/avatar-upload')
@@ -451,8 +451,8 @@ describe('Profile routes that use mocked middleware: /profile/user-update/:sub a
 
   // test upload customer logo image to S3
   it('POST /profile/logo-upload, should upload a customer logo image to S3', async () => {
-    // Create fake buffers to simulate image files
-    const fakeImageBuffer1 = Buffer.from('fake-image-content-1', 'base64');
+    // Minimal valid JPEG buffer (magic bytes + padding to satisfy 12-byte minimum)
+    const fakeImageBuffer1 = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01]);
 
     const response = await request(app)
       .post('/api/v1/profile/logo-upload')
@@ -511,7 +511,7 @@ describe('Profile routes that use mocked middleware: /profile/user-update/:sub a
 
     const response = await request(app)
       .post('/api/v1/profile/avatar-upload')
-      .attach('avatar', Buffer.from('test'), 'test-image.jpg');
+      .attach('avatar', Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01]), 'test-image.jpg');
 
     expect(response.status).toBe(500);
     expect(response.body.message).toBe('An error occurred while uploading the image');
