@@ -7,6 +7,7 @@ const profileOwnership = require('../middleware/profileOwnership.js');
 const validateUserUpdate = require('../middleware/validateUserUpdate.js');
 const validateCustomerUpdate = require('../middleware/validateCustomerUpdate.js');
 const multer = require('multer');
+const { validateImageBuffer } = require('../utils/validateImageBuffer');
 const Gallery = require('../models/Gallery.js');
 const getRedisClient = require('../../redisClient.js');
 
@@ -229,6 +230,9 @@ module.exports = Router()
     let uploadedKey = null;
     try {
       const file = req.file;
+      if (!validateImageBuffer(file.buffer)) {
+        return res.status(400).json({ error: 'Invalid file type' });
+      }
       const s3Folder = 'user-avatars';
       const { publicId, secureUrl } = await s3UploadHelper(file, s3Folder);
       uploadedKey = publicId;
@@ -316,6 +320,9 @@ module.exports = Router()
       let uploadedKey = null;
       try {
         const file = req.file;
+        if (!validateImageBuffer(file.buffer)) {
+          return res.status(400).json({ error: 'Invalid file type' });
+        }
         const s3Folder = 'subscriber-logos';
         const { publicId, secureUrl } = await s3UploadHelper(file, s3Folder);
         uploadedKey = publicId;

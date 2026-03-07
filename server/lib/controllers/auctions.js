@@ -5,6 +5,7 @@ const Bid = require('../models/Bid.js');
 const { scheduleAuctionEnd } = require('../jobs/auctionTimers.js');
 
 const multer = require('multer');
+const { validateImageBuffer } = require('../utils/validateImageBuffer');
 
 //# Configure S3 client
 const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
@@ -86,6 +87,13 @@ module.exports = Router()
   // POST upload image files to S3 (authenticated) /////////////////////////////////
   .post('/upload', [authenticateAWS, upload.array('imageFiles')], async (req, res) => {
     try {
+      // Verify actual file contents match an allowed image type (magic bytes)
+      for (const file of req.files) {
+        if (!validateImageBuffer(file.buffer)) {
+          return res.status(400).json({ error: 'Invalid file type' });
+        }
+      }
+
       const uploadPromises = req.files.map((file) => {
         return new Promise((resolve, reject) => {
           const timestamp = Date.now();
