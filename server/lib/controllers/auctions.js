@@ -203,7 +203,7 @@ module.exports = Router()
   // PUT update auction (seller or admin) /////////////////////////////////
   .put('/:id', [authenticateAWS], async (req, res, next) => {
     try {
-      const id = req.body.id;
+      const id = req.params.id;
       const updatedAuction = req.body.auction;
 
       // 1. Fetch the existing auction from DB

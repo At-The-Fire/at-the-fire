@@ -158,7 +158,7 @@ export async function updateAuction(id, auction) {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ id, auction }),
+      body: JSON.stringify({ auction }),
       credentials: 'include',
     });
     const msg = await resp.json();
