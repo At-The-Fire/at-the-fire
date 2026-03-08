@@ -199,7 +199,7 @@ INSERT INTO cognito_users (sub, email, email_hash)
     const existingCount = parseInt(recentUploads.rows[0].sum) || 0;
 
     if (existingCount + imageCount > 100) {
-      throw new Error('Daily upload limit of 50 images exceeded');
+      throw new Error('Daily upload limit of 100 images exceeded');
     }
 
     await pool.query(
