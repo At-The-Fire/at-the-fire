@@ -202,6 +202,9 @@ module.exports = Router()
 
   // POST transfer main image from gallery_posts to post_imgs for edit product => post creation
   .post('/transfer', async (req, res) => {
+    if (req.restricted) {
+      return res.status(403).json({ code: 403, message: 'An active subscription is required to perform this action.' });
+    }
     try {
       const postId = req.body.postId;
 
@@ -229,6 +232,9 @@ module.exports = Router()
 
   // DELETE image from S3 /////////////////////////////////
   .post('/delete', upload.none(), async (req, res) => {
+    if (req.restricted) {
+      return res.status(403).json({ code: 403, message: 'An active subscription is required to perform this action.' });
+    }
     const public_id = req.body.public_id;
 
     if (!public_id) {
@@ -362,6 +368,9 @@ module.exports = Router()
 
   // update thumbnail in post/ product edit
   .put('/posts/:id/main-image', async (req, res, next) => {
+    if (req.restricted) {
+      return res.status(403).json({ code: 403, message: 'An active subscription is required to perform this action.' });
+    }
     try {
       const { id } = req.params;
       const { image_url, public_id } = req.body;
@@ -425,6 +434,9 @@ module.exports = Router()
 
   // DELETE one gallery image from database /////////////////////////////////
   .delete('/image/:id', [authDelUp], async (req, res, next) => {
+    if (req.restricted) {
+      return res.status(403).json({ code: 403, message: 'An active subscription is required to perform this action.' });
+    }
     try {
       const sub = req.userAWSSub;
       const data = await Post.deleteImgDataById(req.params.id, req.body.public_id);

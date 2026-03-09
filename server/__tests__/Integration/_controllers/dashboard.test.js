@@ -45,6 +45,9 @@ const mockCustomer = {
   subscriptionEndDate: 1630435200,
 };
 
+// Mutable flag for restricted-user tests
+let mockRestricted = false;
+
 // Mocking the `AWSUser` module
 jest.mock('../../../lib/models/AWSUser', () => {
   return {
@@ -67,6 +70,7 @@ jest.mock('../../../lib/middleware/authenticateAWS.js', () => (req, res, next) =
 // this is assuming that the user is logged in and authenticated (tested elsewhere)
 jest.mock('../../../lib/middleware/authorizeSubscription.js', () => (req, res, next) => {
   req.customerId = mockCustomer.customerId;
+  req.restricted = mockRestricted;
   next();
 });
 
@@ -88,6 +92,7 @@ jest.mock('../../../redisClient', () => {
 
 describe('posts/ post details/ S3 routes', () => {
   beforeEach(() => {
+    mockRestricted = false;
     process.env.AWS_BUCKET_NAME = 'test-bucket';
     process.env.AWS_REGION = 'us-west-2';
     return setup(pool);
@@ -557,4 +562,44 @@ describe('posts/ post details/ S3 routes', () => {
   // it.todo(`Rate Limits or External API Failures: If your service relies on any
   //     external APIs (e.g., a call to Cloudinary), consider what happens if
   //     that external service fails or if you exceed any rate limits`);
+
+  describe('restricted user (expired subscription)', () => {
+    const restricted403 = { code: 403, message: 'An active subscription is required to perform this action.' };
+
+    beforeEach(() => {
+      mockRestricted = true;
+    });
+
+    afterEach(() => {
+      mockRestricted = false;
+    });
+
+    it('POST /dashboard/transfer returns 403', async () => {
+      const resp = await request(app).post('/api/v1/dashboard/transfer').send({ postId: '1' });
+      expect(resp.status).toBe(403);
+      expect(resp.body).toEqual(restricted403);
+    });
+
+    it('POST /dashboard/delete returns 403', async () => {
+      const resp = await request(app).post('/api/v1/dashboard/delete').send({ public_id: 'some-id' });
+      expect(resp.status).toBe(403);
+      expect(resp.body).toEqual(restricted403);
+    });
+
+    it('PUT /dashboard/posts/:id/main-image returns 403', async () => {
+      const resp = await request(app)
+        .put('/api/v1/dashboard/posts/1/main-image')
+        .send({ image_url: 'https://example.com/img.jpg', public_id: 'some-id' });
+      expect(resp.status).toBe(403);
+      expect(resp.body).toEqual(restricted403);
+    });
+
+    it('DELETE /dashboard/image/:id returns 403', async () => {
+      const resp = await request(app)
+        .delete('/api/v1/dashboard/image/1')
+        .send({ public_id: 'some-id' });
+      expect(resp.status).toBe(403);
+      expect(resp.body).toEqual(restricted403);
+    });
+  });
 });

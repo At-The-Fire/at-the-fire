@@ -17,6 +17,9 @@ const mockCustomer = {
   subscriptionEndDate: 1630435200,
 };
 
+// Mutable flag for restricted-user tests
+let mockRestricted = false;
+
 // Mock authenticate middleware to attach mock sub to req.userAWSSub before each test case runs
 // this is assuming that the user is logged in and authenticated (tested elsewhere)
 jest.mock('../../../lib/middleware/authenticateAWS.js', () => (req, res, next) => {
@@ -27,16 +30,14 @@ jest.mock('../../../lib/middleware/authenticateAWS.js', () => (req, res, next) =
 // Mock authorizeSubscription middleware to attach mock subscription to req.subscription object before each test case runs (req.subscription is used in the route handler)
 // this is assuming that the user is logged in and authenticated (tested elsewhere)
 jest.mock('../../../lib/middleware/authorizeSubscription.js', () => (req, res, next) => {
-  // if (mockUser.sub !== null) {
   req.customerId = mockCustomer.customerId;
-  // }
-
+  req.restricted = mockRestricted;
   next();
 });
 
 describe('orders routes', () => {
   beforeEach(() => {
-    // jest.resetAllMocks();
+    mockRestricted = false;
     return setup(pool);
   });
 
@@ -842,4 +843,5 @@ describe('orders routes', () => {
     expect(response.status).toBe(404);
     expect(response.body).toEqual({ message: 'Order not found' });
   });
+
 });
