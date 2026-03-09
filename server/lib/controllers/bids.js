@@ -18,7 +18,6 @@ module.exports = Router()
         SELECT
           b.id,
           b.auction_id,
-          b.bidder_sub,
           b.bid_amount,
           b.created_at,
           b.updated_at,
@@ -35,7 +34,6 @@ module.exports = Router()
       const bidsWithProfiles = rows.map((row) => ({
         id: row.id,
         auctionId: row.auction_id,
-        bidderSub: row.bidder_sub,
         bidAmount: row.bid_amount,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
