@@ -15,6 +15,11 @@ Each subdirectory has its own CLAUDE.md with detailed guidance:
 - `client/CLAUDE.md` — React app architecture, state management, routing, auth, env vars
 - `server/CLAUDE.md` — Express architecture, route structure, auth system, database, testing
 
+## Testing Policy
+
+**Never run tests autonomously.** Tests take multiple minutes to complete. When tests should be run (e.g., after code changes), prompt the user to run them manually. Do not invoke `npm test` or `npx jest` under any circumstance
+unless explicitly asked to do so by the user.
+
 ## Commands
 
 All commands run from the repo root unless noted.
