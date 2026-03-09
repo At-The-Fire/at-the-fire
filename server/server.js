@@ -16,8 +16,8 @@ const io = socketIo(server, {
   cors: {
     origin: [
       'http://localhost:3000',
-      'https://atthefire.com',
       'https://www.atthefire.com',
+      'https://at-the-fire.herokuapp.com',
       'https://at-the-fire-dev-68560297982b.herokuapp.com',
     ],
     methods: ['GET', 'POST'],
