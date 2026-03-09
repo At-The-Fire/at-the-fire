@@ -154,7 +154,7 @@ INSERT INTO cognito_users (sub, email, email_hash)
       [sub]
     );
 
-    return rows[0];
+    return rows[0] ? decrypt(rows[0].email) : null;
   }
 
   static async getAllUsers() {
