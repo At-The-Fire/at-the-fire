@@ -91,7 +91,6 @@ describe('Bids routes', () => {
         {
           id: '1',
           auctionId: '1',
-          bidderSub: process.env.TEST_SUB_WITH_PROFILE,
           bidAmount: '150',
           createdAt: expect.any(String),
           updatedAt: expect.any(String),
@@ -129,7 +128,6 @@ describe('Bids routes', () => {
         {
           id: expect.any(String),
           auctionId: expect.any(String),
-          bidderSub: process.env.TEST_SUB_INCOMPLETE_PROFILE,
           bidAmount: '250',
           createdAt: expect.any(String),
           updatedAt: expect.any(String),
@@ -138,7 +136,6 @@ describe('Bids routes', () => {
         {
           id: expect.any(String),
           auctionId: expect.any(String),
-          bidderSub: process.env.TEST_SUB_WITH_PROFILE,
           bidAmount: '150',
           createdAt: expect.any(String),
           updatedAt: expect.any(String),
@@ -150,13 +147,11 @@ describe('Bids routes', () => {
 
   describe('POST /api/v1/bids', () => {
     it('places a bid successfully and returns 201', async () => {
-      const response = await request(app)
-        .post('/api/v1/bids')
-        .send({
-          auctionId: testAuctionId,
-          bidderSub: process.env.TEST_SUB_WITH_PROFILE,
-          bidAmount: 150,
-        });
+      const response = await request(app).post('/api/v1/bids').send({
+        auctionId: testAuctionId,
+        bidderSub: process.env.TEST_SUB_WITH_PROFILE,
+        bidAmount: 150,
+      });
 
       expect(response.status).toBe(201);
       expect(response.body).toEqual({
@@ -173,13 +168,11 @@ describe('Bids routes', () => {
     });
 
     it('updates the auction current_bid after a successful bid', async () => {
-      await request(app)
-        .post('/api/v1/bids')
-        .send({
-          auctionId: testAuctionId,
-          bidderSub: process.env.TEST_SUB_WITH_PROFILE,
-          bidAmount: 200,
-        });
+      await request(app).post('/api/v1/bids').send({
+        auctionId: testAuctionId,
+        bidderSub: process.env.TEST_SUB_WITH_PROFILE,
+        bidAmount: 200,
+      });
 
       const { rows } = await pool.query('SELECT current_bid FROM auctions WHERE id = $1', [
         testAuctionId,
@@ -204,13 +197,11 @@ describe('Bids routes', () => {
       );
 
       // Try to place a lower bid
-      const response = await request(app)
-        .post('/api/v1/bids')
-        .send({
-          auctionId: testAuctionId,
-          bidderSub: process.env.TEST_SUB_INCOMPLETE_PROFILE,
-          bidAmount: 200,
-        });
+      const response = await request(app).post('/api/v1/bids').send({
+        auctionId: testAuctionId,
+        bidderSub: process.env.TEST_SUB_INCOMPLETE_PROFILE,
+        bidAmount: 200,
+      });
 
       expect(response.status).toBe(409);
       expect(response.body).toEqual({
@@ -228,13 +219,11 @@ describe('Bids routes', () => {
         [testAuctionId, process.env.TEST_SUB_WITH_PROFILE, 300],
       );
 
-      const response = await request(app)
-        .post('/api/v1/bids')
-        .send({
-          auctionId: testAuctionId,
-          bidderSub: process.env.TEST_SUB_INCOMPLETE_PROFILE,
-          bidAmount: 300,
-        });
+      const response = await request(app).post('/api/v1/bids').send({
+        auctionId: testAuctionId,
+        bidderSub: process.env.TEST_SUB_INCOMPLETE_PROFILE,
+        bidAmount: 300,
+      });
 
       expect(response.status).toBe(409);
     });
