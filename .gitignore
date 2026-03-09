@@ -20,3 +20,4 @@ add_tracking_to_purchases.sql
 seed-kdog-seller.js
 .claude/reports/
 .claude/tasks/
+.claude/last-retro
