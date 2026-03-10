@@ -58,22 +58,17 @@ module.exports = Router()
         e.message.includes('duplicate key value violates unique constraint "cognito_users_sub_key"')
       ) {
         res.status(409).json('Sub already exists.');
-        next(e);
       } else if (
         e.message.includes(
           'duplicate key value violates unique constraint "cognito_users_email_key"',
         )
       ) {
         res.status(409).json('Email already exists.');
-        next(e);
       } else if (e.message.includes('Missing sub error.')) {
         res.status(400).json('Sub is required.');
-        next(e);
       } else if (e.message.includes('Missing email error.')) {
         res.status(400).json('Email is required.');
-        next(e);
       } else {
-        // Handle other errors or default case
         res.status(500).json('Something went wrong.');
         console.error(e);
         next(e);
@@ -141,8 +136,8 @@ module.exports = Router()
       } else {
         res.status(500).json({ error: 'Internal server error' });
         console.error(e);
+        next(e);
       }
-      next(e);
     }
   })
 
@@ -168,7 +163,6 @@ module.exports = Router()
     } catch (e) {
       res.status(500).json({ error: 'Internal server error' });
       console.error(e);
-      next(e);
     }
   })
 
