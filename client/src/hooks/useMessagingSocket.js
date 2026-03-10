@@ -10,9 +10,11 @@ export function useMessagingSocket() {
   const { markConversationAsRead } = useNotificationStore();
 
   useEffect(() => {
+    if (!user) return;
+
     const isDev = window.location.hostname === 'localhost';
     const socketUrl = isDev ? process.env.REACT_APP_BASE_URL : window.location.origin;
-    const socket = io(socketUrl, { withCredentials: true });
+    const socket = io(socketUrl, { withCredentials: true, transports: ['websocket'] });
 
     // Listener for new messages
     socket.on('new message', (data) => {
