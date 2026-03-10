@@ -2,7 +2,7 @@
 //! More dashboard functionality could be implemented- some ideas commented out- left for brainstorming/ implementing?
 import React, { useEffect, useState } from 'react';
 import './AdminDashboard.css';
-import { fetchUserData, deleteUser, deleteSubscriber, fetchInvoices } from '../../services/fetch-atf.js';
+import { fetchUserData, deleteUser, fetchInvoices } from '../../services/fetch-atf.js';
 import userDefaultImage from './../../assets/user.png';
 import { useAuthStore } from '../../stores/useAuthStore.js';
 import { toast } from 'react-toastify';
@@ -140,12 +140,7 @@ const AdminDashboard = () => {
     try {
       setLoading(true);
 
-      if (user.customerId) {
-        await deleteSubscriber(user.sub);
-        await deleteUser(user.sub);
-      } else {
-        await deleteUser(user.sub);
-      }
+      await deleteUser(user.sub);
 
       // Remove user from state/refresh list
       setCoordinatedUsers((prev) => prev.filter((u) => u.id !== user.id));

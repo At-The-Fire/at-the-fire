@@ -94,32 +94,3 @@ export async function deleteUser(sub) {
     throw e;
   }
 }
-export async function deleteSubscriber(sub) {
-  try {
-    const resp = await fetch(`${BASE_URL}/api/v1/atf-operations/delete-subscriber/${sub}`, {
-      method: 'DELETE',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-    });
-    const data = await resp.json();
-
-    if (!resp.ok) {
-      // Preserve the full error structure
-      throw {
-        code: data.code || resp.status,
-        message: data.message || `Error fetching posts: Status ${resp.status}`,
-        type: data.type || 'UnknownError',
-      };
-    }
-    return data;
-  } catch (e) {
-    if (process.env.REACT_APP_APP_ENV === 'development') {
-      // eslint-disable-next-line no-console
-      console.error('Error deleting user: ', e);
-    }
-    throw e;
-  }
-}
