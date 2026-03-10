@@ -56,10 +56,6 @@ export default function ResponsiveAppBar() {
   const { unreadCount } = useNotificationStore();
   const pendingShipmentsCount = useAuctionEventsStore((s) => s.pendingShipmentsCount);
 
-  // TODO clean up this comment marker for not forgetting
-  // TODO to turn this off/ on- AND REFRESH THE BROWSER IF YOU
-  //  TODO TURN IT OFF IT KEEPS REQUESTING EVERY 3 SECONDS FOREVER
-
   useMessagingSocket();
 
   const theme = useTheme();

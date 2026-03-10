@@ -197,11 +197,7 @@ module.exports = class StripeCustomer {
       await client.query('DELETE FROM inventory_snapshot WHERE customer_id = $1', [customerId]);
       await client.query('DELETE FROM subscriptions WHERE customer_id = $1', [customerId]);
       await client.query('DELETE FROM invoices WHERE customer_id = $1', [customerId]);
-      //^ need to add these to the schema- from autocomplete, need full investigation and testing (as above still), image deletion...
-      // await client.query('DELETE FROM followers WHERE customer_id = $1', [customerId]);
-      // await client.query('DELETE FROM posts WHERE customer_id = $1', [customerId]);
-      // await client.query('DELETE FROM comments WHERE customer_id = $1', [customerId]);
-      // await client.query('DELETE FROM likes WHERE customer_id = $1', [customerId]);
+      await client.query('DELETE FROM gallery_posts WHERE customer_id = $1', [customerId]);
       const result = await client.query(
         'DELETE FROM stripe_customers WHERE customer_id = $1 RETURNING *',
         [customerId]

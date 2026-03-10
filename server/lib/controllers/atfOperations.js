@@ -7,8 +7,30 @@ const {
   CognitoIdentityProviderClient,
   AdminDeleteUserCommand,
 } = require('@aws-sdk/client-cognito-identity-provider');
+const { S3Client, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const Stripe = require('stripe');
 const Invoices = require('../models/Invoices.js');
+
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
+
+async function deleteFromS3(url) {
+  if (!url) return;
+  try {
+    const parsed = new URL(url);
+    const key = parsed.pathname.startsWith('/') ? parsed.pathname.slice(1) : parsed.pathname;
+    if (key) {
+      await s3Client.send(new DeleteObjectCommand({ Bucket: process.env.AWS_BUCKET_NAME, Key: key }));
+    }
+  } catch (err) {
+    console.error('S3 delete failed for', url, err);
+  }
+}
 
 module.exports = Router()
   .get('/', async (req, res, next) => {
@@ -49,13 +71,17 @@ module.exports = Router()
     }
   })
 
-  //TODO
-  //! this ALSO needs to delete avatar
   .delete('/delete-user/:sub', async (req, res, next) => {
     try {
       const { sub } = req.params;
       const cognitoClient = new CognitoIdentityProviderClient();
       let cognitoError = null;
+
+      // Delete avatar from S3 before removing DB row
+      const cognitoUser = await AWSUser.getCognitoUserBySub({ sub });
+      if (cognitoUser?.imageUrl) {
+        await deleteFromS3(cognitoUser.imageUrl);
+      }
 
       // Try to delete from Cognito, but don't block DB cleanup if it fails
       try {
@@ -91,14 +117,22 @@ module.exports = Router()
     }
   })
 
-  //! this needs to ALSO delete logo and all posts/ post images
   .delete('/delete-subscriber/:sub', async (req, res, next) => {
     try {
       const { sub } = req.params;
 
-      const stripeCustomerId = await StripeCustomer.getStripeByAWSSub(sub);
-      if (!stripeCustomerId) {
+      const stripeCustomer = await StripeCustomer.getStripeByAWSSub(sub);
+      if (!stripeCustomer) {
         return res.status(404).json({ message: 'Subscriber not found' });
+      }
+
+      // Delete gallery post images from S3
+      const posts = await AWSUser.getGalleryPosts(stripeCustomer.customerId);
+      await Promise.all(posts.map((post) => deleteFromS3(post.image_url)));
+
+      // Delete logo from S3
+      if (stripeCustomer.logoImageUrl) {
+        await deleteFromS3(stripeCustomer.logoImageUrl);
       }
 
       //* delete customer from Stripe
@@ -107,9 +141,7 @@ module.exports = Router()
 
       // Try to delete from Stripe, but don't block DB cleanup if it fails
       try {
-        if (stripeCustomerId) {
-          await stripe.customers.del(stripeCustomerId.customerId);
-        }
+        await stripe.customers.del(stripeCustomer.customerId);
       } catch (err) {
         // Log the error, but continue
         stripeError = err;
