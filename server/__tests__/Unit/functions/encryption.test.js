@@ -156,59 +156,6 @@ describe('Encryption Functions', () => {
   });
 
   describe('Memory Usage', () => {
-    // this passes locally but fails miserably (expecting 5, receiving 220+) for CI so skipping for now and was experimental anyways
-    test.skip('should not leak memory during repeated operations', async () => {
-      // Force garbage collection if available
-      if (global.gc) {
-        global.gc();
-      }
-
-      const initialMemory = process.memoryUsage().heapUsed;
-
-      // Do multiple encryption/decryption cycles
-      for (let i = 0; i < 100; i++) {
-        const testString = 'A'.repeat(1000); // smaller string, many iterations
-        const encrypted = encrypt(testString);
-        const decrypted = decrypt(encrypted);
-        expect(decrypted).toBe(testString);
-      }
-
-      // Force garbage collection if available
-      if (global.gc) {
-        global.gc();
-      }
-
-      const finalMemory = process.memoryUsage().heapUsed;
-      const memoryIncrease = (finalMemory - initialMemory) / 1024 / 1024;
-      // eslint-disable-next-line
-      console.log(`Memory change after operations: ${memoryIncrease.toFixed(2)}MB`);
-
-      // Test that memory usage stabilizes
-      // We expect some memory overhead, but it shouldn't be extreme
-      const secondRoundInitial = process.memoryUsage().heapUsed;
-
-      // Do another round
-      for (let i = 0; i < 100; i++) {
-        const testString = 'A'.repeat(1000);
-        const encrypted = encrypt(testString);
-        const decrypted = decrypt(encrypted);
-        expect(decrypted).toBe(testString);
-      }
-
-      if (global.gc) {
-        global.gc();
-      }
-
-      const secondRoundFinal = process.memoryUsage().heapUsed;
-      const secondRoundIncrease = (secondRoundFinal - secondRoundInitial) / 1024 / 1024;
-      // eslint-disable-next-line
-      console.log(`Memory change after second round: ${secondRoundIncrease.toFixed(2)}MB`);
-
-      // The second round shouldn't increase memory usage significantly
-      // compared to the first round (allowing for some variation)
-      expect(Math.abs(secondRoundIncrease)).toBeLessThan(5);
-    });
-
     test('should handle single large operation without crashing', () => {
       // This is more of a smoke test
       const testString = 'A'.repeat(1024 * 100); // 100KB
