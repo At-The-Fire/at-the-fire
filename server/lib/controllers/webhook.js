@@ -42,24 +42,7 @@ module.exports = app.post(
     let event;
     const sig = request.headers['stripe-signature'];
     try {
-      if (process.env.STRIPE_WEBHOOK_TEST_BYPASS === 'true') {
-        // Skip constructEvent and mock event directly in tests
-        event = {
-          type: 'invoice.payment_succeeded',
-          data: {
-            object: {
-              id: 'invoice_12345',
-              status: 'paid',
-              subscription: 'sub_12345',
-              amount_due: 5000,
-              amount_paid: 5000,
-            },
-          },
-        };
-      } else {
-        // Real Stripe signature verification for production and development
-        event = stripe.webhooks.constructEvent(request.body, sig, endpointSecret);
-      }
+      event = stripe.webhooks.constructEvent(request.body, sig, endpointSecret);
     } catch (e) {
       return response.status(400).send(`Webhook error: ${e.message}`);
     }
@@ -95,7 +78,7 @@ module.exports = app.post(
               const customer = await StripeCustomer.getStripeByAWSSub(awsSub);
 
               if (customer) {
-                return customer;
+                break;
               } else {
                 console.info('No customer found, inserting new customer');
                 // Insert the customer with all available data
