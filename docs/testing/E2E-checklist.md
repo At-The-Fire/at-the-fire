@@ -163,21 +163,27 @@
   - [ ] Closed auction eventually appears on the archive page
   - [ ] Closed auction no longer appears in active listings after archive cycle runs
 
-## Cart & Checkout
+## Buy Now & Checkout
 
 > **Claude Code note:** The checkout uses a placeholder payment processor — no real payment provider is integrated yet. Any card details entered will result in a successful transaction. Do not use Stripe test card numbers; they have no meaning here. The "Failed checkout" block cannot be tested until a real payment processor is integrated.
+>
+> The cart/add-to-cart model has been replaced with a direct Buy Now flow. Clicking "Buy Now" on a gallery card or post detail navigates straight to checkout with that single item — there is no cart or cart drawer.
 
-- [ ] Add item to cart
-  - [ ] Verify item appears in cart with correct price and quantity
-  - [ ] Test adding duplicate item (quantity update)
-- [ ] Cart validation
-  - [ ] Verify out-of-stock items are flagged
-  - [ ] Verify quantities don't exceed available inventory
+- [ ] Buy Now from gallery card
+  - [ ] Verify "Buy Now" button is visible on purchasable items (not sold, price > 0, quantity > 0)
+  - [ ] Verify "Buy Now" is not shown on sold items
+  - [ ] Click "Buy Now" — verify redirect to checkout with correct item title and price
+- [ ] Buy Now from post detail
+  - [ ] Select quantity from dropdown
+  - [ ] Click "Buy Now" — verify checkout shows correct item and selected quantity
 - [ ] Checkout
+  - [ ] Verify order summary shows correct item, quantity, and total
   - [ ] Complete checkout (placeholder processor — any card details will succeed)
-  - [ ] Verify order confirmation is shown
+  - [ ] Verify order confirmation screen is shown
   - [ ] Verify inventory decremented after purchase
   - [ ] Verify purchase record created
+- [ ] Navigate to /checkout directly (no item state)
+  - [ ] Verify "Nothing to purchase" message is shown with Browse Gallery button
 - [ ] Failed checkout
   - [ ] **Claude Code: SKIP — placeholder processor always succeeds; no failure path exists until a real payment processor is integrated**
   - [ ] Verify inventory is not decremented on failure
