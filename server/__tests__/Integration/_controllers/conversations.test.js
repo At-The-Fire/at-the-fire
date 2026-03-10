@@ -301,6 +301,42 @@ describe('conversations tests', () => {
       expect(Array.isArray(response.body)).toBe(true);
     });
 
+    it('should sort conversations by most recent message activity, not creation time', async () => {
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
+
+      const cookies = [
+        `accessToken=${subscribedUserAccessToken};`,
+        `idToken=${subscribedUserIdToken};`,
+        `refreshToken=${subscribedUserRefreshToken};`,
+      ];
+
+      // Create conv1 first (older created_at / updated_at)
+      const conv1 = await request(app)
+        .post('/api/v1/conversations')
+        .set('Cookie', cookies)
+        .send({ participantSubs: [process.env.TEST_SUB_INCOMPLETE_PROFILE] });
+
+      // Create conv2 second (newer created_at / updated_at)
+      const conv2 = await request(app)
+        .post('/api/v1/conversations')
+        .set('Cookie', cookies)
+        .send({ participantSubs: [process.env.TEST_SUB_NO_PROFILE] });
+
+      // Now send a message to conv1 — making it the most recently active conversation
+      await request(app)
+        .post('/api/v1/conversations/messages')
+        .set('Cookie', cookies)
+        .send({ conversationId: conv1.body.conversationId, content: 'Late message to older conversation' });
+
+      // conv1 should now be first since it has the most recent activity
+      const response = await request(app).get('/api/v1/conversations').set('Cookie', cookies);
+
+      expect(response.status).toBe(200);
+      expect(response.body[0].id).toBe(conv1.body.conversationId);
+      expect(response.body[1].id).toBe(conv2.body.conversationId);
+    });
+
     // needs investigating,
     it.skip('should return conversations in correct chronological order', async () => {
       const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =

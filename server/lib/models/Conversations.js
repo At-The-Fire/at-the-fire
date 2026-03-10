@@ -51,12 +51,18 @@ module.exports = class Conversations {
       );
       // If any recipient had hidden the conversation, make it visible for them again
       await client.query(
-        `UPDATE conversation_visibility 
-         SET is_visible = TRUE 
-         WHERE conversation_id = $1 
-         AND user_sub != $2 
+        `UPDATE conversation_visibility
+         SET is_visible = TRUE
+         WHERE conversation_id = $1
+         AND user_sub != $2
          AND is_visible = FALSE`,
         [conversation_id, sender_sub],
+      );
+
+      // Bump updated_at so conversations sort by most recent activity
+      await client.query(
+        `UPDATE conversations SET updated_at = NOW() WHERE id = $1`,
+        [conversation_id],
       );
 
       await client.query('COMMIT');
