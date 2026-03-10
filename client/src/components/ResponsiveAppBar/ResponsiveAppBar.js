@@ -26,8 +26,6 @@ import { useAuctionEventsStore } from '../../stores/useAuctionEventsStore.js';
 import { Badge } from '@mui/material';
 import './ResponsiveAppBar.css';
 import { useMessagingSocket } from '../../hooks/useMessagingSocket.js'; //! often looks unused due to commenting out socket for local dev DO NOT DELETE
-import CartIcon from '../Cart/CartIcon.js';
-import CartDrawer from '../Cart/CartDrawer.js';
 
 const StyledInputBase = styled(InputBase)(({ theme }) => ({
   color: 'inherit',
@@ -47,7 +45,6 @@ export default function ResponsiveAppBar() {
   const [searchExpanded, setSearchExpanded] = useState(false); // State to toggle the search bar expansion
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [anchorElUser, setAnchorElUser] = useState(null);
-  const [cartOpen, setCartOpen] = useState(false);
 
   const { isFeedView } = useQuery();
 
@@ -247,7 +244,6 @@ export default function ResponsiveAppBar() {
                   gap: '10px',
                 }}
               >
-                {isAuthenticated && <CartIcon onClick={() => setCartOpen(true)} />}{' '}
                 {isAuthenticated && (
                   <UserMenu
                     {...{
@@ -263,7 +259,6 @@ export default function ResponsiveAppBar() {
           </Toolbar>
         </Container>
       </AppBar>
-      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
     </>
   );
 }
