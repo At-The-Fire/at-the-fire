@@ -679,13 +679,13 @@ export default function Profile() {
   };
 
   /*
-  
+
 
       RETURN STARTS HERE========================================================================
       RETURN STARTS HERE========================================================================
       RETURN STARTS HERE========================================================================
 
-  
+
   */
 
   return isUpdating || profileLoading || error ? (
@@ -1183,44 +1183,6 @@ export default function Profile() {
                       )}
                     </Box>
                   )}{' '}
-                  {/* {user && user !== profile.sub && (
-                    <Button
-                      variant="contained"
-                      sx={{ height: '100%' }}
-                      onClick={() => handleMessageClick(profile.sub)}
-                    >
-                      Send Message
-                    </Button>
-                  )} */}
-                  {/* //TODO This should be optional- add checkbox in edit mode to turn this on or not */}
-                  {/* Contact Email */}
-                  {/* {finalBizProfile && isEditing ? (
-                  // Optional Email editing fields here
-                  <></>
-                ) : finalBizProfile?.email && finalBizProfile?.displayName ? (
-                  <Typography
-                    variant="body1"
-                    sx={{
-                      gridRowStart: isMobile || !isTablet ? '' : 2,
-                      gridColumnStart: isMobile || !isTablet ? '' : 3,
-                    }}
-                  >
-                    <Link href={`mailto:${finalBizProfile.email}`}>
-                      {`Email ${finalBizProfile.displayName}`}
-                    </Link>
-                  </Typography>
-                ) : finalBizProfile?.email && !finalBizProfile?.displayName ? (
-                  <Typography
-                    variant="body1"
-                    sx={{
-                      display: 'grid',
-                      gridRowStart: isMobile || !isTablet ? '' : 1,
-                      gridColumnStart: isMobile || !isTablet ? '' : 3,
-                    }}
-                  >
-                    <Link href={`mailto:${finalBizProfile.email}`}>{`Email this artist`}</Link>
-                  </Typography>
-                ) : null} */}
                 </Box>
               </CardContent>
             </Card>
