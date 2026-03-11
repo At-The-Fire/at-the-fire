@@ -40,18 +40,7 @@ export async function fetchPosts() {
 }
 
 // create new post in database
-export async function postPost(
-  title,
-  description,
-  image_url,
-  category,
-  price,
-  public_id,
-  num_imgs,
-  sold,
-  date_sold,
-  quantity
-) {
+export async function postPost({ title, description, image_url, category, price, public_id, num_imgs, sold, date_sold, quantity, shippingCost = 0 }) {
   try {
     const resp = await fetch(`${BASE_URL}/api/v1/dashboard`, {
       method: 'POST',
@@ -70,6 +59,7 @@ export async function postPost(
         sold,
         date_sold,
         quantity,
+        shippingCost,
       }),
       credentials: 'include',
     });

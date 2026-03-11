@@ -72,30 +72,25 @@ export default function NewPost() {
 
   const submitHandler = async (newPost) => {
     try {
-      const { title, description, image_url, category, price, public_id, num_imgs, sold, date_sold, quantity } = newPost;
-
-      // create new post with fetch call to db
-      // TODO refactor to just use object- change function definition in fetch-utils
-      const post = await postPost(title, description, image_url, category, price, public_id, num_imgs, sold, date_sold, quantity);
+      const post = await postPost(newPost);
 
       // send image urls and public ids to db
       await postAddImages(newPost.additionalImages, post.id);
 
       // make fetch call to new controller for inserting new quota tracking entry
       const quotaEntry = {
-        // customer_id: customerId,
-        title,
-        description,
-        image_url,
-        category,
-        price,
-        public_id,
-        num_days: 1, // hard coded for now
+        title: newPost.title,
+        description: newPost.description,
+        image_url: newPost.image_url,
+        category: newPost.category,
+        price: newPost.price,
+        public_id: newPost.public_id,
+        num_days: 1,
         type: 'inventory',
-        date: new Date().setHours(0, 0, 0, 0), // This sets the time to midnight
+        date: new Date().setHours(0, 0, 0, 0),
         qty: 1,
-        sold,
-        date_sold,
+        sold: newPost.sold,
+        date_sold: newPost.date_sold,
         sales: [],
         post_id: post.id,
       };
