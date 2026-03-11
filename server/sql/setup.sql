@@ -43,7 +43,9 @@ first_name VARCHAR(255),
 last_name VARCHAR(255),
 bio VARCHAR(255),
 email_hash VARCHAR(255) UNIQUE NOT NULL,
-social_media_links JSON
+social_media_links JSON,
+accepted_tos_at TIMESTAMPTZ,
+tos_version VARCHAR(20)
 );
 
 CREATE TABLE stripe_customers (
