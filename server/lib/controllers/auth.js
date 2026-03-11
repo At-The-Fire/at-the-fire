@@ -24,7 +24,7 @@ if (process.env.NODE_ENV !== 'test') {
 module.exports = Router()
   .post('/new-user', async (req, res, next) => {
     try {
-      const { email, sub } = req.body;
+      const { email, sub, tosVersion } = req.body;
 
       // Check for missing data
       if (!email) throw new Error('Missing email error.');
@@ -36,8 +36,8 @@ module.exports = Router()
         return;
       }
 
-      // Validate sub is a UUID v4 (Cognito sub format)
-      if (!validator.isUUID(sub, '4')) {
+      // Validate sub is a UUID (Cognito subs may be v4 or v7 depending on pool age)
+      if (!validator.isUUID(sub)) {
         return res.status(400).json({ error: 'Invalid sub format.' });
       }
 
@@ -48,7 +48,11 @@ module.exports = Router()
         return res.status(400).json({ error: 'Invalid email format.' });
       }
 
-      await AWSUser.insertAWS({ email, sub });
+      if (!tosVersion || typeof tosVersion !== 'string') {
+        return res.status(400).json({ error: 'tosVersion is required.' });
+      }
+
+      await AWSUser.insertAWS({ email, sub, tosVersion });
 
       res.json({
         message: 'Account created successfully, check email for verification!',
