@@ -36,7 +36,7 @@ module.exports = class StripeCustomer {
       VALUES ($1, $2, $3, $4, $5)
       RETURNING *
       `,
-      [customerId, awsSub, name, email, encrypt(phone)]
+      [customerId, awsSub, name, email, encrypt(phone)],
     );
 
     return new StripeCustomer(rows[0]);
@@ -55,7 +55,7 @@ module.exports = class StripeCustomer {
         VALUES ($1, $2, $3, $4, $5)
         RETURNING *
       `,
-        [customerId, awsSub, name, encrypt(email), encrypt(phone)]
+        [customerId, awsSub, name, encrypt(email), encrypt(phone)],
       );
 
       // Update the Users table (assuming there's a field isActive in users table)
@@ -65,7 +65,7 @@ module.exports = class StripeCustomer {
         SET customer_id = $1
         WHERE sub = $2
       `,
-        [customerId, awsSub]
+        [customerId, awsSub],
       );
 
       await client.query('COMMIT');
@@ -83,7 +83,7 @@ module.exports = class StripeCustomer {
       SELECT * FROM stripe_customers
       WHERE customer_id = $1
       `,
-      [customerId]
+      [customerId],
     );
     if (!rows[0]) return null;
     return new StripeCustomer(rows[0]);
@@ -95,7 +95,7 @@ module.exports = class StripeCustomer {
       SELECT * FROM stripe_customers
       WHERE aws_sub = $1
       `,
-      [awsSub]
+      [awsSub],
     );
 
     if (!rows[0]) return null;
@@ -126,7 +126,7 @@ module.exports = class StripeCustomer {
         websiteUrl,
         logoImageUrl ? logoImageUrl : null,
         logoPublicId,
-      ]
+      ],
     );
 
     return new StripeCustomer(rows[0]);
@@ -140,7 +140,7 @@ module.exports = class StripeCustomer {
       WHERE customer_id = $1
       RETURNING *
       `,
-      [customerId, confirmed]
+      [customerId, confirmed],
     );
 
     if (!rows[0]) return null;
@@ -154,7 +154,7 @@ module.exports = class StripeCustomer {
     WHERE aws_sub = $1
     RETURNING *
     `,
-      [sub]
+      [sub],
     );
     return new StripeCustomer(rows[0]);
   }
@@ -163,7 +163,7 @@ module.exports = class StripeCustomer {
     const { rows } = await pool.query(
       `
       SELECT * FROM stripe_customers
-      `
+      `,
     );
 
     if (!rows) {
@@ -171,10 +171,6 @@ module.exports = class StripeCustomer {
     }
     return rows.map((row) => new StripeCustomer(row));
   }
-
-  // TODO
-  //! Need to add "ON DELETE CASCADE" for schema-> customer_id foreign keys, this is good for now
-  //! ultimately needs to detect posts-> images-> delete from S3 before database...
 
   static async deleteSubscriber(sub) {
     const data = await StripeCustomer.getStripeByAWSSub(sub);
@@ -200,7 +196,7 @@ module.exports = class StripeCustomer {
       await client.query('DELETE FROM gallery_posts WHERE customer_id = $1', [customerId]);
       const result = await client.query(
         'DELETE FROM stripe_customers WHERE customer_id = $1 RETURNING *',
-        [customerId]
+        [customerId],
       );
 
       await client.query('COMMIT');
