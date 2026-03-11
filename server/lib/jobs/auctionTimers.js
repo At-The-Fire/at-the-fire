@@ -20,7 +20,7 @@ async function completeAuction(auctionId) {
     await client.query('BEGIN'); // start transaction
 
     // 1. Mark auction inactive (idempotent guard)
-    const { rows: auctionRows, rowCount } = await client.query(
+    const { rows: auctionRows = [], rowCount } = await client.query(
       `
       UPDATE auctions
       SET is_active = FALSE, updated_at = NOW()
@@ -77,12 +77,22 @@ async function completeAuction(auctionId) {
         // System message to winner
         if (sellerSub && winnerSub && sellerSub !== winnerSub) {
           try {
-            let conversationId = await Conversations.findConversationByParticipants([sellerSub, winnerSub]);
+            let conversationId = await Conversations.findConversationByParticipants([
+              sellerSub,
+              winnerSub,
+            ]);
             if (!conversationId) {
-              conversationId = await Conversations.createConversation([sellerSub, winnerSub], sellerSub);
+              conversationId = await Conversations.createConversation(
+                [sellerSub, winnerSub],
+                sellerSub,
+              );
             }
             const content = `Congratulations! You won "${auctionTitle}"! Head to your purchases to complete payment and we'll get it shipped to you.`;
-            await Conversations.createMessage({ conversation_id: conversationId, sender_sub: sellerSub, content });
+            await Conversations.createMessage({
+              conversation_id: conversationId,
+              sender_sub: sellerSub,
+              content,
+            });
           } catch (msgErr) {
             console.error(`[Cron] Failed to send winner message for auction ${auctionId}`, msgErr);
           }
