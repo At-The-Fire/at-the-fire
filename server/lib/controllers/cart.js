@@ -21,7 +21,7 @@ module.exports = Router()
 
           const { rows } = await pool.query(
             `
-            SELECT id, price, quantity, sold
+            SELECT id, price, quantity, sold, shipping_cost
             FROM gallery_posts
             WHERE id = $1
             `,
@@ -67,6 +67,7 @@ module.exports = Router()
             available: true,
             currentPrice: post.price,
             availableQty: post.quantity,
+            shippingCost: post.shipping_cost,
           };
         }),
       );
