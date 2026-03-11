@@ -67,6 +67,7 @@ const QueryProvider = ({ children }) => {
       useAuthStore.getState().handleAuthError(e.code, e.message);
     } else {
       if (process.env.REACT_APP_APP_ENV === 'development') {
+        // eslint-disable-next-line
         console.error('Error fetching data:', e);
       }
       useAuthStore.getState().setError(e.code);

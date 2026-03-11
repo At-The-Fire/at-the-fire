@@ -20,8 +20,11 @@ export const useConversations = () => {
   const setSelectedConversation = useNotificationStore((state) => state.setSelectedConversation);
 
   const handleError = (e, operation) => {
+    // eslint-disable-next-line
     console.log('handleError firing values:');
+    // eslint-disable-next-line
     console.log('e', e);
+    // eslint-disable-next-line
     console.log('operation', operation);
 
     setError(e.code);

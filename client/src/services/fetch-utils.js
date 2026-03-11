@@ -40,7 +40,18 @@ export async function fetchPosts() {
 }
 
 // create new post in database
-export async function postPost(title, description, image_url, category, price, public_id, num_imgs, sold, date_sold, quantity) {
+export async function postPost(
+  title,
+  description,
+  image_url,
+  category,
+  price,
+  public_id,
+  num_imgs,
+  sold,
+  date_sold,
+  quantity
+) {
   try {
     const resp = await fetch(`${BASE_URL}/api/v1/dashboard`, {
       method: 'POST',
@@ -247,6 +258,7 @@ export async function updatePostMainImage(postId, newImageUrl, newPublicId) {
     return data;
   } catch (error) {
     if (process.env.REACT_APP_APP_ENV === 'development') {
+      // eslint-disable-next-line
       console.error('Error updating post main image:', error);
     }
     throw error;
@@ -379,6 +391,7 @@ export const uploadImagesAndCreatePost = async (imageFiles, formFunctionMode) =>
             reject(new Error(errorData.message || `Upload failed: ${xhr.status}`));
           } catch (parseError) {
             if (process.env.REACT_APP_APP_ENV === 'development') {
+              // eslint-disable-next-line
               console.error('Error parsing error response:', parseError, 'Raw response:', xhr.responseText);
             }
             toast.update(toastId, {

@@ -53,8 +53,11 @@ export const useAuthStore = create((set, get) => ({
 
   // Dedicated auth error handler
   handleAuthError: (statusCode, message = '') => {
+    // eslint-disable-next-line
     console.log('ERROR');
+    // eslint-disable-next-line
     console.log('statusCode', statusCode);
+    // eslint-disable-next-line
     console.log('message', message);
 
     if (statusCode === 401) {

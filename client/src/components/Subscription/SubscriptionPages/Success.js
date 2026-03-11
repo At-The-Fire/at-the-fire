@@ -25,6 +25,7 @@ export default function Success() {
     if (!isAuthenticated) {
       authenticateUser();
     }
+    // eslint-disable-next-line
   }, []);
 
   return (
@@ -37,11 +38,7 @@ export default function Success() {
       }}
     >
       <Container maxWidth="xs">
-        <Typography
-          variant="h2"
-          color="primary.light"
-          sx={{ fontFamily: 'monospace', marginTop: '50px' }}
-        >
+        <Typography variant="h2" color="primary.light" sx={{ fontFamily: 'monospace', marginTop: '50px' }}>
           Success!
         </Typography>
         <Typography variant="h4" color="primary.light">
@@ -62,11 +59,7 @@ export default function Success() {
             margin: '2rem 0 0 0',
           }}
         />
-        <Typography
-          variant="h1"
-          color="primary.dark"
-          sx={{ fontFamily: 'Reenie Beanie', margin: '0 0 3rem 0' }}
-        >
+        <Typography variant="h1" color="primary.dark" sx={{ fontFamily: 'Reenie Beanie', margin: '0 0 3rem 0' }}>
           At The Fire
         </Typography>
         <Typography variant="h6">Enjoy your subscription.</Typography>
@@ -82,8 +75,7 @@ export default function Success() {
           }}
         >
           {' '}
-          This page will redirect in {countdown} second{countdown !== 1 ? 's' : ''}, click here if
-          not.
+          This page will redirect in {countdown} second{countdown !== 1 ? 's' : ''}, click here if not.
         </Typography>
       </Container>
     </Box>

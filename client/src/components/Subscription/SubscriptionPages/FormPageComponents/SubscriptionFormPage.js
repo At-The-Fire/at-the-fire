@@ -31,6 +31,7 @@ export default function SubscriptionFormPage() {
       navigate('/auth/sign-in');
       return;
     }
+    // eslint-disable-next-line
   }, []);
 
   // Prefill customer information if it exists

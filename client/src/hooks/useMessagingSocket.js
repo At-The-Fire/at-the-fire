@@ -60,5 +60,6 @@ export function useMessagingSocket() {
     // });
 
     return () => socket.disconnect();
+    // eslint-disable-next-line
   }, [user, activeConversationId]);
 }

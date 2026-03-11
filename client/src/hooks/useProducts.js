@@ -61,6 +61,7 @@ export function useProducts() {
 
   useEffect(() => {
     fetchAndSetProducts();
+    // eslint-disable-next-line
   }, [customerId, error, isAuthenticated, navigate, user, email, handleSignOut, setCustomerId, setError, setUser]);
 
   return {

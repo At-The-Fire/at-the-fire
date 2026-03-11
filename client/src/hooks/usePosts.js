@@ -48,5 +48,6 @@ export function usePosts() {
     };
 
     fetchData();
+    // eslint-disable-next-line
   }, []);
 }
