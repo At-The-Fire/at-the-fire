@@ -30,7 +30,7 @@ app.use(
       'https://at-the-fire-dev-68560297982b.herokuapp.com', //^ development server
     ],
     credentials: true,
-  })
+  }),
 );
 
 // Rate limiting - helps prevent brute force attacks
@@ -68,6 +68,35 @@ const authLimiter = rateLimit({
 });
 app.use('/api/v1/auth/create-cookies', authLimiter);
 app.use('/api/v1/auth/new-user', authLimiter);
+
+// Upload rate limits (skip in test environment)
+if (process.env.NODE_ENV !== 'test') {
+  const uploadLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 100,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { code: 429, message: 'Upload limit reached, try again later.' },
+  });
+  const profileUploadLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { code: 429, message: 'Upload limit reached, try again later.' },
+  });
+  const messageLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 60,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { code: 429, message: 'Message limit reached, try again later.' },
+  });
+  app.use('/api/v1/auctions/upload', uploadLimiter);
+  app.use('/api/v1/profile/avatar-upload', profileUploadLimiter);
+  app.use('/api/v1/profile/logo-upload', profileUploadLimiter);
+  app.use('/api/v1/conversations/messages', messageLimiter);
+}
 
 app.use((_, res, next) => {
   res.locals.nonce = crypto.randomBytes(16).toString('base64');
@@ -122,7 +151,7 @@ app.use(
         frameSrc: ["'self'", 'js.stripe.com', 'docs.google.com', 'hooks.stripe.com'],
       },
     },
-  })
+  }),
 );
 
 // App routes
@@ -140,7 +169,7 @@ app.use(
   '/api/v1/conversations',
   jsonParser,
   authenticateAWS,
-  require('./controllers/conversations')
+  require('./controllers/conversations'),
 );
 
 app.use('/api/v1/users', [jsonParser, authenticateAWS], require('./controllers/users'));
@@ -148,13 +177,13 @@ app.use('/api/v1/users', [jsonParser, authenticateAWS], require('./controllers/u
 app.use(
   '/api/v1/create-checkout-session',
   [jsonParser, authenticateAWS],
-  require('./controllers/checkout')
+  require('./controllers/checkout'),
 );
 
 app.use(
   '/api/v1/create-customer-portal-session',
   [jsonParser, authenticateAWS, authorizeSubscription],
-  require('./controllers/customerPortal')
+  require('./controllers/customerPortal'),
 );
 
 app.use('/api/v1/stripe', [jsonParser, authenticateAWS], require('./controllers/stripe'));
@@ -162,55 +191,55 @@ app.use('/api/v1/stripe', [jsonParser, authenticateAWS], require('./controllers/
 app.use(
   '/api/v1/dashboard',
   [jsonParser, authenticateAWS, authorizeSubscription],
-  require('./controllers/dashboard')
+  require('./controllers/dashboard'),
 );
 
 app.use(
   '/api/v1/goals',
   [jsonParser, authenticateAWS, authorizeSubscription],
-  require('./controllers/goals')
+  require('./controllers/goals'),
 );
 
 app.use(
   '/api/v1/quota-tracking',
   [jsonParser, authenticateAWS, authorizeSubscription],
-  require('./controllers/quotaTracking')
+  require('./controllers/quotaTracking'),
 );
 
 app.use(
   '/api/v1/quota-tracking/:productId/sales',
   [jsonParser, authenticateAWS, authorizeSubscription],
-  require('./controllers/sales')
+  require('./controllers/sales'),
 );
 
 app.use(
   '/api/v1/inventory-snapshot',
   [jsonParser, authenticateAWS, authorizeSubscription],
-  require('./controllers/inventorySnapshot')
+  require('./controllers/inventorySnapshot'),
 );
 
 app.use(
   '/api/v1/orders',
   [jsonParser, authenticateAWS, authorizeSubscription],
-  require('./controllers/orders')
+  require('./controllers/orders'),
 );
 
 app.use(
   '/api/v1/atf-operations',
   [jsonParser, authenticateAWS, authorizeSubscription, adminIdCheck],
-  require('./controllers/atfOperations')
+  require('./controllers/atfOperations'),
 );
 
-// Auction routes (Phase 1)
+// Auction routes
 app.use('/api/v1/auctions', [jsonParser], require('./controllers/auctions'));
 app.use('/api/v1/bids', [jsonParser], require('./controllers/bids'));
 app.use(
   '/api/v1/auction-notifications',
   [jsonParser, authenticateAWS],
-  require('./controllers/auctionNotifications')
+  require('./controllers/auctionNotifications'),
 );
 
-// Shopping cart routes (Phase 2)
+// Shopping cart routes
 app.use('/api/v1/cart', [jsonParser, authenticateAWS], require('./controllers/cart'));
 app.use('/api/v1/purchases', [jsonParser, authenticateAWS], require('./controllers/purchases'));
 
