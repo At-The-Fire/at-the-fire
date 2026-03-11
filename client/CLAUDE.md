@@ -17,6 +17,7 @@ At The Fire is an artist/maker business platform (gallery, inventory management,
 ## Code Style
 
 Enforced via `.eslintrc` and `.prettierrc`:
+
 - Single quotes, semicolons required, 2-space indent, 120 char print width
 - Strict equality (`===`) enforced
 - Trailing commas in ES5 positions
@@ -28,6 +29,7 @@ Enforced via `.eslintrc` and `.prettierrc`:
 ### State Management (Hybrid)
 
 **Zustand stores** (`src/stores/`) are the primary state layer:
+
 - `useAuthStore` — auth state, Cognito user, tokens, Stripe customer
 - `usePostStore` — gallery and inventory posts
 - `useProfileStore`, `useFollowerStore`, `useLikeStore` — social features
@@ -42,6 +44,7 @@ Enforced via `.eslintrc` and `.prettierrc`:
 ### Data Fetching
 
 Service functions in `src/services/fetch-*.js` wrap the Fetch API:
+
 - All authenticated requests use `credentials: 'include'`
 - Base URL from `process.env.REACT_APP_BASE_URL`
 - Errors are structured objects: `{ code, message, type }`
@@ -56,6 +59,7 @@ AWS Cognito via `amazon-cognito-identity-js`. User pool config is in `src/servic
 ### Routing
 
 React Router v6 in `src/App.js`. Key routes:
+
 - `/` — public gallery
 - `/dashboard` — authenticated dashboard (tabbed: posts, products/inventory, analysis)
 - `/dashboard/new`, `/dashboard/edit/:id` — post creation/editing
@@ -66,8 +70,8 @@ React Router v6 in `src/App.js`. Key routes:
 - `/at-the-bon-fire` — admin dashboard
 - `/auctions` — browse active auctions (public)
 - `/auctions/:id` — auction detail with live bid history
-- `/auctions/new`, `/auctions/edit/:id` — seller creates/edits auction
-- `/auctions/my-auctions` — seller's listings and results
+- `/dashboard/auctions/new`, `/auctions/edit/:id` — seller creates/edits auction
+- `/dashboard/` — seller's listings and results
 - `/cart` or cart drawer — shopping cart (gallery posts)
 - `/checkout` — payment flow (intent → capture)
 - `/purchases` — buyer's order history
@@ -92,6 +96,7 @@ Material-UI v5 with dark (default) and light themes defined in `App.js`. Brand g
 ## Environment Variables
 
 Defined in `.env.*` files. Key vars:
+
 - `REACT_APP_BASE_URL` — backend API URL
 - `REACT_APP_POOL_ID` / `REACT_APP_APP_CLIENT_ID` — AWS Cognito config
 - `REACT_APP_TEST_MONTHLY` / `REACT_APP_TEST_YEARLY` — Stripe price IDs
