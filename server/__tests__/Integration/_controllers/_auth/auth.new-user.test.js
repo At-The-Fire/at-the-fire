@@ -1,6 +1,7 @@
 const pool = require('../../../../lib/utils/pool.js');
 const setup = require('../../../../data/setup.js');
 const request = require('supertest');
+const crypto = require('crypto');
 
 // IMPORTANT: mock jwt BEFORE requiring the Express app (controllers import jwt at load time)
 jest.mock('jsonwebtoken', () => ({
@@ -40,13 +41,38 @@ describe('AWS Cognito User tests', () => {
 
   // User creation tests
   it('should create a new user successfully', async () => {
-    const mockUserData = { email: 'test-email@email.com', sub: process.env.TEST_SUB };
+    const mockUserData = { email: 'test-email@email.com', sub: process.env.TEST_SUB, tosVersion: '2026-03-09' };
     const response = await request(app).post('/api/v1/auth/new-user').send(mockUserData);
 
     expect(response.status).toBe(200);
     expect(response.body.message).toBe(
       'Account created successfully, check email for verification!',
     );
+  });
+
+  it('should return 400 when tosVersion is missing', async () => {
+    const mockUserData = { email: 'test-email@email.com', sub: process.env.TEST_SUB };
+    const response = await request(app).post('/api/v1/auth/new-user').send(mockUserData);
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe('tosVersion is required.');
+  });
+
+  it('should persist accepted_tos_at and tos_version in the database', async () => {
+    const email = 'tos-check@example.com';
+    const tosVersion = '2026-03-09';
+    await request(app)
+      .post('/api/v1/auth/new-user')
+      .send({ email, sub: process.env.TEST_SUB, tosVersion });
+
+    const emailHash = crypto.createHash('sha256').update(email).digest('hex');
+    const { rows } = await pool.query(
+      'SELECT accepted_tos_at, tos_version FROM cognito_users WHERE email_hash = $1',
+      [emailHash]
+    );
+    expect(rows.length).toBe(1);
+    expect(rows[0].tos_version).toBe(tosVersion);
+    expect(rows[0].accepted_tos_at).not.toBeNull();
   });
 
   it('should throw error if cookies are not present', async () => {
@@ -62,6 +88,7 @@ describe('AWS Cognito User tests', () => {
       email: process.env.TEST_EMAIL,
       sub: process.env.TEST_SUB,
       // sub: process.env.TEST_SUB_NO_PROFILE,
+      tosVersion: '2026-03-09',
     };
     const response = await request(app).post('/api/v1/auth/new-user').send(mockUserData);
 
@@ -73,10 +100,12 @@ describe('AWS Cognito User tests', () => {
     const initialUserData = {
       email: 'initial@example.com',
       sub: process.env.TEST_SUB,
+      tosVersion: '2026-03-09',
     };
     const overwriteAttemptData = {
       email: 'overwrite@example.com',
       sub: process.env.TEST_SUB,
+      tosVersion: '2026-03-09',
     };
     await request(app).post('/api/v1/auth/new-user').send(initialUserData);
 
