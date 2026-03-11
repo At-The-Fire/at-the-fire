@@ -67,7 +67,7 @@ module.exports = Router()
       for (const item of normalizedItems) {
         const { rows: postRows } = await client.query(
           `
-          SELECT id, customer_id, price, quantity AS available_quantity, sold
+          SELECT id, customer_id, price, quantity AS available_quantity, sold, shipping_cost
           FROM gallery_posts
           WHERE id = $1
           `,
@@ -91,13 +91,16 @@ module.exports = Router()
           return res.status(400).json({ error: `Invalid price for post ${item.postId}` });
         }
 
+        const shippingCost = Number.parseFloat(post.shipping_cost) || 0;
+
         itemDetails.push({
           postId: post.id,
           sellerCustomerId: post.customer_id,
           pricePerItem,
           availableQuantity: post.available_quantity,
           quantity: item.quantity,
-          amountPaid: pricePerItem * item.quantity,
+          shippingCost,
+          amountPaid: pricePerItem * item.quantity + shippingCost,
         });
       }
 
@@ -122,10 +125,11 @@ module.exports = Router()
             item_id,
             quantity,
             amount_paid,
+            shipping_cost,
             processor_transaction_id,
             status
           )
-          VALUES ($1, $2, 'gallery_post', $3, $4, $5, $6, 'completed')
+          VALUES ($1, $2, 'gallery_post', $3, $4, $5, $6, $7, 'completed')
           RETURNING id
           `,
           [
@@ -134,6 +138,7 @@ module.exports = Router()
             item.postId,
             item.quantity,
             item.amountPaid,
+            item.shippingCost,
             capturedTransactionId,
           ],
         );
