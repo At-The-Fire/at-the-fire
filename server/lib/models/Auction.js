@@ -41,6 +41,7 @@ module.exports = class Auction {
     this.closedReason = row.closed_reason ?? null;
     this.isPaid = row.is_paid ?? null;
     this.trackingNumber = row.tracking_number ?? null;
+    this.shippingCost = row.shipping_cost ?? 0;
   }
 
   static async insert({
@@ -54,6 +55,7 @@ module.exports = class Auction {
     endTime,
     isActive = true,
     sellerSub,
+    shippingCost = 0,
   }) {
     const { rows } = await pool.query(
       `
@@ -67,9 +69,10 @@ module.exports = class Auction {
         start_time,
         end_time,
         is_active,
-        seller_sub
+        seller_sub,
+        shipping_cost
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING *
       `,
       [
@@ -83,6 +86,7 @@ module.exports = class Auction {
         endTime,
         isActive,
         sellerSub,
+        shippingCost || 0,
       ],
     );
 
@@ -145,6 +149,7 @@ module.exports = class Auction {
       endTime: fields.endTime ?? current.endTime,
       isActive: fields.isActive ?? current.isActive,
       sellerSub: fields.sellerSub ?? current.sellerSub,
+      shippingCost: fields.shippingCost ?? current.shippingCost ?? 0,
     };
 
     const { rows } = await pool.query(
@@ -161,6 +166,7 @@ module.exports = class Auction {
         end_time = $9,
         is_active = $10,
         seller_sub = $11,
+        shipping_cost = $12,
         updated_at = CURRENT_TIMESTAMP
       WHERE id = $1
       RETURNING *
@@ -177,6 +183,7 @@ module.exports = class Auction {
         updated.endTime,
         updated.isActive,
         updated.sellerSub,
+        updated.shippingCost,
       ],
     );
 
