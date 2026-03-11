@@ -31,6 +31,7 @@ export default function AuctionForm() {
   const [description, setDescription] = useState('');
   const [startPrice, setStartPrice] = useState('');
   const [buyNowPrice, setBuyNowPrice] = useState('');
+  const [shippingCost, setShippingCost] = useState('');
   const [endTime, setEndTime] = useState('');
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -71,6 +72,7 @@ export default function AuctionForm() {
         setExistingImages(currentAuction.imageUrls || []);
         setStartPrice(currentAuction.startPrice || '');
         setBuyNowPrice(currentAuction.buyNowPrice || '');
+        setShippingCost(currentAuction.shippingCost ?? '');
 
         if (currentAuction.endTime) {
           const formattedEndTime = new Date(currentAuction.endTime)
@@ -147,6 +149,7 @@ export default function AuctionForm() {
         description: sanitizedDescription,
         startPrice: parseInt(startPrice),
         buyNowPrice: buyNowPrice ? parseInt(buyNowPrice) : null,
+        shippingCost: shippingCost !== '' ? Number(shippingCost) : 0,
         endTime: new Date(endTime).toISOString(),
         startTime: existingAuction?.startTime
           ? new Date(existingAuction.startTime).toISOString()
@@ -170,6 +173,7 @@ export default function AuctionForm() {
         setDescription('');
         setStartPrice('');
         setBuyNowPrice('');
+        setShippingCost('');
         setEndTime('');
         setFiles([]);
         setExistingImages([]);
@@ -254,6 +258,14 @@ export default function AuctionForm() {
             InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
             value={buyNowPrice || ''}
             onChange={(e) => setBuyNowPrice(e.target.value)}
+          />
+          <TextField
+            label="Shipping (optional)"
+            type="number"
+            inputProps={{ min: 0, step: 1 }}
+            InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+            value={shippingCost}
+            onChange={(e) => setShippingCost(e.target.value)}
           />
           <TextField
             label="End Time"
