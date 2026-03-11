@@ -17,6 +17,8 @@ module.exports = class AWSUser {
   emailHash;
   socialMediaLinks;
   displayName;
+  acceptedTosAt;
+  tosVersion;
 
   constructor(row) {
     this.id = row.id;
@@ -35,6 +37,8 @@ module.exports = class AWSUser {
     this.emailHash = row.email_hash;
     this.socialMediaLinks = row.social_media_links;
     this.displayName = row.display_name;
+    this.acceptedTosAt = row.accepted_tos_at;
+    this.tosVersion = row.tos_version;
   }
 
   // email hashing functions
@@ -50,19 +54,17 @@ module.exports = class AWSUser {
     return rows.length > 0;
   }
 
-  static async insertAWS({ sub, email }) {
+  static async insertAWS({ sub, email, tosVersion }) {
     if (await this.emailExists(email)) {
       throw new Error(
         'duplicate key value violates unique constraint "cognito_users_email_key"'
       );
     }
     const { rows } = await pool.query(
-      `
-INSERT INTO cognito_users (sub, email, email_hash)
-      VALUES ($1, $2, $3)
-      RETURNING *
-      `,
-      [sub, encrypt(email), this.hashEmail(email)]
+      `INSERT INTO cognito_users (sub, email, email_hash, accepted_tos_at, tos_version)
+      VALUES ($1, $2, $3, NOW(), $4)
+      RETURNING *`,
+      [sub, encrypt(email), this.hashEmail(email), tosVersion]
     );
 
     return new AWSUser(rows[0]);
