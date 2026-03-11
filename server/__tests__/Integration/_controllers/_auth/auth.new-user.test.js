@@ -41,7 +41,11 @@ describe('AWS Cognito User tests', () => {
 
   // User creation tests
   it('should create a new user successfully', async () => {
-    const mockUserData = { email: 'test-email@email.com', sub: process.env.TEST_SUB, tosVersion: '2026-03-09' };
+    const mockUserData = {
+      email: 'test-email@email.com',
+      sub: process.env.TEST_SUB,
+      tosVersion: '2026-03-09',
+    };
     const response = await request(app).post('/api/v1/auth/new-user').send(mockUserData);
 
     expect(response.status).toBe(200);
@@ -58,6 +62,35 @@ describe('AWS Cognito User tests', () => {
     expect(response.body.error).toBe('tosVersion is required.');
   });
 
+  it('should return 400 when tosVersion is an empty string', async () => {
+    const response = await request(app)
+      .post('/api/v1/auth/new-user')
+      .send({ email: 'test-email@email.com', sub: process.env.TEST_SUB, tosVersion: '' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe('tosVersion is required.');
+  });
+
+  it('should accept Cognito sub format regardless of UUID variant bits', async () => {
+    // AWS Cognito does not always emit RFC 4122-compliant variant bits,
+    // so validator.isUUID() rejects real subs. We validate structure only (8-4-4-4-12 hex).
+    const cognitoSub = '186153d0-20f1-70ec-5c8a-2782624547a2';
+    const response = await request(app)
+      .post('/api/v1/auth/new-user')
+      .send({ email: 'v7-sub-test@example.com', sub: cognitoSub, tosVersion: '2026-03-09' });
+
+    expect(response.status).toBe(200);
+  });
+
+  it('should return 400 for a completely invalid sub format', async () => {
+    const response = await request(app)
+      .post('/api/v1/auth/new-user')
+      .send({ email: 'test-email@email.com', sub: 'not-a-uuid-at-all', tosVersion: '2026-03-09' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe('Invalid sub format.');
+  });
+
   it('should persist accepted_tos_at and tos_version in the database', async () => {
     const email = 'tos-check@example.com';
     const tosVersion = '2026-03-09';
@@ -68,7 +101,7 @@ describe('AWS Cognito User tests', () => {
     const emailHash = crypto.createHash('sha256').update(email).digest('hex');
     const { rows } = await pool.query(
       'SELECT accepted_tos_at, tos_version FROM cognito_users WHERE email_hash = $1',
-      [emailHash]
+      [emailHash],
     );
     expect(rows.length).toBe(1);
     expect(rows[0].tos_version).toBe(tosVersion);
@@ -92,7 +125,7 @@ describe('AWS Cognito User tests', () => {
     };
     const response = await request(app).post('/api/v1/auth/new-user').send(mockUserData);
 
-    // expect(response.body).toBe(409);
+    expect(response.status).toBe(409);
     expect(response.body).toBe('Email already exists.');
   });
 

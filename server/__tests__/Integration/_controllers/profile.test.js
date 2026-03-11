@@ -333,6 +333,8 @@ describe('Profile routes that use mocked middleware: /profile/user-update/:sub a
       bio: 'Bio for profile user',
       emailHash: expect.any(String),
       socialMediaLinks: {},
+      acceptedTosAt: null,
+      tosVersion: null,
     });
   });
 
