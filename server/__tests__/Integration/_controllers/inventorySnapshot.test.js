@@ -124,6 +124,7 @@ describe('posts/ post details/ cloudinary routes', () => {
       num_imgs: expect.any(String),
       public_id: expect.any(String),
       quantity: null,
+      shipping_cost: '0',
       sold: true,
       date_sold: '1720594800000',
     });
