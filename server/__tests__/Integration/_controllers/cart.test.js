@@ -111,6 +111,7 @@ describe('Cart routes', () => {
           available: true,
           currentPrice: '20.00',
           availableQty: 5,
+          shippingCost: '0',
         },
       ]);
     });
