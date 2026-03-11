@@ -36,8 +36,9 @@ module.exports = Router()
         return;
       }
 
-      // Validate sub is a UUID (Cognito subs may be v4 or v7 depending on pool age)
-      if (!validator.isUUID(sub)) {
+      // Validate sub looks like a UUID (8-4-4-4-12 hex).
+      // AWS Cognito generates non-standard variant bits so validator.isUUID() rejects them.
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sub)) {
         return res.status(400).json({ error: 'Invalid sub format.' });
       }
 
