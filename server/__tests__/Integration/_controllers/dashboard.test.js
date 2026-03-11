@@ -224,6 +224,7 @@ describe('posts/ post details/ S3 routes', () => {
       num_imgs: expect.any(String),
       public_id: expect.any(String),
       quantity: 1,
+      shipping_cost: '0',
       sold: expect.any(Boolean),
       date_sold: null,
     });
@@ -257,6 +258,7 @@ describe('posts/ post details/ S3 routes', () => {
       num_imgs: expect.any(String),
       public_id: expect.any(String),
       quantity: null,
+      shipping_cost: '0',
       sold: true,
       date_sold: '1720594800000',
     });
@@ -277,6 +279,7 @@ describe('posts/ post details/ S3 routes', () => {
           num_imgs: 1,
           public_id: 'test public id',
           quantity: 1,
+          shipping_cost: 0,
           sold: true,
           date_sold: '1720594800000',
         },
@@ -296,6 +299,7 @@ describe('posts/ post details/ S3 routes', () => {
       num_imgs: expect.any(String),
       public_id: expect.any(String),
       quantity: 0,
+      shipping_cost: '0',
       sold: true,
       date_sold: '1720594800000',
     });
@@ -318,6 +322,7 @@ describe('posts/ post details/ S3 routes', () => {
           quantity: 3,
           sold: false,
           date_sold: null,
+          shipping_cost: '0',
         },
       });
 
@@ -334,7 +339,7 @@ describe('posts/ post details/ S3 routes', () => {
       customer_id: expect.any(String),
       num_imgs: expect.any(String),
       public_id: expect.any(String),
-
+      shipping_cost: '0',
       quantity: 3,
       sold: false,
       date_sold: null,
@@ -425,12 +430,14 @@ describe('posts/ post details/ S3 routes', () => {
         image_url: expect.any(String),
         public_id: expect.any(String),
         resource_type: expect.any(String),
+        shipping_cost: 0,
       },
       {
         id: expect.any(Number),
         image_url: expect.any(String),
         public_id: expect.any(String),
         resource_type: expect.any(String),
+        shipping_cost: 0,
       },
     ]);
   });
@@ -451,12 +458,14 @@ describe('posts/ post details/ S3 routes', () => {
           "image_url": "test-url",
           "public_id": "test-public-id",
           "resource_type": "image",
+          "shipping_cost": 0,
         },
         {
           "id": 2,
           "image_url": "test-url-2",
           "public_id": "test-public-id-2",
           "resource_type": "image",
+          "shipping_cost": 0,
         },
       ]
     `);
@@ -471,6 +480,7 @@ describe('posts/ post details/ S3 routes', () => {
         "image_url": "test-url",
         "public_id": "test-public-id",
         "resource_type": "image",
+        "shipping_cost": 0,
       }
     `);
 
@@ -513,7 +523,7 @@ describe('posts/ post details/ S3 routes', () => {
 
   it('POST/upload with 51 images should return 400 status', async () => {
     AWSUser.checkAndRecordImageUploads.mockRejectedValueOnce(
-      new Error('Daily upload limit of 50 images exceeded')
+      new Error('Daily upload limit of 50 images exceeded'),
     );
 
     const imageBuffer = Buffer.from([
@@ -547,7 +557,10 @@ describe('posts/ post details/ S3 routes', () => {
   //     that external service fails or if you exceed any rate limits`);
 
   describe('restricted user (expired subscription)', () => {
-    const restricted403 = { code: 403, message: 'An active subscription is required to perform this action.' };
+    const restricted403 = {
+      code: 403,
+      message: 'An active subscription is required to perform this action.',
+    };
 
     beforeEach(() => {
       mockRestricted = true;
@@ -564,7 +577,9 @@ describe('posts/ post details/ S3 routes', () => {
     });
 
     it('POST /dashboard/delete returns 403', async () => {
-      const resp = await request(app).post('/api/v1/dashboard/delete').send({ public_id: 'some-id' });
+      const resp = await request(app)
+        .post('/api/v1/dashboard/delete')
+        .send({ public_id: 'some-id' });
       expect(resp.status).toBe(403);
       expect(resp.body).toEqual(restricted403);
     });
