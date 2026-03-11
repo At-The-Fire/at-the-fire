@@ -31,6 +31,7 @@ module.exports = class Purchase {
     this.trackingNumber = row.tracking_number || null;
     this.shippedAt = row.shipped_at || null;
     this.createdAt = row.created_at;
+    this.shippingCost = row.shipping_cost ?? 0;
     this.title = row.title || null;
     this.imageUrls = null;
   }
