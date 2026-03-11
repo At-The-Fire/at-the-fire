@@ -1,6 +1,7 @@
 // /jobs/auctionTimers.js
 const cron = require('node-cron');
 const db = require('../utils/pool.js');
+const Conversations = require('../models/Conversations');
 
 // Module-level Socket.IO instance (set via initAuctionTimers)
 let _io;
@@ -19,14 +20,17 @@ async function completeAuction(auctionId) {
     await client.query('BEGIN'); // start transaction
 
     // 1. Mark auction inactive (idempotent guard)
-    const { rowCount } = await client.query(
+    const { rows: auctionRows, rowCount } = await client.query(
       `
       UPDATE auctions
       SET is_active = FALSE, updated_at = NOW()
       WHERE id = $1 AND is_active = TRUE AND end_time <= NOW()
+      RETURNING seller_sub, title
       `,
       [auctionId],
     );
+    const sellerSub = auctionRows[0]?.seller_sub;
+    const auctionTitle = auctionRows[0]?.title;
 
     if (rowCount > 0) {
       // 2. Get top bid
@@ -70,8 +74,19 @@ async function completeAuction(auctionId) {
           _io.to(`user_${winnerSub}`).emit('user-won', { auctionId });
         }
 
-        // System message to winner - TODO: implement once conversation system method identified
-        // await Conversations.insertSystemMessage(winnerSub, `Congrats on the win!...`);
+        // System message to winner
+        if (sellerSub && winnerSub && sellerSub !== winnerSub) {
+          try {
+            let conversationId = await Conversations.findConversationByParticipants([sellerSub, winnerSub]);
+            if (!conversationId) {
+              conversationId = await Conversations.createConversation([sellerSub, winnerSub], sellerSub);
+            }
+            const content = `Congratulations! You won "${auctionTitle}"! Head to your purchases to complete payment and we'll get it shipped to you.`;
+            await Conversations.createMessage({ conversation_id: conversationId, sender_sub: sellerSub, content });
+          } catch (msgErr) {
+            console.error(`[Cron] Failed to send winner message for auction ${auctionId}`, msgErr);
+          }
+        }
 
         console.info(`[Cron] Auction ${auctionId} expired — winner user ${winnerSub} recorded.`);
       } else {
