@@ -265,6 +265,7 @@ module.exports = Router()
         startTime: updatedAuction.startTime,
         endTime: updatedAuction.endTime,
         isActive: updatedAuction.isActive,
+        shippingCost: updatedAuction.shippingCost,
       };
 
       // 6. Update auction record in DB
