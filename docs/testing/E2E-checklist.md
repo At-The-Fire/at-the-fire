@@ -19,7 +19,7 @@
 - [ ] Upload avatar
   - [ ] Test supported file types
   - [ ] Test file size limits
-- [ ] Remove/replace avatar
+- [ ] Replace avatar
   - [ ] Verify default avatar appears when removed
 - [ ] Fill in all text fields
   - [ ] Test required vs optional fields
@@ -54,6 +54,7 @@
   - [ ] Enter a valid quantity
     - [ ] Verify quantity accepts only positive integers
     - [ ] Verify quantity field rejects 0, negative numbers, and non-numeric input
+  - [ ] Enter a shipping cost — verify it saves and displays correctly at checkout
   - [ ] Verify post displays in _Dashboard_ tab
   - [ ] Verify post displays in _Quota Tracking_ tab with matching quantity
   - [ ] Verify post displays in _Gallery_
@@ -132,6 +133,7 @@
 - [ ] Create auction
   - [ ] Test required fields (title, starting bid, end date)
   - [ ] Upload auction images
+  - [ ] Enter a shipping cost — verify it appears at BIN/auction-payment step
   - [ ] Verify auction appears in public auction listing
 - [ ] Bid on auction
   - [ ] Place a valid bid above minimum
@@ -142,6 +144,7 @@
   - [ ] Purchase at buy-it-now price
   - [ ] Verify auction closes immediately
   - [ ] Verify purchase appears in buyer's purchases
+  - [ ] Verify a congratulations message appears in the messaging system from the seller
 - [ ] Outbid notification (buyer)
   - [ ] Warning toast appears if on-site when outbid
   - [ ] _Purchases_ menu shows orange "N outbid" count on next login if offline when outbid
@@ -151,6 +154,7 @@
   - [ ] _Purchases_ menu shows green "N won" shimmer/count on next login
   - [ ] Avatar badge shows combined total (messages + won + outbid)
   - [ ] Badge clears on navigating to _My Purchases_
+  - [ ] Verify a congratulations message appears in the messaging system from the seller
 - [ ] Auction end — seller
   - [ ] _Workspace_ button shows numeric orange badge for unshipped won auctions
   - [ ] Badge is accurate immediately on page load/refresh (not only after visiting Dashboard)
@@ -178,8 +182,10 @@
   - [ ] Click "Buy Now" — verify checkout shows correct item and selected quantity
 - [ ] Checkout
   - [ ] Verify order summary shows correct item, quantity, and total
+  - [ ] Verify shipping cost appears as a line item in order summary (when > $0)
+  - [ ] Verify total = item price × quantity + shipping
   - [ ] Complete checkout (placeholder processor — any card details will succeed)
-  - [ ] Verify order confirmation screen is shown
+  - [ ] Verify redirect to /my-purchases with new purchase visible
   - [ ] Verify inventory decremented after purchase
   - [ ] Verify purchase record created
 - [ ] Navigate to /checkout directly (no item state)
