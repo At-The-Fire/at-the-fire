@@ -6,6 +6,7 @@ import usePostStore from './usePostStore.js';
 import { websocketService } from '../services/websocketService.js';
 
 const BASE_URL = process.env.REACT_APP_BASE_URL;
+const TOS_VERSION = '2026-03-09';
 
 export const useAuthStore = create((set, get) => ({
   // State
@@ -100,7 +101,7 @@ export const useAuthStore = create((set, get) => ({
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ email, sub: result.userSub }),
+          body: JSON.stringify({ email, sub: result.userSub, tosVersion: TOS_VERSION }),
         });
         const data = await resp.json();
         if (resp.ok) {
@@ -115,7 +116,8 @@ export const useAuthStore = create((set, get) => ({
           // eslint-disable-next-line no-console
           console.error(e);
         }
-        !toast.error(`Account error: ${e}`, {
+        const message = e?.error || e?.message || String(e);
+        !toast.error(`Account error: ${message}`, {
           theme: 'colored',
           draggable: true,
           draggablePercent: 60,
@@ -580,6 +582,7 @@ export const useAuthStore = create((set, get) => ({
         body: JSON.stringify({
           email: challengeParams.userAttributes.email,
           sub: sub,
+          tosVersion: TOS_VERSION,
         }),
       });
 
