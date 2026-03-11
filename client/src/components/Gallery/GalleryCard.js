@@ -36,6 +36,7 @@ export default function GalleryCard({ item }) {
           quantity: 1,
           imageUrl: item.image_url,
           sellerCustomerId: item.customer_id,
+          shippingCost: Number(item.shipping_cost) || 0,
         },
       },
     });
