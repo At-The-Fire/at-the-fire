@@ -33,6 +33,7 @@ module.exports = class Post {
     this.logo_image_url = row.logo_image_url;
     this.date_sold = row.date_sold;
     this.quantity = row.quantity;
+    this.shipping_cost = row.shipping_cost ?? 0;
   }
 
   // post a new post
@@ -47,10 +48,11 @@ module.exports = class Post {
     num_imgs,
     sold,
     date_sold,
-    quantity
+    quantity,
+    shippingCost = 0
   ) {
     const { rows } = await pool.query(
-      'INSERT INTO gallery_posts (title, description, image_url, category, price, customer_id, public_id, num_imgs,sold, date_sold, quantity) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *',
+      'INSERT INTO gallery_posts (title, description, image_url, category, price, customer_id, public_id, num_imgs, sold, date_sold, quantity, shipping_cost) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *',
       [
         title,
         description,
@@ -63,6 +65,7 @@ module.exports = class Post {
         sold,
         date_sold,
         quantity || null,
+        shippingCost || 0,
       ]
     );
 
@@ -105,7 +108,8 @@ module.exports = class Post {
     num_imgs,
     sold,
     date_sold,
-    quantity
+    quantity,
+    shippingCost = 0
   ) {
     const { rows } = await pool.query(
       `
@@ -120,7 +124,8 @@ module.exports = class Post {
           num_imgs = $9,
           sold = $10,
           date_sold = $11,
-          quantity = CASE WHEN $10 = true THEN 0 ELSE $12 END
+          quantity = CASE WHEN $10 = true THEN 0 ELSE $12 END,
+          shipping_cost = $13
       WHERE id = $1
       RETURNING *;
       `,
@@ -137,6 +142,7 @@ module.exports = class Post {
         sold,
         date_sold,
         quantity || null,
+        shippingCost || 0,
       ]
     );
 
