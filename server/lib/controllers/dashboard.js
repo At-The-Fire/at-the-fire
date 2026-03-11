@@ -306,7 +306,8 @@ module.exports = Router()
         req.body.num_imgs,
         req.body.sold,
         req.body.date_sold,
-        req.body.quantity
+        req.body.quantity,
+        req.body.shippingCost || 0
       );
 
       const redisClient = await getRedisClient();
@@ -349,7 +350,8 @@ module.exports = Router()
         req.body.post.num_imgs,
         req.body.post.sold,
         req.body.post.date_sold,
-        quantity
+        quantity,
+        req.body.post.shippingCost || 0
       );
 
       if (quantity) {
