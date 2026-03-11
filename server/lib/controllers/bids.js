@@ -2,6 +2,7 @@ const { Router } = require('express');
 const authenticateAWS = require('../middleware/authenticateAWS');
 const Bid = require('../models/Bid.js');
 const Auction = require('../models/Auction.js');
+const Conversations = require('../models/Conversations');
 const AuctionNotification = require('../models/AuctionNotification.js');
 const auctionTimers = require('../jobs/auctionTimers');
 const pool = require('../utils/pool');
@@ -201,10 +202,21 @@ module.exports = Router()
           client,
         );
 
-        // TODO: System message to winner once conversation method identified
-        // await Conversations.insertSystemMessage(buyerSub, `Congrats on the win!...`);
-
         await client.query('COMMIT');
+
+        // System message to winner (non-fatal)
+        if (auction.sellerSub && buyerSub && auction.sellerSub !== buyerSub) {
+          try {
+            let conversationId = await Conversations.findConversationByParticipants([auction.sellerSub, buyerSub]);
+            if (!conversationId) {
+              conversationId = await Conversations.createConversation([auction.sellerSub, buyerSub], auction.sellerSub);
+            }
+            const content = `Congratulations! You won "${auction.title}"! Head to your purchases to complete payment and we'll get it shipped to you.`;
+            await Conversations.createMessage({ conversation_id: conversationId, sender_sub: auction.sellerSub, content });
+          } catch (msgErr) {
+            console.error('Failed to send winner message on BIN', msgErr);
+          }
+        }
 
         // Emit WebSocket event for real-time updates after a successful commit
         const io = req.app.get('io');
