@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Box, Button, Divider, Typography } from '@mui/material';
 import { toast } from 'react-toastify';
 import { confirmPurchase } from '../../services/fetch-purchases.js';
@@ -9,22 +8,22 @@ import { useQuery } from '../../context/QueryContext.js';
 export default function Checkout() {
   const location = useLocation();
   const item = location.state?.item;
-  const totalAmount = item ? item.price * item.quantity : 0;
+  const shippingCost = item?.shippingCost ?? 0;
+  const totalAmount = item ? item.price * item.quantity + shippingCost : 0;
   const { setNewPostCreated } = useQuery();
 
-  const [orderConfirmed, setOrderConfirmed] = useState(false);
   const navigate = useNavigate();
 
   const handleSuccess = async (intentId, payment) => {
     try {
       await confirmPurchase(intentId, [item], payment);
       setNewPostCreated((prev) => !prev);
-      setOrderConfirmed(true);
       toast.success('Order placed successfully!', {
         theme: 'colored',
         toastId: 'order-success',
         autoClose: 5000,
       });
+      navigate('/my-purchases');
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('Confirm purchase error:', err);
@@ -43,22 +42,6 @@ export default function Checkout() {
       autoClose: false,
     });
   };
-
-  if (orderConfirmed) {
-    return (
-      <Box sx={{ paddingTop: '100px', textAlign: 'center', p: 4 }}>
-        <Typography variant="h5" gutterBottom>
-          Order Confirmed!
-        </Typography>
-        <Typography sx={{ color: 'text.secondary', mb: 3 }}>
-          Thank you for your purchase. You will receive a confirmation shortly.
-        </Typography>
-        <Button variant="contained" onClick={() => navigate('/')}>
-          Continue Shopping
-        </Button>
-      </Box>
-    );
-  }
 
   if (!item) {
     return (
@@ -88,6 +71,12 @@ export default function Checkout() {
           </Typography>
           <Typography variant="body2">${(item.price * item.quantity).toLocaleString()}</Typography>
         </Box>
+        {shippingCost > 0 && (
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+            <Typography variant="body2">Shipping</Typography>
+            <Typography variant="body2">${shippingCost.toLocaleString()}</Typography>
+          </Box>
+        )}
         <Divider sx={{ my: 1 }} />
         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
           <Typography fontWeight={600}>Total</Typography>
