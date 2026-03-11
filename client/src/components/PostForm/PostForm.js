@@ -42,6 +42,7 @@ export default function PostForm({
   sold = false,
   date_sold = null,
   quantity = '',
+  shipping_cost = 0,
 }) {
   // form wasn't showing current values in edit mode, this fixed it
   useEffect(() => {
@@ -54,8 +55,9 @@ export default function PostForm({
       setSoldInput(sold);
       setDateSoldInput(date_sold);
       setQuantityInput(quantity || '');
+      setShippingCostInput(shipping_cost ?? 0);
     }
-  }, [title, description, price, category, imageUrls, sold, date_sold, quantity]);
+  }, [title, description, price, category, imageUrls, sold, date_sold, quantity, shipping_cost]);
   const { restricted } = usePostStore();
 
   const [titleInput, setTitleInput] = useState(title);
@@ -70,6 +72,7 @@ export default function PostForm({
 
   const [soldInput, setSoldInput] = useState(sold);
   const [quantityInput, setQuantityInput] = useState(quantity || '');
+  const [shippingCostInput, setShippingCostInput] = useState(shipping_cost ?? 0);
 
   const isMobile = useMediaQuery('(max-width:767px)');
 
@@ -225,6 +228,7 @@ export default function PostForm({
         sold: soldInput,
         date_sold: dateSoldInput,
         quantity: quantityInput !== '' ? Number(quantityInput) : null,
+        shippingCost: Number(shippingCostInput) || 0,
       };
 
       // Upload new images to S3 and get their URLs + post details
@@ -495,6 +499,20 @@ export default function PostForm({
                 inputProps={{ min: 1, step: 1 }}
                 value={quantityInput}
                 onChange={(e) => handleQuantityEdit(e.target.value)}
+              />
+            </div>
+
+            <div className="desk-quantity-input">
+              <br />
+              <TextField
+                placeholder="Shipping cost (optional)"
+                className="image-input"
+                type="number"
+                name="shippingCost"
+                inputProps={{ min: 0, step: 1 }}
+                InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+                value={shippingCostInput}
+                onChange={(e) => setShippingCostInput(e.target.value)}
               />
             </div>
 
