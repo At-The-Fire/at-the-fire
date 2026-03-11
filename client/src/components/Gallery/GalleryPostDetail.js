@@ -50,6 +50,7 @@ export default function GalleryPostDetail() {
           quantity: qty,
           imageUrl: imageUrls[0],
           sellerCustomerId: postDetail.customer_id,
+          shippingCost: Number(postDetail.shipping_cost) || 0,
         },
       },
     });
