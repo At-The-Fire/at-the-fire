@@ -122,6 +122,7 @@ CREATE TABLE gallery_posts (
   sold BOOLEAN DEFAULT FALSE,
   date_sold VARCHAR,
   quantity INTEGER DEFAULT 1,
+  shipping_cost NUMERIC DEFAULT 0,
   deleted_at TIMESTAMPTZ DEFAULT NULL
 );
 
@@ -291,7 +292,8 @@ CREATE TABLE auctions (
   end_time      TIMESTAMPTZ NOT NULL,
   is_active     BOOLEAN NOT NULL DEFAULT TRUE,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  shipping_cost NUMERIC DEFAULT 0
 );
 
 -- Bids
@@ -335,6 +337,7 @@ CREATE TABLE purchases (
   item_id                 BIGINT NOT NULL,
   quantity                INT NOT NULL DEFAULT 1,
   amount_paid             NUMERIC NOT NULL,
+  shipping_cost           NUMERIC DEFAULT 0,
   processor_transaction_id VARCHAR,
   status                  VARCHAR NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'refunded')),
   tracking_number         TEXT,
