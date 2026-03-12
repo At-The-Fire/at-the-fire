@@ -71,6 +71,10 @@ Client tests are **not** in CI — only server tests run automatically.
 
 **Never hardcode user identifiers in tests.** All Cognito subs, emails, and Stripe customer IDs used in test files must reference `process.env.*` variables. This ensures a single `.env` update propagates everywhere — avoiding the need to edit dozens of files. See `server/CLAUDE.md` → *Test Fixture Data* for the full variable list and rules.
 
+## File Placement
+
+**Always save project files inside this repository.** Plans, documentation, notes, and any other files created during work on this project belong inside this repo (e.g. `docs/`). Never write project-related files to `~/.claude/plans/`, `~/.claude/projects/`, or any path outside this repository.
+
 ## Key Architectural Decisions
 
 - **No shared code** between client and server — they communicate only via HTTP (`/api/v1/`) and WebSocket.
