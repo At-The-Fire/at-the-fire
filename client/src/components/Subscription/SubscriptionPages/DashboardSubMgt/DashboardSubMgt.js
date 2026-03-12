@@ -109,6 +109,8 @@ export default function Dashboard() {
     navigate('/subscription/form');
   };
 
+  if (!customerId) return null;
+
   return (
     <>
       {!pageLoading ? (

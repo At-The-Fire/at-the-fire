@@ -522,10 +522,14 @@ export default function Dashboard({ products, setProducts, customerId }) {
 
                     <div className="temp-fix"></div>
 
-                    <Typography variant="h5" style={{ textAlign: 'center', paddingLeft: '0px', marginTop: '2rem' }}>
-                      Subscription Management
-                    </Typography>
-                    <DashboardSubMgt />
+                    {customerId && (
+                      <>
+                        <Typography variant="h5" style={{ textAlign: 'center', paddingLeft: '0px', marginTop: '2rem' }}>
+                          Subscription Management
+                        </Typography>
+                        <DashboardSubMgt />
+                      </>
+                    )}
                   </div>
                 </section>
               </aside>
@@ -701,10 +705,14 @@ export default function Dashboard({ products, setProducts, customerId }) {
 
                     <div className="temp-fix"></div>
 
-                    <Typography variant="h5" style={{ textAlign: 'center', paddingLeft: '0px', marginTop: '2rem' }}>
-                      Subscription Management
-                    </Typography>
-                    <DashboardSubMgt />
+                    {customerId && (
+                      <>
+                        <Typography variant="h5" style={{ textAlign: 'center', paddingLeft: '0px', marginTop: '2rem' }}>
+                          Subscription Management
+                        </Typography>
+                        <DashboardSubMgt />
+                      </>
+                    )}
                   </div>
                 </section>
               </aside>
@@ -1270,10 +1278,14 @@ export default function Dashboard({ products, setProducts, customerId }) {
                     </Box>
                     <div className="temp-fix"></div>
 
-                    <Typography variant="h5" style={{ textAlign: 'center', paddingLeft: '0px', marginTop: '2rem' }}>
-                      Subscription Management
-                    </Typography>
-                    <DashboardSubMgt />
+                    {customerId && (
+                      <>
+                        <Typography variant="h5" style={{ textAlign: 'center', paddingLeft: '0px', marginTop: '2rem' }}>
+                          Subscription Management
+                        </Typography>
+                        <DashboardSubMgt />
+                      </>
+                    )}
                   </div>
                 </section>
               </aside>
