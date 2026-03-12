@@ -77,9 +77,7 @@ export default function ResponsiveAppBar() {
 
   userMenuItems =
     isAuthenticated && !loadingCustomerId
-      ? customerId && isConfirmed
-        ? [messages, 'Workspace', 'Purchases', 'Profile', 'User Guide', 'Logout']
-        : [messages, 'My Orders', 'Profile', 'User Guide', 'Logout']
+      ? [messages, 'Workspace', 'Purchases', 'Profile', 'User Guide', 'Logout']
       : [];
 
   const pages = user
@@ -187,56 +185,37 @@ export default function ResponsiveAppBar() {
                 </Box>
               )}
 
-              {!loadingCustomerId ? (
-                customerId && isAuthenticated && isConfirmed ? (
-                  <Box sx={{ display: 'grid' }}>
-                    <Badge
-                      badgeContent={pendingShipmentsCount > 0 ? pendingShipmentsCount : null}
-                      color="warning"
-                      sx={{ display: isTablet && searchExpanded ? 'none' : 'block' }}
-                    >
-                      <Button
-                        onClick={handleHomeDashboard}
-                        style={{
-                          margin: '0 10px',
-                          color: 'white',
-                          display: isTablet && searchExpanded ? 'none' : 'flex',
-                          padding: '0',
-                        }}
-                        variant="outlined"
-                      >
-                        {admin ? '🔥   Admin    🔥' : 'Workspace'}
-                      </Button>
-                    </Badge>
-
-                    <Typography
-                      sx={{
-                        fontSize: '.8rem',
-                        color: (theme) => theme.palette.primary.light,
+              {!loadingCustomerId && isAuthenticated ? (
+                <Box sx={{ display: 'grid' }}>
+                  <Badge
+                    badgeContent={pendingShipmentsCount > 0 ? pendingShipmentsCount : null}
+                    color="warning"
+                    sx={{ display: isTablet && searchExpanded ? 'none' : 'block' }}
+                  >
+                    <Button
+                      onClick={handleHomeDashboard}
+                      style={{
+                        margin: '0 10px',
+                        color: 'white',
                         display: isTablet && searchExpanded ? 'none' : 'flex',
+                        padding: '0',
                       }}
+                      variant="outlined"
                     >
-                      {` ${!isMobile ? email : ''}`}
-                    </Typography>
-                  </Box>
-                ) : (
-                  <Box>
-                    <Button onClick={handleSubscriptionNav} style={{ margin: '0 20px', color: 'white' }}>
-                      Subscription
+                      {admin ? '🔥   Admin    🔥' : 'Workspace'}
                     </Button>
-                    {isAuthenticated && (
-                      <Typography
-                        sx={{
-                          fontSize: '.8rem',
-                          color: (theme) => theme.palette.primary.light,
-                          display: isTablet && searchExpanded ? 'none' : 'flex',
-                        }}
-                      >
-                        {` ${!isMobile ? email : ''}`}
-                      </Typography>
-                    )}
-                  </Box>
-                )
+                  </Badge>
+
+                  <Typography
+                    sx={{
+                      fontSize: '.8rem',
+                      color: (theme) => theme.palette.primary.light,
+                      display: isTablet && searchExpanded ? 'none' : 'flex',
+                    }}
+                  >
+                    {` ${!isMobile ? email : ''}`}
+                  </Typography>
+                </Box>
               ) : null}
               <Box
                 sx={{
