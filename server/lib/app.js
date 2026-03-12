@@ -188,11 +188,7 @@ app.use(
 
 app.use('/api/v1/stripe', [jsonParser, authenticateAWS], require('./controllers/stripe'));
 
-app.use(
-  '/api/v1/dashboard',
-  [jsonParser, authenticateAWS, authorizeSubscription],
-  require('./controllers/dashboard'),
-);
+app.use('/api/v1/dashboard', [jsonParser, authenticateAWS], require('./controllers/dashboard'));
 
 app.use(
   '/api/v1/goals',
