@@ -203,6 +203,7 @@ module.exports = Router()
         name,
         admin: customerId === process.env.ADMIN_ID,
         confirmed,
+        betaAccess: process.env.BETA_MODE === 'true',
       });
     } catch (e) {
       if (e.message.includes('User not found')) {
