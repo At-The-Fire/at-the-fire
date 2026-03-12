@@ -17,6 +17,7 @@ export function useInventory() {
     const getSnapshots = async () => {
       try {
         if (!user || !isAuthenticated || !customerId || error === 401) {
+          setInventoryLoading(false);
           return;
         }
         setInventoryLoading(true);
