@@ -190,6 +190,28 @@ describe('authorize Middleware', () => {
     });
   });
 
+  it('GET /dashboard should bypass subscription checks when BETA_MODE is true', async () => {
+    process.env.BETA_MODE = 'true';
+    setupTokensAndMocks(
+      'valid.beta.access.token',
+      'valid.beta.id.token',
+      'valid.beta.refresh.token',
+      false, // inactive subscription — should still pass due to BETA_MODE bypass
+    );
+
+    const response = await request(app)
+      .get('/api/v1/dashboard')
+      .set('Cookie', [
+        'accessToken=valid.beta.access.token;',
+        'idToken=valid.beta.id.token;',
+        'refreshToken=valid.beta.refresh.token;',
+      ]);
+
+    delete process.env.BETA_MODE;
+    expect(response.status).toBe(200);
+    expect(response.body.restricted).toBe(false);
+  });
+
   //
   it('PUT /profile/customer-update should return a 403 if user is not authorized to update profile due to incorrect customerId ', async () => {
     // Setup the mocks with one customerId
