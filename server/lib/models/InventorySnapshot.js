@@ -4,52 +4,49 @@ module.exports = class InventorySnapshot {
   created_at;
   category_count;
   price_count;
-  customer_id;
+  user_sub;
 
   constructor(row) {
     this.id = row.id;
     this.created_at = row.created_at;
     this.category_count = row.category_count;
     this.price_count = row.price_count;
-    this.customer_id = row.customer_id;
+    this.user_sub = row.user_sub;
   }
 
-  static async getInventorySnapshots(customerId) {
+  static async getInventorySnapshots(userSub) {
     const { rows } = await pool.query(
       `
-      SELECT category_count, price_count, id, created_at FROM inventory_snapshot 
-      WHERE customer_id=$1 
+      SELECT category_count, price_count, id, created_at FROM inventory_snapshot
+      WHERE user_sub=$1
       ORDER BY created_at ASC
       `,
-      [customerId]
+      [userSub]
     );
 
     return rows.map((row) => new InventorySnapshot(row));
   }
 
-  //  this is the new insertInventorySnapshot
-  //
-
-  static async findSnapshotForToday(customerId) {
+  static async findSnapshotForToday(userSub) {
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Set time to 00:00:00 for consistent date comparison
 
     const { rows } = await pool.query(
-      `SELECT * FROM inventory_snapshot 
-       WHERE customer_id = $1 
+      `SELECT * FROM inventory_snapshot
+       WHERE user_sub = $1
        AND DATE(created_at) = DATE($2)`,
-      [customerId, today]
+      [userSub, today]
     );
 
     if (!rows[0]) return null;
     return rows[0];
   }
 
-  static async fetchCurrentPosts(customerId) {
+  static async fetchCurrentPosts(sub) {
     // Fetch posts from the database
     const { rows } = await pool.query(
-      'SELECT * FROM gallery_posts WHERE customer_id = $1',
-      [customerId]
+      'SELECT * FROM gallery_posts WHERE seller_sub = $1',
+      [sub]
     );
 
     return rows;
@@ -101,17 +98,14 @@ module.exports = class InventorySnapshot {
         return sortedObj;
       }, {});
   }
-  static async addOrUpdateSnapshot(
-    customerId,
-    newCategoryCount,
-    newPriceCount
-  ) {
-    const existingSnapshot = await this.findSnapshotForToday(customerId);
+  static async addOrUpdateSnapshot(userSub) {
+    const existingSnapshot = await this.findSnapshotForToday(userSub);
+
+    // Always calculate from actual current posts in the DB
+    const currentPosts = await this.fetchCurrentPosts(userSub);
+    const recalculatedCounts = this.recalculateCounts(currentPosts);
 
     if (existingSnapshot) {
-      // Fetch current posts and recalculate counts
-      const currentPosts = await this.fetchCurrentPosts(customerId);
-      const recalculatedCounts = this.recalculateCounts(currentPosts);
 
       // Use recalculated counts directly for updating snapshot
       const adjustedCategoryCount = recalculatedCounts.categoryCount;
@@ -149,12 +143,12 @@ module.exports = class InventorySnapshot {
       );
       return rows[0];
     } else {
-      // Insert new snapshot
+      // Insert new snapshot using server-calculated counts
       const { rows } = await pool.query(
-        `INSERT INTO inventory_snapshot (customer_id, category_count, price_count) 
+        `INSERT INTO inventory_snapshot (user_sub, category_count, price_count)
          VALUES ($1, $2, $3)
          RETURNING category_count, price_count, id, created_at`,
-        [customerId, newCategoryCount, newPriceCount]
+        [userSub, recalculatedCounts.categoryCount, recalculatedCounts.priceCount]
       );
       return rows[0];
     }
