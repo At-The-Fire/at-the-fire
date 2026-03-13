@@ -11,6 +11,7 @@ const Post = require('../models/Post.js');
 module.exports = async (req, res, next) => {
   try {
     const id = req.params.id;
+    const userSub = req.userAWSSub;
     const customerId = req.customerId;
     const path = req.originalUrl;
 
@@ -30,17 +31,15 @@ module.exports = async (req, res, next) => {
 
     if (!item) {
       return res.status(404).json({
-        message: `${
-          path.includes('/dashboard') ? 'Post' : 'Product'
-        } not found`,
+        message: `${path.includes('/dashboard') ? 'Post' : 'Product'} not found`,
         code: 404,
       });
     }
 
-    // Assuming both models have customer_id field
-    // If Post uses a different field name, you'll need to adjust this check
+    const ownerId = path.includes('/dashboard') ? item.seller_sub : item.customer_id;
+    const currentUserId = path.includes('/dashboard') ? userSub : customerId;
 
-    if (item.customer_id !== customerId) {
+    if (ownerId !== currentUserId) {
       return res.status(403).json({
         message: 'You do not have permission to do this: access denied',
         code: 403,
