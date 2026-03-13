@@ -20,7 +20,6 @@
   - [ ] Test supported file types
   - [ ] Test file size limits
 - [ ] Replace avatar
-  - [ ] Verify default avatar appears when removed
 - [ ] Fill in all text fields
   - [ ] Test required vs optional fields
 - [ ] Edit all text fields
