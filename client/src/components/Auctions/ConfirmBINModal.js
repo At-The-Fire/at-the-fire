@@ -28,9 +28,19 @@ export default function ConfirmBINModal({ isOpen, onClose, onConfirm, auction })
     <div className="bid-modal-overlay" role="dialog" aria-modal="true">
       <div className="bid-modal">
         <h3>Confirm Purchase</h3>
-        <p style={{ marginBottom: '1rem' }}>
-          Are you sure you want to buy <strong>{auction.title}</strong> for ${auction.buyNowPrice}?
+        <p style={{ marginBottom: '0.5rem' }}>
+          Are you sure you want to buy <strong>{auction.title}</strong>?
         </p>
+        {auction.shippingCost > 0 ? (
+          <p style={{ marginBottom: '1rem' }}>
+            ${auction.buyNowPrice} + ${auction.shippingCost} shipping ={' '}
+            <strong>${Number(auction.buyNowPrice) + Number(auction.shippingCost)}</strong>
+          </p>
+        ) : (
+          <p style={{ marginBottom: '1rem' }}>
+            Total: <strong>${auction.buyNowPrice}</strong>
+          </p>
+        )}
         <div className="modal-actions">
           <button
             onClick={async () => {
