@@ -8,10 +8,11 @@ module.exports = class Gallery {
   image_url;
   category;
   price;
-  customer_id;
+  seller_sub;
   public_id;
   num_imgs;
   quantity;
+  shipping_cost;
   display_name;
   logo_image_url;
   sub;
@@ -25,10 +26,11 @@ module.exports = class Gallery {
     this.image_url = row.image_url;
     this.category = row.category;
     this.price = row.price;
-    this.customer_id = row.customer_id;
+    this.seller_sub = row.seller_sub;
     this.public_id = row.public_id;
     this.num_imgs = row.num_imgs;
     this.quantity = row.quantity;
+    this.shipping_cost = row.shipping_cost ?? 0;
     this.display_name = row.display_name;
     this.logo_image_url = row.logo_image_url;
     this.sub = row.sub;
@@ -38,64 +40,59 @@ module.exports = class Gallery {
   static async getGalleryPosts() {
     const { rows } = await pool.query(
       `
-            SELECT
-        g.category,
-        g.created_at,
-        g.customer_id,
-        g.description,
-        g.id,
-        g.image_url,
-        g.num_imgs,
-        g.price,
-        g.public_id,
-        g.title,
-        g.sold,
-        g.quantity,
-        s.display_name,
-        s.logo_image_url
-    FROM
-        gallery_posts AS g
-    JOIN
-        stripe_customers AS s ON g.customer_id = s.customer_id
-    WHERE g.deleted_at IS NULL ORDER BY created_at DESC;
-
-            `
+      SELECT
+          g.category,
+          g.created_at,
+          g.seller_sub,
+          g.seller_sub AS sub,
+          g.description,
+          g.id,
+          g.image_url,
+          g.num_imgs,
+          g.price,
+          g.public_id,
+          g.title,
+          g.sold,
+          g.quantity,
+          g.shipping_cost,
+          sc.display_name,
+          sc.logo_image_url
+      FROM gallery_posts AS g
+      JOIN cognito_users cu ON g.seller_sub = cu.sub
+      LEFT JOIN stripe_customers sc ON cu.sub = sc.aws_sub
+      WHERE g.deleted_at IS NULL ORDER BY created_at DESC;
+      `
     );
 
     return rows.map((row) => new Gallery(row));
   }
 
   // get profile posts
-  static async getGalleryPostsByStripeId(customerId) {
+  static async getGalleryPostsBySub(sub) {
     const { rows } = await pool.query(
       `
       SELECT
-      g.category,
-      g.created_at,
-      g.customer_id,
-      g.description,
-      g.id,
-      g.image_url,
-      g.num_imgs,
-      g.price,
-      g.public_id,
-      g.title,
-      s.display_name,
-      s.logo_image_url,
-      cu.sub
-  FROM
-      gallery_posts AS g
-  JOIN
-      stripe_customers AS s ON g.customer_id = s.customer_id
-  JOIN
-      cognito_users AS cu ON s.aws_sub = cu.sub
-  WHERE
-      g.customer_id= $1 AND g.deleted_at IS NULL
-  ORDER BY
-      created_at DESC;
-  
+          g.category,
+          g.created_at,
+          g.seller_sub,
+          g.seller_sub AS sub,
+          g.description,
+          g.id,
+          g.image_url,
+          g.num_imgs,
+          g.price,
+          g.public_id,
+          g.title,
+          g.shipping_cost,
+          sc.display_name,
+          sc.logo_image_url
+      FROM gallery_posts AS g
+      JOIN cognito_users cu ON g.seller_sub = cu.sub
+      LEFT JOIN stripe_customers sc ON cu.sub = sc.aws_sub
+      WHERE g.seller_sub = $1 AND g.deleted_at IS NULL
+      ORDER BY created_at DESC;
       `,
-      [customerId]
+      [sub]
     );
 
     return rows.map((row) => new Gallery(row));
@@ -105,32 +102,28 @@ module.exports = class Gallery {
     const { rows } = await pool.query(
       `
       SELECT
-      g.category,
-      g.created_at,
-      g.customer_id,
-      g.description,
-      g.id,
-      g.image_url,
-      g.num_imgs,
-      g.price,
-      g.public_id,
-      g.title,
-      g.sold,
-      g.quantity,
-      s.display_name,
-      s.logo_image_url,
-      cu.sub
-  FROM
-      gallery_posts AS g
-  JOIN
-      stripe_customers AS s ON g.customer_id = s.customer_id
-  JOIN
-      cognito_users AS cu ON s.aws_sub = cu.sub
-  WHERE
-      g.id= $1 AND g.deleted_at IS NULL
-  ORDER BY
-      created_at DESC;
-            `,
+          g.category,
+          g.created_at,
+          g.seller_sub,
+          g.seller_sub AS sub,
+          g.description,
+          g.id,
+          g.image_url,
+          g.num_imgs,
+          g.price,
+          g.public_id,
+          g.title,
+          g.sold,
+          g.quantity,
+          g.shipping_cost,
+          sc.display_name,
+          sc.logo_image_url
+      FROM gallery_posts AS g
+      JOIN cognito_users cu ON g.seller_sub = cu.sub
+      LEFT JOIN stripe_customers sc ON cu.sub = sc.aws_sub
+      WHERE g.id = $1 AND g.deleted_at IS NULL
+      ORDER BY created_at DESC;
+      `,
       [id]
     );
 
