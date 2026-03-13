@@ -8,7 +8,7 @@ module.exports = class Post {
   image_url;
   category;
   price;
-  customer_id;
+  seller_sub;
   public_id;
   num_imgs;
   resource_type;
@@ -25,7 +25,7 @@ module.exports = class Post {
     this.image_url = row.image_url;
     this.category = row.category;
     this.price = row.price;
-    this.customer_id = row.customer_id;
+    this.seller_sub = row.seller_sub;
     this.public_id = row.public_id;
     this.num_imgs = row.num_imgs;
     this.resource_type = row.resource_type;
@@ -43,7 +43,7 @@ module.exports = class Post {
     image_url,
     category,
     price,
-    customerId,
+    sellerSub,
     public_id,
     num_imgs,
     sold,
@@ -52,14 +52,14 @@ module.exports = class Post {
     shippingCost = 0
   ) {
     const { rows } = await pool.query(
-      'INSERT INTO gallery_posts (title, description, image_url, category, price, customer_id, public_id, num_imgs, sold, date_sold, quantity, shipping_cost) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *',
+      'INSERT INTO gallery_posts (title, description, image_url, category, price, seller_sub, public_id, num_imgs, sold, date_sold, quantity, shipping_cost) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *',
       [
         title,
         description,
         image_url,
         category,
         price,
-        customerId,
+        sellerSub,
         public_id,
         num_imgs,
         sold,
@@ -103,7 +103,6 @@ module.exports = class Post {
     image_url,
     category,
     price,
-    customerId,
     public_id,
     num_imgs,
     sold,
@@ -119,13 +118,12 @@ module.exports = class Post {
           image_url = $4,
           category = $5,
           price = $6,
-          customer_id = $7,
-          public_id = $8,
-          num_imgs = $9,
-          sold = $10,
-          date_sold = $11,
-          quantity = CASE WHEN $10 = true THEN 0 ELSE $12 END,
-          shipping_cost = $13
+          public_id = $7,
+          num_imgs = $8,
+          sold = $9,
+          date_sold = $10,
+          quantity = CASE WHEN $9 = true THEN 0 ELSE $11 END,
+          shipping_cost = $12
       WHERE id = $1
       RETURNING *;
       `,
@@ -136,7 +134,6 @@ module.exports = class Post {
         image_url,
         category,
         price,
-        customerId,
         public_id,
         num_imgs,
         sold,
@@ -306,10 +303,10 @@ module.exports = class Post {
   static async getFeedPosts(sub) {
     const { rows } = await pool.query(
       `
-SELECT 
+SELECT
     posts.category,
     posts.created_at,
-    posts.customer_id,
+    posts.seller_sub,
     posts.description,
     posts.id,
     posts.image_url,
@@ -321,8 +318,9 @@ SELECT
     sc.display_name,
     sc.logo_image_url
 FROM gallery_posts posts
-JOIN stripe_customers sc ON posts.customer_id = sc.customer_id
-JOIN followers f ON sc.aws_sub = f.followed_id
+JOIN cognito_users cu ON posts.seller_sub = cu.sub
+LEFT JOIN stripe_customers sc ON cu.sub = sc.aws_sub
+JOIN followers f ON cu.sub = f.followed_id
 WHERE f.follower_id = $1 AND posts.deleted_at IS NULL
 ORDER BY posts.created_at DESC
 LIMIT 50;

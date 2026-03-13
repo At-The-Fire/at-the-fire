@@ -41,7 +41,7 @@ const logo = require('../../assets/logo-icon-6.png');
 export default function Dashboard({ products, setProducts, customerId }) {
   // state
   const { bizProfile, profileLoading } = useProfileContext();
-  const { user, authenticateUser, isAuthenticated, isConfirmed } = useAuthStore();
+  const { user, authenticateUser, isAuthenticated, isConfirmed, hasPremiumAccess } = useAuthStore();
 
   const { restricted, loading, posts, setPosts } = usePostStore();
   usePosts();
@@ -102,7 +102,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
   }, []);
 
   useEffect(() => {
-    if (!bizProfile?.logoImageUrl && !profileLoading && isAuthenticated && isConfirmed) {
+    if (!bizProfile?.logoImageUrl && !profileLoading && isAuthenticated) {
       toast.info(
         <Box>
           <Box
@@ -156,9 +156,9 @@ export default function Dashboard({ products, setProducts, customerId }) {
               <ListItem sx={{ display: 'list-item', fontWeight: '600' }}>Connect your social media accounts</ListItem>
             </List>
             <Typography>
-              Your business logo will then appear on your posts. Your posts (data) will populate the graphs, calendar,
-              and accounting summaries in the other tabs, as well as create tabs in your profile categorizing all your
-              work.
+              Your logo will appear on your gallery posts and auction listings.
+              {hasPremiumAccess &&
+                ' Your posts will also populate the graphs, calendar, and accounting summaries in the other tabs.'}
             </Typography>
             <Typography sx={{ marginTop: '1rem' }}>
               Please see our User Guide (in the menu) if you would like some guidance on how everything works.
@@ -522,10 +522,14 @@ export default function Dashboard({ products, setProducts, customerId }) {
 
                     <div className="temp-fix"></div>
 
-                    <Typography variant="h5" style={{ textAlign: 'center', paddingLeft: '0px', marginTop: '2rem' }}>
-                      Subscription Management
-                    </Typography>
-                    <DashboardSubMgt />
+                    {customerId && (
+                      <>
+                        <Typography variant="h5" style={{ textAlign: 'center', paddingLeft: '0px', marginTop: '2rem' }}>
+                          Subscription Management
+                        </Typography>
+                        <DashboardSubMgt />
+                      </>
+                    )}
                   </div>
                 </section>
               </aside>
@@ -701,10 +705,14 @@ export default function Dashboard({ products, setProducts, customerId }) {
 
                     <div className="temp-fix"></div>
 
-                    <Typography variant="h5" style={{ textAlign: 'center', paddingLeft: '0px', marginTop: '2rem' }}>
-                      Subscription Management
-                    </Typography>
-                    <DashboardSubMgt />
+                    {customerId && (
+                      <>
+                        <Typography variant="h5" style={{ textAlign: 'center', paddingLeft: '0px', marginTop: '2rem' }}>
+                          Subscription Management
+                        </Typography>
+                        <DashboardSubMgt />
+                      </>
+                    )}
                   </div>
                 </section>
               </aside>
@@ -958,7 +966,10 @@ export default function Dashboard({ products, setProducts, customerId }) {
                                   variant="body2"
                                   sx={{ color: 'text.secondary', fontSize: '.75rem', textAlign: 'left' }}
                                 >
-                                  Final bid: ${Number(auction.finalBid || auction.currentBid || auction.startPrice).toLocaleString()}
+                                  Final bid: $
+                                  {Number(
+                                    auction.finalBid || auction.currentBid || auction.startPrice
+                                  ).toLocaleString()}
                                 </Typography>
                                 {auction.trackingNumber ? (
                                   (() => {
@@ -1270,10 +1281,14 @@ export default function Dashboard({ products, setProducts, customerId }) {
                     </Box>
                     <div className="temp-fix"></div>
 
-                    <Typography variant="h5" style={{ textAlign: 'center', paddingLeft: '0px', marginTop: '2rem' }}>
-                      Subscription Management
-                    </Typography>
-                    <DashboardSubMgt />
+                    {customerId && (
+                      <>
+                        <Typography variant="h5" style={{ textAlign: 'center', paddingLeft: '0px', marginTop: '2rem' }}>
+                          Subscription Management
+                        </Typography>
+                        <DashboardSubMgt />
+                      </>
+                    )}
                   </div>
                 </section>
               </aside>

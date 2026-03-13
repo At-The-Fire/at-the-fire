@@ -641,11 +641,11 @@ describe('quotaTracking routes', () => {
       'http://img',
       'cat',
       '100',
-      process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
+      process.env.TEST_SUB_FULL_CUSTOMER,
       'publicid',
       1,
       false,
-      null
+      null,
     );
     // Insert a product with a valid post_id
     await QuotaProduct.insertNewProduct({

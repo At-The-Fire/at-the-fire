@@ -16,7 +16,7 @@ export const useConversations = () => {
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState([]);
   const { markConversationAsRead, fetchUnreadCount, selectedConversation } = useNotificationStore();
-  const { customerId, isAuthenticated, setError, error, user } = useAuthStore();
+  const { isAuthenticated, setError, error, user } = useAuthStore();
   const setSelectedConversation = useNotificationStore((state) => state.setSelectedConversation);
 
   const handleError = (e, operation) => {
@@ -48,7 +48,7 @@ export const useConversations = () => {
 
   const loadConversations = async () => {
     try {
-      if (!user || !isAuthenticated || !customerId || error === 401 || error === 403) {
+      if (!user || !isAuthenticated || error === 401 || error === 403) {
         return;
       }
       const data = await fetchConversations();

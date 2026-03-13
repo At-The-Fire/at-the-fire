@@ -28,7 +28,6 @@ describe('posts/ post details/ cloudinary routes', () => {
       expect(post).toEqual({
         category: expect.any(String),
         created_at: expect.any(String),
-        customer_id: expect.any(String),
         description: expect.any(String),
         id: expect.any(String),
         image_url: expect.any(String),
@@ -36,10 +35,13 @@ describe('posts/ post details/ cloudinary routes', () => {
         price: expect.any(String),
         public_id: expect.any(String),
         quantity: 1,
+        shipping_cost: expect.anything(),
+        seller_sub: expect.any(String),
         title: expect.any(String),
         display_name: displayName,
         logo_image_url: logoImageUrl,
         sold: expect.any(Boolean),
+        sub: expect.any(String),
       });
 
       if (post.logo_image_url !== null) {
@@ -57,7 +59,6 @@ describe('posts/ post details/ cloudinary routes', () => {
     expect(data.body).toEqual({
       category: 'SampleCategory1',
       created_at: expect.any(String),
-      customer_id: 'stripe-customer-id_noProfile',
       description: 'SampleDescription1',
       display_name: null,
       id: '1',
@@ -65,8 +66,10 @@ describe('posts/ post details/ cloudinary routes', () => {
       logo_image_url: null,
       num_imgs: '1',
       quantity: 1,
+      shipping_cost: expect.anything(),
       price: 'SamplePrice1',
       public_id: 'publicID_post_1',
+      seller_sub: process.env.TEST_SUB_CUSTOMER_NO_PROFILE,
       sold: false,
       sub: process.env.TEST_SUB_CUSTOMER_NO_PROFILE,
       title: 'SampleTitle1',
@@ -80,7 +83,9 @@ describe('posts/ post details/ cloudinary routes', () => {
   });
 
   it('should return a feed of posts for a valid user', async () => {
-    const response = await request(app).get(`/api/v1/gallery-posts/feed/${process.env.TEST_SUB_WITH_PROFILE}`);
+    const response = await request(app).get(
+      `/api/v1/gallery-posts/feed/${process.env.TEST_SUB_WITH_PROFILE}`,
+    );
 
     expect(response.status).toBe(200);
     expect(Array.isArray(response.body)).toBe(true);
@@ -109,7 +114,9 @@ describe('posts/ post details/ cloudinary routes', () => {
       throw new Error('Database error'); // Mock failure only for post fetching
     });
 
-    const response = await request(app).get(`/api/v1/gallery-posts/feed/${process.env.TEST_SUB_WITH_PROFILE}`);
+    const response = await request(app).get(
+      `/api/v1/gallery-posts/feed/${process.env.TEST_SUB_WITH_PROFILE}`,
+    );
 
     expect(response.status).toBe(500);
     expect(response.body.message).toBe('Database error');

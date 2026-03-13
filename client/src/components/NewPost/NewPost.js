@@ -14,7 +14,7 @@ export default function NewPost() {
   const navigate = useNavigate();
 
   const { setNewPostCreated } = useQuery();
-  const { authenticateUser, isAuthenticated, error, signingOut, checkTokenExpiry, loadingAuth, hasAuthChecked } =
+  const { authenticateUser, isAuthenticated, error, signingOut, checkTokenExpiry, loadingAuth, hasAuthChecked, hasPremiumAccess } =
     useAuthStore();
 
   // authenticate and check tokens
@@ -95,7 +95,9 @@ export default function NewPost() {
         post_id: post.id,
       };
 
-      handleAddProduct(quotaEntry);
+      if (hasPremiumAccess) {
+        handleAddProduct(quotaEntry);
+      }
 
       setNewPostCreated((prevState) => !prevState);
       navigate('/dashboard');

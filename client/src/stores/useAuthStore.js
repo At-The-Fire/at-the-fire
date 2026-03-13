@@ -31,6 +31,8 @@ export const useAuthStore = create((set, get) => ({
   isRefreshing: false,
   isConfirmed: false,
   trialStatus: false,
+  betaAccess: false,
+  hasPremiumAccess: false,
   challengeName: null,
   challengeUser: null,
   challengeParams: null,
@@ -225,6 +227,8 @@ export const useAuthStore = create((set, get) => ({
         password: '',
         admin: false,
         trialStatus: false,
+        betaAccess: false,
+        hasPremiumAccess: false,
       });
 
       usePostStore.getState().reset();
@@ -356,6 +360,7 @@ export const useAuthStore = create((set, get) => ({
         } else {
           // Only proceed with the Stripe customer check if the user is fully authenticated
           const customerData = type === 'sign-in' ? await get().checkStripeCustomer() : null;
+          const betaAccess = customerData?.data?.betaAccess || false;
           set({
             isAuthenticated: true,
             isConfirmed: customerData?.data?.confirmed,
@@ -365,6 +370,11 @@ export const useAuthStore = create((set, get) => ({
             password: '',
             cPassword: '',
             trialStatus: customerData?.data?.subscription?.status,
+            betaAccess,
+            hasPremiumAccess:
+              betaAccess ||
+              (customerData?.data?.confirmed &&
+                ['active', 'trialing'].includes(customerData?.data?.subscription?.status)),
           });
           return true;
         }
@@ -456,6 +466,7 @@ export const useAuthStore = create((set, get) => ({
       if (session.isValid()) {
         const customerData = await get().checkStripeCustomer();
 
+        const betaAccess = customerData?.data?.betaAccess || false;
         set({
           accessToken: session.accessToken.jwtToken,
           admin: customerData?.data?.admin,
@@ -466,6 +477,11 @@ export const useAuthStore = create((set, get) => ({
           isAuthenticated: true,
           customerId: customerData?.data?.customerId || null,
           isConfirmed: customerData?.data?.confirmed || null,
+          betaAccess,
+          hasPremiumAccess:
+            betaAccess ||
+            (customerData?.data?.confirmed &&
+              ['active', 'trialing'].includes(customerData?.data?.subscription?.status)),
         });
         websocketService.connect();
       } else {

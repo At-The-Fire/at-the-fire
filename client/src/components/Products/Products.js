@@ -590,18 +590,19 @@ export default function Products({ products, setProducts, loadingProducts, setLo
         const { title, description, image_url, category, price, public_id, sold, date_sold, qty } = updatedProduct;
 
         // Create new post with fetch call to DB
-        const post = await postPost(
+        const post = await postPost({
           title,
           description,
           image_url,
           category,
           price,
           public_id,
-          files.length,
+          num_imgs: files.length,
           sold,
           date_sold,
-          qty
-        );
+          quantity: qty,
+          shippingCost: updatedProduct.shippingCost || 0,
+        });
 
         const adaptedFiles = files.slice(1); // added to remove duplicate url
 

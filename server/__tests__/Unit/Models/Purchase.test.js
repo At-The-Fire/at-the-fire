@@ -16,7 +16,7 @@ describe('Purchase Model', () => {
     const row = {
       id: 1,
       buyer_sub: 'sub_123',
-      seller_customer_id: 'cus_stripe123',
+      seller_sub: 'seller_sub_123',
       item_type: 'gallery_post',
       item_id: 10,
       quantity: 2,
@@ -29,7 +29,7 @@ describe('Purchase Model', () => {
     const purchase = new Purchase(row);
     expect(purchase.id).toBe(1);
     expect(purchase.buyerSub).toBe('sub_123');
-    expect(purchase.sellerCustomerId).toBe('cus_stripe123');
+    expect(purchase.sellerSub).toBe('seller_sub_123');
     expect(purchase.itemType).toBe('gallery_post');
     expect(purchase.itemId).toBe(10);
     expect(purchase.quantity).toBe(2);
@@ -44,7 +44,7 @@ describe('Purchase Model', () => {
       const mockRow = {
         id: 1,
         buyer_sub: 'sub_123',
-        seller_customer_id: 'cus_stripe123',
+        seller_sub: 'seller_sub_123',
         item_type: 'gallery_post',
         item_id: 10,
         quantity: 1,
@@ -58,7 +58,7 @@ describe('Purchase Model', () => {
 
       const result = await Purchase.insert({
         buyerSub: 'sub_123',
-        sellerCustomerId: 'cus_stripe123',
+        sellerSub: 'seller_sub_123',
         itemType: 'gallery_post',
         itemId: 10,
         quantity: 1,
@@ -72,7 +72,7 @@ describe('Purchase Model', () => {
       expect(pool.query).toHaveBeenCalledTimes(1);
       expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO purchases'), [
         'sub_123',
-        'cus_stripe123',
+        'seller_sub_123',
         'gallery_post',
         10,
         1,
@@ -86,7 +86,7 @@ describe('Purchase Model', () => {
       const mockRow = {
         id: 5,
         buyer_sub: 'sub_123',
-        seller_customer_id: 'cus_stripe123',
+        seller_sub: 'seller_sub_123',
         item_type: 'gallery_post',
         item_id: 10,
         quantity: 1,
@@ -121,7 +121,7 @@ describe('Purchase Model', () => {
         {
           id: 2,
           buyer_sub: 'sub_123',
-          seller_customer_id: 'cus_stripe123',
+          seller_sub: 'seller_sub_123',
           item_type: 'gallery_post',
           item_id: 20,
           quantity: 1,
@@ -133,7 +133,7 @@ describe('Purchase Model', () => {
         {
           id: 1,
           buyer_sub: 'sub_123',
-          seller_customer_id: 'cus_stripe123',
+          seller_sub: 'seller_sub_123',
           item_type: 'gallery_post',
           item_id: 10,
           quantity: 1,
@@ -173,7 +173,7 @@ describe('Purchase Model', () => {
       const mockRow = {
         id: 1,
         buyer_sub: 'sub_123',
-        seller_customer_id: 'cus_stripe123',
+        seller_sub: 'seller_sub_123',
         item_type: 'gallery_post',
         item_id: 10,
         quantity: 1,
@@ -204,7 +204,7 @@ describe('Purchase Model', () => {
       const mockRow = {
         id: 1,
         buyer_sub: 'sub_123',
-        seller_customer_id: 'cus_stripe123',
+        seller_sub: 'seller_sub_123',
         item_type: 'gallery_post',
         item_id: 10,
         quantity: 1,

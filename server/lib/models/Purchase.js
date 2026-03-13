@@ -4,7 +4,7 @@ const Post = require('./Post');
 module.exports = class Purchase {
   id;
   buyerSub;
-  sellerCustomerId;
+  sellerSub;
   itemType;
   itemId;
   quantity;
@@ -21,7 +21,7 @@ module.exports = class Purchase {
   constructor(row) {
     this.id = row.id;
     this.buyerSub = row.buyer_sub;
-    this.sellerCustomerId = row.seller_customer_id;
+    this.sellerSub = row.seller_sub;
     this.itemType = row.item_type;
     this.itemId = row.item_id;
     this.quantity = row.quantity;
@@ -36,14 +36,14 @@ module.exports = class Purchase {
     this.imageUrls = null;
   }
 
-  static async insert({ buyerSub, sellerCustomerId, itemType, itemId, quantity, amountPaid }) {
+  static async insert({ buyerSub, sellerSub, itemType, itemId, quantity, amountPaid }) {
     const { rows } = await pool.query(
       `
-      INSERT INTO purchases (buyer_sub, seller_customer_id, item_type, item_id, quantity, amount_paid)
+      INSERT INTO purchases (buyer_sub, seller_sub, item_type, item_id, quantity, amount_paid)
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *
       `,
-      [buyerSub, sellerCustomerId, itemType, itemId, quantity, amountPaid],
+      [buyerSub, sellerSub, itemType, itemId, quantity, amountPaid],
     );
 
     return new Purchase(rows[0]);
@@ -118,16 +118,16 @@ module.exports = class Purchase {
     return new Purchase(rows[0]);
   }
 
-  static async getBySellerCustomerId(customerid) {
+  static async getBySellerSub(sub) {
     const { rows } = await pool.query(
       `
       SELECT p.*, gp.title
       FROM purchases p
       LEFT JOIN gallery_posts gp ON p.item_type = 'gallery_post' AND p.item_id = gp.id
-      WHERE p.seller_customer_id = $1
+      WHERE p.seller_sub = $1
       ORDER BY p.created_at DESC
       `,
-      [customerid],
+      [sub],
     );
 
     return Promise.all(

@@ -6,7 +6,7 @@ const app = require('../../../lib/app');
 const mockUser = {
   email: 'fullCustomer@example.com',
   sub: process.env.TEST_SUB_FULL_CUSTOMER,
-  customer_id: 'stripe-customer-id_full',
+  customer_id: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
 };
 
 const authState = { user: null };
@@ -29,7 +29,7 @@ describe('Cart routes', () => {
     // Available post — qty 5, not sold
     const { rows: r1 } = await pool.query(
       `
-      INSERT INTO gallery_posts (title, description, image_url, category, price, customer_id, public_id, num_imgs, quantity, sold)
+      INSERT INTO gallery_posts (title, description, image_url, category, price, seller_sub, public_id, num_imgs, quantity, sold)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING id
       `,
@@ -39,7 +39,7 @@ describe('Cart routes', () => {
         'https://test.com/img1.jpg',
         'Art',
         '20.00',
-        'stripe-customer-id_full',
+        process.env.TEST_SUB_FULL_CUSTOMER,
         'pub_id_1',
         1,
         5,
@@ -51,7 +51,7 @@ describe('Cart routes', () => {
     // Sold post
     const { rows: r2 } = await pool.query(
       `
-      INSERT INTO gallery_posts (title, description, image_url, category, price, customer_id, public_id, num_imgs, quantity, sold)
+      INSERT INTO gallery_posts (title, description, image_url, category, price, seller_sub, public_id, num_imgs, quantity, sold)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING id
       `,
@@ -61,7 +61,7 @@ describe('Cart routes', () => {
         'https://test.com/img2.jpg',
         'Art',
         '30.00',
-        'stripe-customer-id_full',
+        process.env.TEST_SUB_FULL_CUSTOMER,
         'pub_id_2',
         1,
         0,
@@ -73,7 +73,7 @@ describe('Cart routes', () => {
     // Low quantity post — only 2 in stock
     const { rows: r3 } = await pool.query(
       `
-      INSERT INTO gallery_posts (title, description, image_url, category, price, customer_id, public_id, num_imgs, quantity, sold)
+      INSERT INTO gallery_posts (title, description, image_url, category, price, seller_sub, public_id, num_imgs, quantity, sold)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING id
       `,
@@ -83,7 +83,7 @@ describe('Cart routes', () => {
         'https://test.com/img3.jpg',
         'Art',
         '15.00',
-        'stripe-customer-id_full',
+        process.env.TEST_SUB_FULL_CUSTOMER,
         'pub_id_3',
         1,
         2,

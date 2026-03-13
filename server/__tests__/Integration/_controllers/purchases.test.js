@@ -5,11 +5,10 @@ const setup = require('../../../data/setup');
 const request = require('supertest');
 const app = require('../../../lib/app');
 
-// Buyer is a seeded user with a stripe_customers row (customer_id present)
+// Buyer is a seeded authenticated user.
 const mockBuyer = {
   email: 'fullCustomer@example.com',
   sub: process.env.TEST_SUB_FULL_CUSTOMER,
-  customer_id: 'stripe-customer-id_full',
 };
 
 // Mutable auth state — swap per-test; reset to mockBuyer in beforeEach
@@ -37,11 +36,10 @@ describe('Purchases routes', () => {
     authState.user = mockBuyer;
     await setup(pool);
 
-    // Insert a gallery post with a numeric price and known seller for FK constraints.
-    // seller is sub_fullCustomer whose stripe customer_id is 'stripe-customer-id_full'.
+    // Insert a gallery post with a numeric price and known seller sub for FK constraints.
     const { rows } = await pool.query(
       `
-      INSERT INTO gallery_posts (title, description, image_url, category, price, customer_id, public_id, num_imgs, quantity)
+      INSERT INTO gallery_posts (title, description, image_url, category, price, seller_sub, public_id, num_imgs, quantity)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING id
       `,
@@ -51,7 +49,7 @@ describe('Purchases routes', () => {
         'https://test.com/img.jpg',
         'Art',
         '25.00',
-        'stripe-customer-id_full',
+        process.env.TEST_SUB_FULL_CUSTOMER,
         'public_id_test',
         1,
         5,
@@ -173,7 +171,7 @@ describe('Purchases routes', () => {
       // Insert a second post
       const { rows } = await pool.query(
         `
-        INSERT INTO gallery_posts (title, description, image_url, category, price, customer_id, public_id, num_imgs, quantity)
+        INSERT INTO gallery_posts (title, description, image_url, category, price, seller_sub, public_id, num_imgs, quantity)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id
         `,
@@ -183,7 +181,7 @@ describe('Purchases routes', () => {
           'https://test.com/img2.jpg',
           'Art',
           '10.00',
-          'stripe-customer-id_full',
+          process.env.TEST_SUB_FULL_CUSTOMER,
           'public_id_test2',
           1,
           3,
@@ -256,10 +254,10 @@ describe('Purchases routes', () => {
       // Seed a purchase record directly
       await pool.query(
         `
-        INSERT INTO purchases (buyer_sub, seller_customer_id, item_type, item_id, quantity, amount_paid)
+        INSERT INTO purchases (buyer_sub, seller_sub, item_type, item_id, quantity, amount_paid)
         VALUES ($1, $2, $3, $4, $5, $6)
         `,
-        [mockBuyer.sub, 'stripe-customer-id_full', 'gallery_post', testPostId, 1, '25.00'],
+        [mockBuyer.sub, process.env.TEST_SUB_FULL_CUSTOMER, 'gallery_post', testPostId, 1, '25.00'],
       );
 
       const response = await request(app).get('/api/v1/purchases');
@@ -286,12 +284,12 @@ describe('Purchases routes', () => {
     it('returns purchases ordered by created_at DESC (newest first)', async () => {
       await pool.query(
         `
-        INSERT INTO purchases (buyer_sub, seller_customer_id, item_type, item_id, quantity, amount_paid, created_at)
+        INSERT INTO purchases (buyer_sub, seller_sub, item_type, item_id, quantity, amount_paid, created_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7), ($1, $2, $3, $4, $5, $6, $8)
         `,
         [
           mockBuyer.sub,
-          'stripe-customer-id_full',
+          process.env.TEST_SUB_FULL_CUSTOMER,
           'gallery_post',
           testPostId,
           1,

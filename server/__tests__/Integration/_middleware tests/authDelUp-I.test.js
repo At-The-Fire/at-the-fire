@@ -132,16 +132,13 @@ describe('DELETE /api/v1/dashboard/:id', () => {
     pool.end();
   });
   it('DELETE /dashboard/:id should allow deletion when user owns the post', async () => {
-    const {
-      subscribedUserAccessToken,
-      subscribedUserIdToken,
-      subscribedUserRefreshToken,
-    } = setupSuccessSubscribedUserMocks();
+    const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+      setupSuccessSubscribedUserMocks();
 
     // Mock the post to be owned by the authenticated user
     Post.getById.mockResolvedValue({
       id: '123',
-      customer_id: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
+      seller_sub: process.env.TEST_SUB_FULL_CUSTOMER,
       title: 'Test Post',
     });
 
@@ -155,7 +152,7 @@ describe('DELETE /api/v1/dashboard/:id', () => {
           'https://res.cloudinary.com/dzodr2cdk/image/upload/v1731739541/at-the-fire/IMG_5038.jpg',
         category: 'Blunt Tips',
         price: '34',
-        customer_id: 'cus_PFVjJAq9obQOR8',
+        seller_sub: process.env.TEST_SUB_FULL_CUSTOMER,
         public_id: 'at-the-fire/IMG_5038',
         num_imgs: '1',
         resource_type: undefined,
@@ -175,16 +172,13 @@ describe('DELETE /api/v1/dashboard/:id', () => {
   });
 
   it('DELETE /dashboard/:id should return 403 when user does not own the post', async () => {
-    const {
-      subscribedUserAccessToken,
-      subscribedUserIdToken,
-      subscribedUserRefreshToken,
-    } = setupSuccessSubscribedUserMocks();
+    const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+      setupSuccessSubscribedUserMocks();
 
     // Mock the post to be owned by a different user
     Post.getById.mockResolvedValue({
       id: '123',
-      customer_id: 'different-customer-id',
+      seller_sub: process.env.TEST_SUB_NO_PROFILE,
       title: 'Test Post',
     });
 
@@ -204,11 +198,8 @@ describe('DELETE /api/v1/dashboard/:id', () => {
   });
 
   it('DELETE /dashboard/:id should return 404 when post does not exist', async () => {
-    const {
-      subscribedUserAccessToken,
-      subscribedUserIdToken,
-      subscribedUserRefreshToken,
-    } = setupSuccessSubscribedUserMocks();
+    const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+      setupSuccessSubscribedUserMocks();
 
     // Mock post not found
     Post.getById.mockResolvedValue(null);
@@ -229,11 +220,8 @@ describe('DELETE /api/v1/dashboard/:id', () => {
   });
 
   it('DELETE /dashboard/:id should return 500 when database query fails', async () => {
-    const {
-      subscribedUserAccessToken,
-      subscribedUserIdToken,
-      subscribedUserRefreshToken,
-    } = setupSuccessSubscribedUserMocks();
+    const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+      setupSuccessSubscribedUserMocks();
 
     // Mock database error
     Post.getById.mockRejectedValue(new Error('Database connection failed'));
@@ -254,23 +242,18 @@ describe('DELETE /api/v1/dashboard/:id', () => {
   });
 
   it('PUT /dashboard/:id should allow updates when user owns the post', async () => {
-    const {
-      subscribedUserAccessToken,
-      subscribedUserIdToken,
-      subscribedUserRefreshToken,
-    } = setupSuccessSubscribedUserMocks();
+    const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+      setupSuccessSubscribedUserMocks();
 
     Post.getById.mockResolvedValue({
       id: '123',
-      customer_id: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
+      seller_sub: process.env.TEST_SUB_FULL_CUSTOMER,
       title: 'Test Post',
     });
 
     Post.updateById.mockResolvedValue({
       additionalImages: [],
       category: 'Blunt Tips',
-      customerId: 'cus_PFVjJAq9obQOR8',
-      customer_id: 'cus_PFVjJAq9obQOR8',
       description: 'sdf',
       image_url:
         'https://res.cloudinary.com/dzodr2cdk/image/upload/f_auto,q_auto/v1731739453/at-the-fire/IMG_1770.jpg',
@@ -278,6 +261,7 @@ describe('DELETE /api/v1/dashboard/:id', () => {
       num_imgs: 1,
       price: '234',
       public_id: 'at-the-fire/IMG_1770',
+      seller_sub: process.env.TEST_SUB_FULL_CUSTOMER,
       sold: false,
       title: 'updated title',
     });
@@ -293,8 +277,6 @@ describe('DELETE /api/v1/dashboard/:id', () => {
         post: {
           additionalImages: [],
           category: 'Blunt Tips',
-          customerId: 'cus_PFVjJAq9obQOR8',
-          customer_id: 'cus_PFVjJAq9obQOR8',
           description: 'sdf',
           image_url:
             'https://res.cloudinary.com/dzodr2cdk/image/upload/f_auto,q_auto/v1731739453/at-the-fire/IMG_1770.jpg',
@@ -311,8 +293,6 @@ describe('DELETE /api/v1/dashboard/:id', () => {
     expect(response.body).toEqual({
       additionalImages: [],
       category: 'Blunt Tips',
-      customerId: 'cus_PFVjJAq9obQOR8',
-      customer_id: 'cus_PFVjJAq9obQOR8',
       description: 'sdf',
       image_url:
         'https://res.cloudinary.com/dzodr2cdk/image/upload/f_auto,q_auto/v1731739453/at-the-fire/IMG_1770.jpg',
@@ -320,6 +300,7 @@ describe('DELETE /api/v1/dashboard/:id', () => {
       num_imgs: 1,
       price: '234',
       public_id: 'at-the-fire/IMG_1770',
+      seller_sub: process.env.TEST_SUB_FULL_CUSTOMER,
       sold: false,
       title: 'updated title',
     });

@@ -145,9 +145,9 @@ module.exports = Router()
       }
 
       // Fetch missing posts
-      if (!posts.length && bizProfile?.customerId) {
+      if (!posts.length) {
         console.info('Fetching posts from Postgres');
-        posts = await Gallery.getGalleryPostsByStripeId(bizProfile.customerId);
+        posts = await Gallery.getGalleryPostsBySub(sub);
         await redisClient.set(cacheKey3, JSON.stringify(posts), { EX: 300 });
       }
 

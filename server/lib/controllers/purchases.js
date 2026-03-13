@@ -67,7 +67,7 @@ module.exports = Router()
       for (const item of normalizedItems) {
         const { rows: postRows } = await client.query(
           `
-          SELECT id, customer_id, price, quantity AS available_quantity, sold, shipping_cost
+          SELECT id, seller_sub, price, quantity AS available_quantity, sold, shipping_cost
           FROM gallery_posts
           WHERE id = $1
           `,
@@ -95,7 +95,7 @@ module.exports = Router()
 
         itemDetails.push({
           postId: post.id,
-          sellerCustomerId: post.customer_id,
+          sellerSub: post.seller_sub,
           pricePerItem,
           availableQuantity: post.available_quantity,
           quantity: item.quantity,
@@ -120,7 +120,7 @@ module.exports = Router()
           `
           INSERT INTO purchases (
             buyer_sub,
-            seller_customer_id,
+            seller_sub,
             item_type,
             item_id,
             quantity,
@@ -134,7 +134,7 @@ module.exports = Router()
           `,
           [
             buyerSub,
-            item.sellerCustomerId,
+            item.sellerSub,
             item.postId,
             item.quantity,
             item.amountPaid,
@@ -208,12 +208,7 @@ module.exports = Router()
   // GET /api/v1/purchases/seller - get seller's sales
   .get('/seller', authenticateAWS, async (req, res, next) => {
     try {
-      const { rows } = await pool.query(
-        'SELECT customer_id FROM stripe_customers WHERE aws_sub = $1',
-        [req.userAWSSub],
-      );
-      if (!rows[0]) return res.json([]);
-      const purchases = await Purchase.getBySellerCustomerId(rows[0].customer_id);
+      const purchases = await Purchase.getBySellerSub(req.userAWSSub);
       res.json(purchases);
     } catch (e) {
       next(e);
@@ -244,12 +239,8 @@ module.exports = Router()
       const purchase = await Purchase.getById(id);
       if (!purchase) return res.status(404).json({ error: 'Purchase not found' });
 
-      // Verify seller ownership via stripe_customers
-      const { rows } = await pool.query(
-        'SELECT aws_sub FROM stripe_customers WHERE customer_id = $1',
-        [purchase.sellerCustomerId],
-      );
-      if (!rows[0] || rows[0].aws_sub !== req.userAWSSub) {
+      // Verify seller ownership
+      if (purchase.sellerSub !== req.userAWSSub) {
         return res.status(403).json({ error: 'Forbidden' });
       }
 

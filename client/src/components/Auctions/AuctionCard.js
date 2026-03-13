@@ -16,7 +16,7 @@ export default function AuctionCard({ auction }) {
   const lastBuyNowId = useAuctionEventsStore((s) => s.lastBuyNowId);
 
   const id = Number(auction.id);
-  const { user, admin, isConfirmed, customerId } = useAuthStore();
+  const { user, admin, isAuthenticated } = useAuthStore();
 
   const [selectedImage, setSelectedImage] = useState(auction.imageUrls[0]);
   const [bids, setBids] = useState([]);
@@ -173,17 +173,8 @@ export default function AuctionCard({ auction }) {
   };
 
   const checkProfileCompletion = () => {
-    if (!isConfirmed || !customerId) {
-      toast.warn(
-        <span style={{ fontSize: '.9rem' }}>Please complete your subscription before bidding or buying.</span>,
-        {
-          theme: 'dark',
-          draggable: true,
-          draggablePercent: 60,
-          autoClose: false,
-        }
-      );
-      navigate('/subscription');
+    if (!isAuthenticated) {
+      handleNavAuth();
       return false;
     }
     return true;

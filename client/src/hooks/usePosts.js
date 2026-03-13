@@ -13,7 +13,7 @@ export function usePosts() {
       setLoading(true); // Start loading
 
       // Early return if required conditions are not met
-      if (!user || !isAuthenticated || !customerId) {
+      if (!user || !isAuthenticated) {
         setLoading(false); // Stop loading on early exit
         return;
       }

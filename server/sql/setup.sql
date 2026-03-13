@@ -115,10 +115,10 @@ CREATE TABLE gallery_posts (
   image_url VARCHAR,
   category VARCHAR,
   price VARCHAR,
-  customer_id VARCHAR(255),
+  seller_sub VARCHAR(255) NOT NULL,
   public_id VARCHAR,
   num_imgs BIGINT,
-  FOREIGN KEY (customer_id) REFERENCES stripe_customers(customer_id) ON DELETE CASCADE ,
+  FOREIGN KEY (seller_sub) REFERENCES cognito_users(sub) ON DELETE CASCADE,
   sold BOOLEAN DEFAULT FALSE,
   date_sold VARCHAR,
   quantity INTEGER DEFAULT 1,
@@ -178,8 +178,8 @@ CREATE TABLE inventory_snapshot (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   category_count JSONB,
   price_count JSONB,
-  customer_id VARCHAR(255) NOT NULL,
-  FOREIGN KEY (customer_id) REFERENCES stripe_customers(customer_id) ON DELETE CASCADE
+  user_sub VARCHAR(255) NOT NULL,
+  FOREIGN KEY (user_sub) REFERENCES cognito_users(sub) ON DELETE CASCADE
 );
 
 CREATE TABLE orders (
@@ -201,13 +201,13 @@ CREATE TABLE image_uploads(
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
   image_count INTEGER NOT NULL CHECK (image_count > 0),
-  customer_id VARCHAR(255) NOT NULL,
-  FOREIGN KEY (customer_id) REFERENCES stripe_customers(customer_id)  ON DELETE CASCADE
+  user_sub VARCHAR(255) NOT NULL,
+  FOREIGN KEY (user_sub) REFERENCES cognito_users(sub) ON DELETE CASCADE
 );
 
 -- Add index for the queries you'll be running in image_uploads table
-CREATE INDEX idx_image_uploads_customer_time
-ON image_uploads (customer_id, created_at);
+CREATE INDEX idx_image_uploads_user_time
+ON image_uploads (user_sub, created_at);
 
 CREATE TABLE webhook_events (
   id SERIAL PRIMARY KEY,
@@ -332,7 +332,7 @@ CREATE TABLE auction_notifications (
 CREATE TABLE purchases (
   id                      BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   buyer_sub               VARCHAR NOT NULL REFERENCES cognito_users(sub),
-  seller_customer_id      VARCHAR NOT NULL REFERENCES stripe_customers(customer_id),
+  seller_sub              VARCHAR NOT NULL REFERENCES cognito_users(sub),
   item_type               VARCHAR NOT NULL CHECK (item_type IN ('gallery_post', 'auction')),
   item_id                 BIGINT NOT NULL,
   quantity                INT NOT NULL DEFAULT 1,
@@ -406,17 +406,17 @@ VALUES ('auction', 1731744000000, 'test-title','test-description','test-category
 -- Add posts for testing
 -- Posts for the user with a customer ID but no profile data entered in stripe_customers
 INSERT INTO "gallery_posts"
-("title", "description", "image_url", "category", "price", "customer_id", "public_id", "num_imgs","sold")
+("title", "description", "image_url", "category", "price", "seller_sub", "public_id", "num_imgs","sold")
 VALUES
-('SampleTitle1', 'SampleDescription1', 'sample_image_url_path_1', 'SampleCategory1', 'SamplePrice1', 'stripe-customer-id_noProfile', 'publicID_post_1', 1,false),
-('SampleTitle2', 'SampleDescription2', 'sample_image_url_path_2', 'SampleCategory2', 'SamplePrice2', 'stripe-customer-id_noProfile', 'publicID_post_2', 2,false);
+('SampleTitle1', 'SampleDescription1', 'sample_image_url_path_1', 'SampleCategory1', 'SamplePrice1', '123e4567-e89b-42d3-a456-426614174103', 'publicID_post_1', 1,false),
+('SampleTitle2', 'SampleDescription2', 'sample_image_url_path_2', 'SampleCategory2', 'SamplePrice2', '123e4567-e89b-42d3-a456-426614174103', 'publicID_post_2', 2,false);
 
 -- Posts for the customer with profile data
 INSERT INTO "gallery_posts"
-("title", "description", "image_url", "category", "price", "customer_id", "public_id", "num_imgs","sold")
+("title", "description", "image_url", "category", "price", "seller_sub", "public_id", "num_imgs","sold")
 VALUES
-('SampleTitle3', 'SampleDescription3', 'sample_image_url_path_3', 'SampleCategory3', 'SamplePrice3', 'stripe-customer-id_full', 'publicID_post_3', 1,false),
-('SampleTitle4', 'SampleDescription4', 'sample_image_url_path_4', 'SampleCategory4', 'SamplePrice4', 'stripe-customer-id_full', 'publicID_post_4', 2,false);
+('SampleTitle3', 'SampleDescription3', 'sample_image_url_path_3', 'SampleCategory3', 'SamplePrice3', '123e4567-e89b-42d3-a456-426614174104', 'publicID_post_3', 1,false),
+('SampleTitle4', 'SampleDescription4', 'sample_image_url_path_4', 'SampleCategory4', 'SamplePrice4', '123e4567-e89b-42d3-a456-426614174104', 'publicID_post_4', 2,false);
 
 -- Add partial profile data for testing
 INSERT INTO "cognito_users"
@@ -431,9 +431,9 @@ VALUES
 
 -- Add Inventory Snapshot data for testing
 INSERT INTO "inventory_snapshot"
-("category_count",  "customer_id",  "price_count")
+("category_count",  "user_sub",  "price_count")
 VALUES
-('{"Beads":2,"Marbles":3,"Bubblers":1,"Recyclers":1,"Dry Pieces":2}',  'stripe-customer-id_full', '{"Beads":916,"Marbles":950,"Bubblers":500,"Recyclers":2000,"Dry Pieces":1400}');
+('{"Beads":2,"Marbles":3,"Bubblers":1,"Recyclers":1,"Dry Pieces":2}',  '123e4567-e89b-42d3-a456-426614174104', '{"Beads":916,"Marbles":950,"Bubblers":500,"Recyclers":2000,"Dry Pieces":1400}');
 
 INSERT INTO "invoices"
 ("customer_id", "invoice_id","start_date","end_date","invoice_status","subscription_id","amount_due","amount_paid","created_at")

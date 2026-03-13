@@ -155,6 +155,7 @@ app.use(
 );
 
 // App routes
+
 app.use('/api/v1/gallery-posts', [jsonParser], require('./controllers/galleryPosts'));
 
 app.use('/api/v1/profile', [jsonParser], require('./controllers/profile'));
@@ -188,11 +189,7 @@ app.use(
 
 app.use('/api/v1/stripe', [jsonParser, authenticateAWS], require('./controllers/stripe'));
 
-app.use(
-  '/api/v1/dashboard',
-  [jsonParser, authenticateAWS, authorizeSubscription],
-  require('./controllers/dashboard'),
-);
+app.use('/api/v1/dashboard', [jsonParser, authenticateAWS], require('./controllers/dashboard'));
 
 app.use(
   '/api/v1/goals',
@@ -214,7 +211,7 @@ app.use(
 
 app.use(
   '/api/v1/inventory-snapshot',
-  [jsonParser, authenticateAWS, authorizeSubscription],
+  [jsonParser, authenticateAWS],
   require('./controllers/inventorySnapshot'),
 );
 

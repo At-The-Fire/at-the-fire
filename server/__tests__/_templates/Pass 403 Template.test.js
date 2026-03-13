@@ -91,7 +91,7 @@ const setupSubscribedUserMocks = () => {
   StripeCustomer.getStripeByAWSSub.mockResolvedValue(undefined);
 
   StripeCustomer.updateByCustomerId.mockRejectedValue(
-    new Error('You are not authorized to update this profile')
+    new Error('You are not authorized to update this profile'),
   );
 
   // Mock the database call to return the subscription status for a subscribed user
@@ -124,11 +124,8 @@ describe('authenticateAWS Middleware', () => {
 
   //! WORKS: SELECT ALL COPY/ PASTE & USE FOR TEMPLATES
   it.skip('should allow access to subscription-only routes for subscribed users', async () => {
-    const {
-      subscribedUserAccessToken,
-      subscribedUserIdToken,
-      subscribedUserRefreshToken,
-    } = setupSubscribedUserMocks();
+    const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+      setupSubscribedUserMocks();
 
     // Sending the request with all three required tokens as cookies
     const response = await request(app)
@@ -141,6 +138,6 @@ describe('authenticateAWS Middleware', () => {
 
     // We expect the authentication and authorization middleware to pass
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ posts: [], restricted: false });
+    expect(response.body).toEqual({ posts: [] });
   });
 });

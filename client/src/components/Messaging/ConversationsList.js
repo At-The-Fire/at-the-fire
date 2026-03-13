@@ -172,7 +172,7 @@ export default function ConversationsList({
                         {`${conversation.last_message.content.slice(0, 20)}...`}
                       </Typography>{' '}
                       <Typography component="span" variant="caption" color="text.secondary">
-                        {formatDistanceToNow(new Date(conversation.last_message.created_at + 'Z'), {
+                        {formatDistanceToNow(new Date(conversation.last_message.created_at), {
                           addSuffix: true,
                         })}
                       </Typography>
