@@ -6,7 +6,7 @@ const AmazonCognitoIdentity = require('amazon-cognito-identity-js');
 const jwt = require('jsonwebtoken');
 const { getSigningKey } = require('../utils/jwks');
 
-const { getStripeByAWSSub } = require('../models/StripeCustomer.js');
+const { getStripeByAWSSub, insertBetaPlaceholder } = require('../models/StripeCustomer.js');
 const { getSubscriptionByCustomerId } = require('../models/Subscriptions');
 
 const poolData = {
@@ -184,6 +184,16 @@ module.exports = Router()
       const stripeCustomer = await getStripeByAWSSub(sub);
       let subscription = null;
       if (!stripeCustomer) {
+        if (process.env.BETA_MODE === 'true') {
+          const placeholder = await insertBetaPlaceholder(sub);
+          return res.status(200).json({
+            hasSubscription: false,
+            betaAccess: true,
+            customerId: placeholder.customerId,
+            confirmed: true,
+            subscription: null,
+          });
+        }
         return res.status(200).json({
           hasSubscription: false,
           message: 'User is not subscribed',
