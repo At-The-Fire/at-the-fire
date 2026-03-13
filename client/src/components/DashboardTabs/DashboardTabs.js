@@ -119,6 +119,7 @@ export default function BasicTabs() {
     // Calculate fresh counts here, before creating the snapshot
     const freshCategoryCounts = {};
     const freshPriceCounts = {};
+
     for (let post of posts) {
       if (freshCategoryCounts[post.category]) {
         freshCategoryCounts[post.category]++;

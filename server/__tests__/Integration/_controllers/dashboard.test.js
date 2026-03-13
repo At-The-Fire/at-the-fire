@@ -33,19 +33,19 @@ jest.mock('@aws-sdk/client-s3', () => {
 
 // Mock user data
 const mockUser = {
-  email: process.env.TEST_EMAIL,
-  sub: process.env.TEST_SUB,
-  customer_id: process.env.TEST_CUSTOMER_ID,
+  email: process.env.TEST_EMAIL_NO_PROFILE,
+  sub: process.env.TEST_SUB_CUSTOMER_NO_PROFILE,
+  customer_id: process.env.TEST_STRIPE_CUSTOMER_ID_NO_PROFILE,
 };
 
-// Mock customer data
+// Mock customer data retained for any middleware that still reads customer context.
 const mockCustomer = {
   customerId: process.env.TEST_STRIPE_CUSTOMER_ID_NO_PROFILE,
   isActive: true,
   subscriptionEndDate: 1630435200,
 };
 
-// Mutable flag for restricted-user tests
+// Retained for compatibility with unrelated middleware mocks.
 let mockRestricted = false;
 
 // Mocking the `AWSUser` module
@@ -220,7 +220,7 @@ describe('posts/ post details/ S3 routes', () => {
       image_url: expect.any(String),
       category: expect.any(String),
       price: expect.any(String),
-      customer_id: expect.any(String),
+      seller_sub: expect.any(String),
       num_imgs: expect.any(String),
       public_id: expect.any(String),
       quantity: 1,
@@ -254,7 +254,7 @@ describe('posts/ post details/ S3 routes', () => {
         'https://res.cloudinary.com/dzodr2cdk/image/upload/v1731739453/at-the-fire/IMG_1770.jpg',
       category: 'test category',
       price: '40',
-      customer_id: 'stripe-customer-id_noProfile',
+      seller_sub: process.env.TEST_SUB_CUSTOMER_NO_PROFILE,
       num_imgs: expect.any(String),
       public_id: expect.any(String),
       quantity: null,
@@ -295,7 +295,7 @@ describe('posts/ post details/ S3 routes', () => {
         'https://res.cloudinary.com/dzodr2cdk/image/upload/v1731739453/at-the-fire/UPDATED_IMAGE.jpg',
       category: 'test category is updated',
       price: 'test price is updated',
-      customer_id: expect.any(String),
+      seller_sub: expect.any(String),
       num_imgs: expect.any(String),
       public_id: expect.any(String),
       quantity: 0,
@@ -336,7 +336,7 @@ describe('posts/ post details/ S3 routes', () => {
         'https://res.cloudinary.com/dzodr2cdk/image/upload/v1731739453/at-the-fire/UPDATED_IMAGE.jpg',
       category: 'test category is updated again',
       price: 'test price is updated again',
-      customer_id: expect.any(String),
+      seller_sub: expect.any(String),
       num_imgs: expect.any(String),
       public_id: expect.any(String),
       shipping_cost: '0',
@@ -555,49 +555,4 @@ describe('posts/ post details/ S3 routes', () => {
   // it.todo(`Rate Limits or External API Failures: If your service relies on any
   //     external APIs (e.g., a call to Cloudinary), consider what happens if
   //     that external service fails or if you exceed any rate limits`);
-
-  describe('restricted user (expired subscription)', () => {
-    const restricted403 = {
-      code: 403,
-      message: 'An active subscription is required to perform this action.',
-    };
-
-    beforeEach(() => {
-      mockRestricted = true;
-    });
-
-    afterEach(() => {
-      mockRestricted = false;
-    });
-
-    it('POST /dashboard/transfer returns 403', async () => {
-      const resp = await request(app).post('/api/v1/dashboard/transfer').send({ postId: '1' });
-      expect(resp.status).toBe(403);
-      expect(resp.body).toEqual(restricted403);
-    });
-
-    it('POST /dashboard/delete returns 403', async () => {
-      const resp = await request(app)
-        .post('/api/v1/dashboard/delete')
-        .send({ public_id: 'some-id' });
-      expect(resp.status).toBe(403);
-      expect(resp.body).toEqual(restricted403);
-    });
-
-    it('PUT /dashboard/posts/:id/main-image returns 403', async () => {
-      const resp = await request(app)
-        .put('/api/v1/dashboard/posts/1/main-image')
-        .send({ image_url: 'https://example.com/img.jpg', public_id: 'some-id' });
-      expect(resp.status).toBe(403);
-      expect(resp.body).toEqual(restricted403);
-    });
-
-    it('DELETE /dashboard/image/:id returns 403', async () => {
-      const resp = await request(app)
-        .delete('/api/v1/dashboard/image/1')
-        .send({ public_id: 'some-id' });
-      expect(resp.status).toBe(403);
-      expect(resp.body).toEqual(restricted403);
-    });
-  });
 });

@@ -966,7 +966,10 @@ export default function Dashboard({ products, setProducts, customerId }) {
                                   variant="body2"
                                   sx={{ color: 'text.secondary', fontSize: '.75rem', textAlign: 'left' }}
                                 >
-                                  Final bid: ${Number(auction.finalBid || auction.currentBid || auction.startPrice).toLocaleString()}
+                                  Final bid: $
+                                  {Number(
+                                    auction.finalBid || auction.currentBid || auction.startPrice
+                                  ).toLocaleString()}
                                 </Typography>
                                 {auction.trackingNumber ? (
                                   (() => {
