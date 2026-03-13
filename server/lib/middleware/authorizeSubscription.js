@@ -3,11 +3,13 @@ const { getSubscriptionByCustomerId } = require('../models/Subscriptions.js');
 const { getBillingPeriodByCustomerId } = require('../models/Invoices.js');
 
 module.exports = async (req, res, next) => {
-  // if (process.env.BETA_MODE === 'true') {
-  //   req.restricted = false;
-  //   req.trialStatus = { isTrialing: false };
-  //   return next();
-  // }
+  if (process.env.BETA_MODE === 'true') {
+    req.restricted = false;
+    req.trialStatus = { isTrialing: false };
+    const stripeCustomer = await getStripeByAWSSub(req.userAWSSub);
+    if (stripeCustomer) req.customerId = stripeCustomer.customerId;
+    return next();
+  }
 
   try {
     const sub = req.userAWSSub;
