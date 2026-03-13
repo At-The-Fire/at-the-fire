@@ -77,6 +77,45 @@ module.exports = class StripeCustomer {
     }
   }
 
+  static async insertBetaPlaceholder(awsSub) {
+    const customerId = `beta_${awsSub}`;
+    const subscriptionId = `beta_sub_${awsSub}`;
+    const invoiceId = `beta_inv_${awsSub}`;
+    const now = Math.floor(Date.now() / 1000);
+    const oneYearFromNow = now + 365 * 24 * 60 * 60;
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(
+        'INSERT INTO stripe_customers (customer_id, aws_sub, confirmed) VALUES ($1, $2, true)',
+        [customerId, awsSub],
+      );
+      await client.query('UPDATE cognito_users SET customer_id = $1 WHERE sub = $2', [
+        customerId,
+        awsSub,
+      ]);
+      await client.query(
+        `INSERT INTO subscriptions
+          (customer_id, subscription_id, is_active, interval, subscription_start_date, subscription_end_date, trial_start_date, trial_end_date, status)
+         VALUES ($1, $2, true, 'month', $3, $4, null, null, 'active')`,
+        [customerId, subscriptionId, now, oneYearFromNow],
+      );
+      await client.query(
+        `INSERT INTO invoices (invoice_id, subscription_id, customer_id, start_date, end_date)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [invoiceId, subscriptionId, customerId, now, oneYearFromNow],
+      );
+      await client.query('COMMIT');
+      return { customerId, awsSub };
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
+  }
+
   static async getStripeByCustomerId(customerId) {
     const { rows } = await pool.query(
       `
