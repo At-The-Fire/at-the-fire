@@ -9,14 +9,14 @@ import { useAuthStore } from '../stores/useAuthStore.js';
 
 export function useInventory() {
   const navigate = useNavigate();
-  const { isAuthenticated, setError, error, user, customerId } = useAuthStore();
+  const { isAuthenticated, setError, error, user } = useAuthStore();
 
   const { snapshots, inventoryLoading, setInventoryLoading, setSnapshots } = useSnapshotStore();
 
   useEffect(() => {
     const getSnapshots = async () => {
       try {
-        if (!user || !isAuthenticated || !customerId || error === 401) {
+        if (!user || !isAuthenticated || error === 401) {
           setInventoryLoading(false);
           return;
         }
@@ -47,7 +47,7 @@ export function useInventory() {
     };
 
     getSnapshots();
-  }, [isAuthenticated, navigate, error, customerId, user, setInventoryLoading, setSnapshots, setError]);
+  }, [isAuthenticated, navigate, error, user, setInventoryLoading, setSnapshots, setError]);
 
   return { snapshots, inventoryLoading };
 }
