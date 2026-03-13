@@ -26,7 +26,9 @@ async function deleteFromS3(url) {
     const parsed = new URL(url);
     const key = parsed.pathname.startsWith('/') ? parsed.pathname.slice(1) : parsed.pathname;
     if (key) {
-      await s3Client.send(new DeleteObjectCommand({ Bucket: process.env.AWS_BUCKET_NAME, Key: key }));
+      await s3Client.send(
+        new DeleteObjectCommand({ Bucket: process.env.AWS_BUCKET_NAME, Key: key }),
+      );
     }
   } catch (err) {
     console.error('S3 delete failed for', url, err);
@@ -83,12 +85,14 @@ module.exports = Router()
       if (cognitoUser.imageUrl) s3Urls.push(cognitoUser.imageUrl);
       if (stripeCustomer) {
         if (stripeCustomer.logoImageUrl) s3Urls.push(stripeCustomer.logoImageUrl);
-        const posts = await AWSUser.getGalleryPosts(stripeCustomer.customerId);
-        posts.forEach((p) => { if (p.image_url) s3Urls.push(p.image_url); });
       }
+      const posts = await AWSUser.getGalleryPosts(sub);
+      posts.forEach((p) => {
+        if (p.image_url) s3Urls.push(p.image_url);
+      });
       const { rows: auctionRows } = await pool.query(
         'SELECT image_urls FROM auctions WHERE seller_sub = $1',
-        [sub]
+        [sub],
       );
       auctionRows.forEach((row) => row.image_urls?.forEach((url) => s3Urls.push(url)));
 
@@ -99,21 +103,20 @@ module.exports = Router()
       try {
         await client.query('BEGIN');
 
-        // purchases has no ON DELETE CASCADE on buyer_sub or seller_customer_id
+        // purchases has no ON DELETE CASCADE on buyer_sub or seller_sub
         await client.query('DELETE FROM purchases WHERE buyer_sub = $1', [sub]);
+        await client.query('DELETE FROM purchases WHERE seller_sub = $1', [sub]);
+        await client.query('DELETE FROM image_uploads WHERE user_sub = $1', [sub]);
+        await client.query('DELETE FROM gallery_posts WHERE seller_sub = $1', [sub]);
 
         if (stripeCustomer) {
           const customerId = stripeCustomer.customerId;
-          // purchases where this user is the seller
-          await client.query('DELETE FROM purchases WHERE seller_customer_id = $1', [customerId]);
-          await client.query('DELETE FROM image_uploads WHERE customer_id = $1', [customerId]);
           await client.query('DELETE FROM quota_tracking WHERE customer_id = $1', [customerId]);
           await client.query('DELETE FROM quota_goals WHERE customer_id = $1', [customerId]);
           await client.query('DELETE FROM orders WHERE customer_id = $1', [customerId]);
-          await client.query('DELETE FROM inventory_snapshot WHERE customer_id = $1', [customerId]);
+          await client.query('DELETE FROM inventory_snapshot WHERE user_sub = $1', [sub]);
           await client.query('DELETE FROM subscriptions WHERE customer_id = $1', [customerId]);
           await client.query('DELETE FROM invoices WHERE customer_id = $1', [customerId]);
-          await client.query('DELETE FROM gallery_posts WHERE customer_id = $1', [customerId]);
           await client.query('DELETE FROM stripe_customers WHERE customer_id = $1', [customerId]);
         }
 
@@ -121,7 +124,7 @@ module.exports = Router()
         await client.query('DELETE FROM auction_results WHERE winner_sub = $1', [sub]);
         await client.query(
           'DELETE FROM auction_results WHERE auction_id IN (SELECT id FROM auctions WHERE seller_sub = $1)',
-          [sub]
+          [sub],
         );
 
         // Deleting cognito_users cascades: auctions, bids, auction_notifications, followers, messages, etc.
@@ -150,7 +153,7 @@ module.exports = Router()
           new AdminDeleteUserCommand({
             UserPoolId: process.env.COGNITO_USER_POOL_ID,
             Username: sub,
-          })
+          }),
         );
       } catch (err) {
         cognitoError = err;
@@ -162,7 +165,9 @@ module.exports = Router()
       ].filter(Boolean);
 
       return res.json({
-        message: warnings.length ? 'User deleted from DB, but some external cleanup failed' : 'User successfully deleted',
+        message: warnings.length
+          ? 'User deleted from DB, but some external cleanup failed'
+          : 'User successfully deleted',
         ...(warnings.length && { warnings }),
       });
     } catch (e) {
