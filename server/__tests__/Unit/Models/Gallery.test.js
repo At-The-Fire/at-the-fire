@@ -10,19 +10,22 @@ describe('Gallery Model', () => {
 
   it('creates a gallery instance from a row', () => {
     const row = {
-      id: 1,
-      created_at: '2024-01-01T00:00:00Z',
-      title: 'Test Gallery',
-      description: 'Test Description',
-      image_url: 'http://test.com/image.jpg',
       category: 'art',
-      price: 100,
-      customer_id: 'cust_123',
-      public_id: 'pub_123',
-      num_imgs: 5,
+      created_at: '2024-01-01T00:00:00Z',
+      description: 'Test Description',
       display_name: 'Test User',
+      id: 1,
+      image_url: 'http://test.com/image.jpg',
       logo_image_url: 'http://test.com/logo.jpg',
+      num_imgs: 5,
+      price: 100,
+      public_id: 'pub_123',
+      quantity: 5,
+      seller_sub: 'sub_123',
+      shipping_cost: 15,
+      sold: false,
       sub: 'sub_123',
+      title: 'Test Gallery',
     };
 
     const gallery = new Gallery(row);
@@ -35,7 +38,7 @@ describe('Gallery Model', () => {
         {
           id: 1,
           title: 'Post 1',
-          customer_id: 'cust_123',
+          seller_sub: 'sub_123',
           display_name: 'Test User',
           logo_image_url: 'logo.jpg',
         },
@@ -61,12 +64,12 @@ describe('Gallery Model', () => {
     });
   });
 
-  describe('getGalleryPostsByStripeId', () => {
-    it('returns posts for specific customer', async () => {
+  describe('getGalleryPostsBySub', () => {
+    it('returns posts for specific seller sub', async () => {
       const mockRows = [
         {
           id: 1,
-          customer_id: 'cust_123',
+          seller_sub: 'sub_123',
           title: 'Customer Post',
           sub: 'sub_123',
         },
@@ -74,16 +77,16 @@ describe('Gallery Model', () => {
 
       pool.query.mockResolvedValueOnce({ rows: mockRows });
 
-      const results = await Gallery.getGalleryPostsByStripeId('cust_123');
+      const results = await Gallery.getGalleryPostsBySub('sub_123');
 
-      expect(results[0].customer_id).toBe('cust_123');
-      expect(pool.query).toHaveBeenCalledWith(expect.any(String), ['cust_123']);
+      expect(results[0].seller_sub).toBe('sub_123');
+      expect(pool.query).toHaveBeenCalledWith(expect.any(String), ['sub_123']);
     });
 
-    it('returns empty array when customer has no posts', async () => {
+    it('returns empty array when seller has no posts', async () => {
       pool.query.mockResolvedValueOnce({ rows: [] });
 
-      const results = await Gallery.getGalleryPostsByStripeId('cust_456');
+      const results = await Gallery.getGalleryPostsBySub('sub_456');
 
       expect(results).toHaveLength(0);
     });
@@ -94,7 +97,7 @@ describe('Gallery Model', () => {
       const mockRow = {
         id: 1,
         title: 'Test Post',
-        customer_id: 'cust_123',
+        seller_sub: 'sub_123',
       };
 
       pool.query.mockResolvedValueOnce({ rows: [mockRow] });
@@ -136,10 +139,7 @@ describe('Gallery Model', () => {
 
       expect(results).toHaveLength(2);
       expect(results[0]).toBeInstanceOf(Gallery);
-      expect(pool.query).toHaveBeenCalledWith(
-        expect.stringContaining('posts_imgs'),
-        [123]
-      );
+      expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('posts_imgs'), [123]);
     });
 
     it('returns empty array when post has no images', async () => {

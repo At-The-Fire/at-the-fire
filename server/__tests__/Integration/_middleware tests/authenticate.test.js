@@ -209,7 +209,7 @@ describe('authenticateAWS Middleware', () => {
     ); // Adjust the error message based on your actual middleware response
   });
 
-  it('should deny access to subscription-only routes for free users', async () => {
+  it('should allow dashboard access for free users', async () => {
     // Mock valid tokens for a free user
     const freeUserAccessToken = 'valid.free.user.access.token';
     const freeUserIdToken = 'valid.free.user.id.token';
@@ -238,16 +238,15 @@ describe('authenticateAWS Middleware', () => {
 
     // Sending the request with all three required tokens as cookies
     const response = await request(app)
-      .get('/api/v1/dashboard') // This is your subscription-only route
+      .get('/api/v1/dashboard')
       .set('Cookie', [
         `accessToken=${freeUserAccessToken};`,
         `idToken=${freeUserIdToken};`,
         `refreshToken=${freeUserRefreshToken};`,
       ]);
 
-    // We expect to get past authentication middleware, but the route should restrict access due to role
-    expect(response.status).toBe(403); // Expecting 403 forbidden status code
-    expect(response.body.message).toContain('You do not have access to view this page');
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ posts: [] });
   });
 
   //! ALERT:
@@ -311,7 +310,6 @@ describe('authenticateAWS Middleware', () => {
         {
           category: 'SampleCategory3',
           created_at: expect.any(String),
-          customer_id: 'stripe-customer-id_full',
           description: 'SampleDescription3',
           id: '3',
           image_url: 'sample_image_url_path_3',
@@ -319,6 +317,7 @@ describe('authenticateAWS Middleware', () => {
           price: 'SamplePrice3',
           public_id: 'publicID_post_3',
           quantity: 1,
+          seller_sub: process.env.TEST_SUB_FULL_CUSTOMER,
           shipping_cost: '0',
           sold: false,
           date_sold: null,
@@ -327,7 +326,6 @@ describe('authenticateAWS Middleware', () => {
         {
           category: 'SampleCategory4',
           created_at: expect.any(String),
-          customer_id: 'stripe-customer-id_full',
           description: 'SampleDescription4',
           id: '4',
           image_url: 'sample_image_url_path_4',
@@ -335,13 +333,13 @@ describe('authenticateAWS Middleware', () => {
           price: 'SamplePrice4',
           public_id: 'publicID_post_4',
           quantity: 1,
+          seller_sub: process.env.TEST_SUB_FULL_CUSTOMER,
           shipping_cost: '0',
           sold: false,
           date_sold: null,
           title: 'SampleTitle4',
         },
       ],
-      restricted: false,
     });
   });
   it('should still allow access to /dashboard route for subscribed users with inactive subscription', async () => {
@@ -404,7 +402,6 @@ describe('authenticateAWS Middleware', () => {
         {
           category: 'SampleCategory3',
           created_at: expect.any(String),
-          customer_id: 'stripe-customer-id_full',
           description: 'SampleDescription3',
           id: '3',
           image_url: 'sample_image_url_path_3',
@@ -412,6 +409,7 @@ describe('authenticateAWS Middleware', () => {
           price: 'SamplePrice3',
           public_id: 'publicID_post_3',
           quantity: 1,
+          seller_sub: process.env.TEST_SUB_FULL_CUSTOMER,
           shipping_cost: '0',
           sold: false,
           date_sold: null,
@@ -420,7 +418,6 @@ describe('authenticateAWS Middleware', () => {
         {
           category: 'SampleCategory4',
           created_at: expect.any(String),
-          customer_id: 'stripe-customer-id_full',
           description: 'SampleDescription4',
           id: '4',
           image_url: 'sample_image_url_path_4',
@@ -428,13 +425,13 @@ describe('authenticateAWS Middleware', () => {
           price: 'SamplePrice4',
           public_id: 'publicID_post_4',
           quantity: 1,
+          seller_sub: process.env.TEST_SUB_FULL_CUSTOMER,
           shipping_cost: '0',
           sold: false,
           date_sold: null,
           title: 'SampleTitle4',
         },
       ],
-      restricted: true,
     });
   });
 });

@@ -99,7 +99,6 @@ describe('authorize Middleware', () => {
         {
           category: 'SampleCategory3',
           created_at: expect.any(String),
-          customer_id: 'stripe-customer-id_full',
           description: 'SampleDescription3',
           id: '3',
           image_url: 'sample_image_url_path_3',
@@ -107,6 +106,7 @@ describe('authorize Middleware', () => {
           price: 'SamplePrice3',
           public_id: 'publicID_post_3',
           quantity: 1,
+          seller_sub: process.env.TEST_SUB_FULL_CUSTOMER,
           shipping_cost: '0',
           sold: false,
           date_sold: null,
@@ -115,7 +115,6 @@ describe('authorize Middleware', () => {
         {
           category: 'SampleCategory4',
           created_at: expect.any(String),
-          customer_id: 'stripe-customer-id_full',
           description: 'SampleDescription4',
           id: '4',
           image_url: 'sample_image_url_path_4',
@@ -123,14 +122,13 @@ describe('authorize Middleware', () => {
           price: 'SamplePrice4',
           public_id: 'publicID_post_4',
           quantity: 1,
+          seller_sub: process.env.TEST_SUB_FULL_CUSTOMER,
           shipping_cost: '0',
           sold: false,
           date_sold: null,
           title: 'SampleTitle4',
         },
       ],
-
-      restricted: false,
     });
   });
 
@@ -155,7 +153,6 @@ describe('authorize Middleware', () => {
         {
           category: 'SampleCategory3',
           created_at: expect.any(String),
-          customer_id: 'stripe-customer-id_full',
           description: 'SampleDescription3',
           id: '3',
           image_url: 'sample_image_url_path_3',
@@ -163,6 +160,7 @@ describe('authorize Middleware', () => {
           price: 'SamplePrice3',
           public_id: 'publicID_post_3',
           quantity: 1,
+          seller_sub: process.env.TEST_SUB_FULL_CUSTOMER,
           shipping_cost: '0',
           sold: false,
           date_sold: null,
@@ -171,7 +169,6 @@ describe('authorize Middleware', () => {
         {
           category: 'SampleCategory4',
           created_at: expect.any(String),
-          customer_id: 'stripe-customer-id_full',
           description: 'SampleDescription4',
           id: '4',
           image_url: 'sample_image_url_path_4',
@@ -179,14 +176,13 @@ describe('authorize Middleware', () => {
           price: 'SamplePrice4',
           public_id: 'publicID_post_4',
           quantity: 1,
+          seller_sub: process.env.TEST_SUB_FULL_CUSTOMER,
           shipping_cost: '0',
           sold: false,
           date_sold: null,
           title: 'SampleTitle4',
         },
       ],
-
-      restricted: true,
     });
   });
 
@@ -209,7 +205,7 @@ describe('authorize Middleware', () => {
 
     delete process.env.BETA_MODE;
     expect(response.status).toBe(200);
-    expect(response.body.restricted).toBe(false);
+    expect(response.body.posts).toEqual(expect.any(Array));
   });
 
   //

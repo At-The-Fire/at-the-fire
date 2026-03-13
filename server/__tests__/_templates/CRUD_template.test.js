@@ -143,7 +143,6 @@ describe('authenticateAWS Middleware', () => {
         {
           category: 'SampleCategory3',
           created_at: expect.any(String),
-          customer_id: 'stripe-customer-id_full',
           description: 'SampleDescription3',
           id: '3',
           image_url: 'sample_image_url_path_3',
@@ -151,6 +150,7 @@ describe('authenticateAWS Middleware', () => {
           price: 'SamplePrice3',
           public_id: 'publicID_post_3',
           quantity: 1,
+          seller_sub: process.env.TEST_SUB_FULL_CUSTOMER,
           shipping_cost: '0',
           sold: false,
           date_sold: null,
@@ -159,7 +159,6 @@ describe('authenticateAWS Middleware', () => {
         {
           category: 'SampleCategory4',
           created_at: expect.any(String),
-          customer_id: 'stripe-customer-id_full',
           description: 'SampleDescription4',
           id: '4',
           image_url: 'sample_image_url_path_4',
@@ -167,13 +166,13 @@ describe('authenticateAWS Middleware', () => {
           price: 'SamplePrice4',
           public_id: 'publicID_post_4',
           quantity: 1,
+          seller_sub: process.env.TEST_SUB_FULL_CUSTOMER,
           shipping_cost: '0',
           sold: false,
           date_sold: null,
           title: 'SampleTitle4',
         },
       ],
-      restricted: false,
     });
   });
 });

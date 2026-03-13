@@ -5,32 +5,13 @@ const app = require('../../../lib/app');
 
 // Mock user data
 const mockUser = {
-  email: process.env.TEST_EMAIL,
-  sub: process.env.TEST_SUB,
-  customer_id: process.env.TEST_CUSTOMER_ID,
-};
-
-// Mock customer data
-const mockCustomer = {
-  customerId: 'stripe-customer-id_full',
-  isActive: true,
-  subscriptionEndDate: 1630435200,
+  sub: process.env.TEST_SUB_FULL_CUSTOMER,
 };
 
 // Mock authenticate middleware to attach mock sub to req.userAWSSub before each test case runs
 // this is assuming that the user is logged in and authenticated (tested elsewhere)
 jest.mock('../../../lib/middleware/authenticateAWS.js', () => (req, res, next) => {
   req.userAWSSub = mockUser.sub;
-  next();
-});
-
-// Mock authorizeSubscription middleware to attach mock subscription to req.subscription object before each test case runs (req.subscription is used in the route handler)
-// this is assuming that the user is logged in and authenticated (tested elsewhere)
-jest.mock('../../../lib/middleware/authorizeSubscription.js', () => (req, res, next) => {
-  if (mockUser.sub !== null) {
-    req.customerId = mockCustomer.customerId;
-  }
-
   next();
 });
 
@@ -103,7 +84,6 @@ describe('posts/ post details/ cloudinary routes', () => {
         'https://res.cloudinary.com/dzodr2cdk/image/upload/v1731739453/at-the-fire/IMG_1770.jpg',
       category: 'testCategory',
       price: 500,
-      customer_id: 'stripe-customer-id_full',
       num_imgs: 1,
       public_id: 'test public id',
       sold: true,
@@ -120,7 +100,7 @@ describe('posts/ post details/ cloudinary routes', () => {
         'https://res.cloudinary.com/dzodr2cdk/image/upload/v1731739453/at-the-fire/IMG_1770.jpg',
       category: 'testCategory',
       price: '500',
-      customer_id: 'stripe-customer-id_full',
+      seller_sub: process.env.TEST_SUB_FULL_CUSTOMER,
       num_imgs: expect.any(String),
       public_id: expect.any(String),
       quantity: null,
