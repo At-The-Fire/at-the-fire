@@ -74,6 +74,11 @@ function createTabs(index) {
     'aria-controls': `simple-tabpanel-${index}`,
   };
 }
+
+const premiumTabSx = {
+  borderTop: '1px solid #f59e0b',
+  '&.Mui-selected': { borderTop: '3px solid #d97706' },
+};
 export default function BasicTabs() {
   // Initial state now tries to get from localStorage, falling back to 0
   const [value, setValue] = useState(() => {
@@ -205,7 +210,7 @@ export default function BasicTabs() {
   return (
     <Box sx={{ margin: '80px auto 0 auto', width: '100%' }}>
       <CssBaseline />
-      <Box sx={{ borderBottom: 0, borderColor: 'divider', height: '55px', margin: '0px' }}>
+      <Box sx={{ borderBottom: 0, borderColor: 'divider', height: '55px', margin: '0px', position: 'relative' }}>
         <Tabs
           variant="scrollable"
           scrollButtons
@@ -219,12 +224,38 @@ export default function BasicTabs() {
         >
           <Tab label="Dashboard" {...createTabs(0)} />
           <Tab label="Post Tracking" {...createTabs(1)} />
-          <Tab label="Orders" {...createTabs(2)} />
-          <Tab label="Products" {...createTabs(3)} />
-          <Tab label="Calendar" {...createTabs(4)} />
-          <Tab label="Analysis" {...createTabs(5)} />
+          <Tab label="Orders" sx={premiumTabSx} {...createTabs(2)} />
+          <Tab label="Products" sx={premiumTabSx} {...createTabs(3)} />
+          <Tab label="Calendar" sx={premiumTabSx} {...createTabs(4)} />
+          <Tab label="Analysis" sx={premiumTabSx} {...createTabs(5)} />
         </Tabs>
       </Box>
+      <Typography
+        variant="caption"
+        sx={{
+          display: 'block',
+          textAlign: 'right',
+          pr: 1,
+          pb: 0.5,
+          opacity: 0.55,
+          fontSize: '0.68rem',
+          margin: '0 1rem .25rem 0',
+        }}
+      >
+        <Box
+          component="span"
+          sx={{
+            display: 'inline-block',
+            width: 22,
+            height: 3,
+            bgcolor: '#f59e0b',
+            borderRadius: 1,
+            mr: 0.5,
+            verticalAlign: 'middle',
+          }}
+        />
+        Premium features — free during beta
+      </Typography>
 
       <TabPanel value={value} index={0}>
         <Dashboard
