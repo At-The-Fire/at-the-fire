@@ -88,15 +88,15 @@ module.exports = class AWSUser {
     // return rows[0];
   }
 
-  static async getGalleryPosts(customer_id) {
+  static async getGalleryPosts(sub) {
     const { rows } = await pool.query(
       `
     SELECT * FROM gallery_posts
-    WHERE customer_id=$1 AND deleted_at IS NULL
+    WHERE seller_sub=$1 AND deleted_at IS NULL
     ORDER BY created_at DESC;
-    
+
   `,
-      [customer_id]
+      [sub]
     );
     return rows.map((row) => new Post(row));
   }
@@ -189,13 +189,13 @@ module.exports = class AWSUser {
     return new AWSUser(rows[0]);
   }
 
-  static async checkAndRecordImageUploads(customerId, imageCount) {
+  static async checkAndRecordImageUploads(sub, imageCount) {
     const recentUploads = await pool.query(
-      `SELECT SUM(image_count) 
-      FROM image_uploads 
-      WHERE customer_id = $1 
+      `SELECT SUM(image_count)
+      FROM image_uploads
+      WHERE user_sub = $1
       AND created_at > NOW() - INTERVAL '24 hours'`,
-      [customerId]
+      [sub]
     );
 
     const existingCount = parseInt(recentUploads.rows[0].sum) || 0;
@@ -205,9 +205,9 @@ module.exports = class AWSUser {
     }
 
     await pool.query(
-      `INSERT INTO image_uploads (customer_id, image_count)
+      `INSERT INTO image_uploads (user_sub, image_count)
       VALUES ($1, $2)`,
-      [customerId, imageCount]
+      [sub, imageCount]
     );
 
     return true;
