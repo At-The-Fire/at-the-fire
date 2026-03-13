@@ -6,6 +6,8 @@ const StripeCustomer = require('../../../lib/models/StripeCustomer.js');
 const Subscriptions = require('../../../lib/models/Subscriptions.js');
 const Invoices = require('../../../lib/models/Invoices.js');
 
+const originalBetaMode = process.env.BETA_MODE;
+
 // Importing jsonwebtoken to mock its verify function
 const jwt = require('jsonwebtoken');
 
@@ -84,7 +86,7 @@ const setupFailedSubscribedUserMocks = () => {
   StripeCustomer.getStripeByAWSSub.mockResolvedValue(undefined);
 
   StripeCustomer.updateByCustomerId.mockRejectedValue(
-    new Error('You are not authorized to update this profile')
+    new Error('You are not authorized to update this profile'),
   );
 
   // Mock the database call to return the subscription status for a subscribed user
@@ -169,19 +171,22 @@ const setupSuccessSubscribedUserMocks = () => {
 describe('authenticateAWS Middleware', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    process.env.BETA_MODE = 'false';
     return setup(pool);
   });
   afterAll(() => {
+    if (typeof originalBetaMode === 'undefined') {
+      delete process.env.BETA_MODE;
+    } else {
+      process.env.BETA_MODE = originalBetaMode;
+    }
     delete process.env.SECURE_COOKIES;
     pool.end();
   });
 
   it('PUT /profile/customer-update, should return a 403 if user is not authorized to update profile', async () => {
-    const {
-      subscribedUserAccessToken,
-      subscribedUserIdToken,
-      subscribedUserRefreshToken,
-    } = setupFailedSubscribedUserMocks();
+    const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+      setupFailedSubscribedUserMocks();
 
     const resp = await request(app)
       .put('/api/v1/profile/customer-update')
@@ -205,11 +210,8 @@ describe('authenticateAWS Middleware', () => {
   });
 
   it('PUT /profile/customer-update should allow access when customer ID matches and sub is valid', async () => {
-    const {
-      subscribedUserAccessToken,
-      subscribedUserIdToken,
-      subscribedUserRefreshToken,
-    } = setupSuccessSubscribedUserMocks();
+    const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+      setupSuccessSubscribedUserMocks();
 
     // Mock matching customer ID scenario
     StripeCustomer.getStripeByAWSSub.mockResolvedValue({
@@ -245,11 +247,8 @@ describe('authenticateAWS Middleware', () => {
   });
 
   it('PUT /profile/customer-update should return 403 when customer lookup fails', async () => {
-    const {
-      subscribedUserAccessToken,
-      subscribedUserIdToken,
-      subscribedUserRefreshToken,
-    } = setupSuccessSubscribedUserMocks();
+    const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+      setupSuccessSubscribedUserMocks();
 
     // Mock failed customer lookup
     StripeCustomer.getStripeByAWSSub.mockResolvedValue(null);
@@ -275,11 +274,8 @@ describe('authenticateAWS Middleware', () => {
   });
 
   it('PUT /profile/customer-update should return 403 when customer IDs do not match', async () => {
-    const {
-      subscribedUserAccessToken,
-      subscribedUserIdToken,
-      subscribedUserRefreshToken,
-    } = setupSuccessSubscribedUserMocks();
+    const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+      setupSuccessSubscribedUserMocks();
 
     // Mock mismatched customer ID scenario
     StripeCustomer.getStripeByAWSSub.mockResolvedValue({
@@ -304,22 +300,16 @@ describe('authenticateAWS Middleware', () => {
     expect(resp.status).toBe(403);
     expect(resp.body).toEqual({
       code: 403,
-      message:
-        'You are not a current customer or your subscription is not active',
+      message: 'You are not a current customer or your subscription is not active',
     });
   });
 
   it('PUT /profile/customer-update should return 500 when getStripeByAWSSub throws an error', async () => {
-    const {
-      subscribedUserAccessToken,
-      subscribedUserIdToken,
-      subscribedUserRefreshToken,
-    } = setupSuccessSubscribedUserMocks();
+    const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+      setupSuccessSubscribedUserMocks();
 
     // Mock database error
-    StripeCustomer.getStripeByAWSSub.mockRejectedValue(
-      new Error('Database error')
-    );
+    StripeCustomer.getStripeByAWSSub.mockRejectedValue(new Error('Database error'));
 
     const resp = await request(app)
       .put('/api/v1/profile/customer-update')
