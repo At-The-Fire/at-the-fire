@@ -186,14 +186,14 @@ module.exports = class StripeCustomer {
     try {
       await client.query('BEGIN');
 
-      await client.query('DELETE FROM image_uploads WHERE customer_id = $1', [customerId]);
+      await client.query('DELETE FROM image_uploads WHERE user_sub = $1', [sub]);
       await client.query('DELETE FROM quota_tracking WHERE customer_id = $1', [customerId]);
       await client.query('DELETE FROM quota_goals WHERE customer_id = $1', [customerId]);
       await client.query('DELETE FROM orders WHERE customer_id = $1', [customerId]);
       await client.query('DELETE FROM inventory_snapshot WHERE customer_id = $1', [customerId]);
       await client.query('DELETE FROM subscriptions WHERE customer_id = $1', [customerId]);
       await client.query('DELETE FROM invoices WHERE customer_id = $1', [customerId]);
-      await client.query('DELETE FROM gallery_posts WHERE customer_id = $1', [customerId]);
+      await client.query('DELETE FROM gallery_posts WHERE seller_sub = $1', [sub]);
       const result = await client.query(
         'DELETE FROM stripe_customers WHERE customer_id = $1 RETURNING *',
         [customerId],
