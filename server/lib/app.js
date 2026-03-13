@@ -155,6 +155,7 @@ app.use(
 );
 
 // App routes
+
 app.use('/api/v1/gallery-posts', [jsonParser], require('./controllers/galleryPosts'));
 
 app.use('/api/v1/profile', [jsonParser], require('./controllers/profile'));
@@ -210,7 +211,7 @@ app.use(
 
 app.use(
   '/api/v1/inventory-snapshot',
-  [jsonParser, authenticateAWS, authorizeSubscription],
+  [jsonParser, authenticateAWS],
   require('./controllers/inventorySnapshot'),
 );
 
