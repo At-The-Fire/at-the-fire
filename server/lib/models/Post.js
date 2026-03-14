@@ -49,7 +49,7 @@ module.exports = class Post {
     sold,
     date_sold,
     quantity,
-    shippingCost = 0
+    shippingCost = 0,
   ) {
     const { rows } = await pool.query(
       'INSERT INTO gallery_posts (title, description, image_url, category, price, seller_sub, public_id, num_imgs, sold, date_sold, quantity, shipping_cost) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *',
@@ -66,7 +66,7 @@ module.exports = class Post {
         date_sold,
         quantity || null,
         shippingCost || 0,
-      ]
+      ],
     );
 
     const data = new Post(rows[0]);
@@ -108,7 +108,7 @@ module.exports = class Post {
     sold,
     date_sold,
     quantity,
-    shippingCost = 0
+    shippingCost = 0,
   ) {
     const { rows } = await pool.query(
       `
@@ -140,7 +140,7 @@ module.exports = class Post {
         date_sold,
         quantity || null,
         shippingCost || 0,
-      ]
+      ],
     );
 
     if (!rows[0]) {
@@ -155,11 +155,11 @@ module.exports = class Post {
   // update thumbnail
   static async updateMainImage(id, imageUrl, publicId) {
     const { rows } = await pool.query(
-      `UPDATE gallery_posts 
+      `UPDATE gallery_posts
      SET image_url = $2, public_id = $3
-     WHERE id = $1 
+     WHERE id = $1
      RETURNING *`,
-      [id, imageUrl, publicId]
+      [id, imageUrl, publicId],
     );
 
     if (!rows[0]) {
@@ -175,11 +175,11 @@ module.exports = class Post {
   static async getById(post_id) {
     const { rows } = await pool.query(
       `
-      SELECT * 
-      FROM gallery_posts 
-      WHERE id=$1 
+      SELECT *
+      FROM gallery_posts
+      WHERE id=$1
       `,
-      [post_id]
+      [post_id],
     );
     if (!rows[0]) {
       return null;
@@ -191,7 +191,7 @@ module.exports = class Post {
   static async softDeleteById(id) {
     const { rows } = await pool.query(
       'UPDATE gallery_posts SET deleted_at = NOW() WHERE id = $1 RETURNING *',
-      [id]
+      [id],
     );
     return rows[0] ? new Post(rows[0]) : null;
   }
@@ -207,7 +207,7 @@ module.exports = class Post {
     WHERE id = $1
     RETURNING *
     `,
-      [post]
+      [post],
     );
 
     return new Post(rows[0]);
@@ -220,7 +220,7 @@ module.exports = class Post {
     WHERE post_id = $1 AND public_id = $2
     RETURNING *
     `,
-      [post_id, public_id]
+      [post_id, public_id],
     );
 
     if (!rows[0]) {
@@ -235,11 +235,11 @@ module.exports = class Post {
   static async getAdditionalImages(post_id) {
     const { rows } = await pool.query(
       `
-      SELECT * 
-      FROM posts_imgs 
-      WHERE post_id=$1 
+      SELECT *
+      FROM posts_imgs
+      WHERE post_id=$1
       `,
-      [post_id]
+      [post_id],
     );
     if (!rows[0]) {
       return [];
@@ -253,11 +253,11 @@ module.exports = class Post {
       // Step 1: Retrieve the image_url and public_id from gallery_posts for the given post_id
       const { rows: galleryRows } = await pool.query(
         `
-      SELECT image_url, public_id 
-      FROM gallery_posts 
+      SELECT image_url, public_id
+      FROM gallery_posts
       WHERE id=$1
       `,
-        [post_id]
+        [post_id],
       );
 
       if (!galleryRows[0]) {
@@ -273,7 +273,7 @@ module.exports = class Post {
       VALUES ($1, $2, $3, 'image')
       RETURNING *
       `,
-        [post_id, image_url, public_id]
+        [post_id, image_url, public_id],
       );
 
       return postImgsRows[0];
@@ -291,7 +291,7 @@ module.exports = class Post {
     const { rows } = await pool.query(
       `
     SELECT * FROM gallery_posts WHERE deleted_at IS NULL
-    `
+    `,
     );
 
     if (!rows) {
@@ -326,7 +326,7 @@ ORDER BY posts.created_at DESC
 LIMIT 50;
 
       `,
-      [sub]
+      [sub],
     );
 
     if (!rows) {
