@@ -18,6 +18,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import usePostStore from '../../stores/usePostStore.js';
 import useSnapshotStore from '../../stores/useSnapshotStore.js';
 import { useAuthStore } from '../../stores/useAuthStore.js';
+import { useAuctionEventsStore } from '../../stores/useAuctionEventsStore.js';
+import Badge from '@mui/material/Badge';
 import { useMediaQuery, useTheme } from '@mui/material';
 import ordersExDt from '../../assets/orders-example.png';
 import ordersExM from '../../assets/orders-example-m.png';
@@ -92,6 +94,7 @@ export default function BasicTabs() {
   const { products, setProducts, loadingProducts, setLoadingProducts, fetchProducts } = useProducts();
 
   const { error, customerId, loadingCustomerId, verifyAuth, isAuthenticated, hasPremiumAccess } = useAuthStore();
+  const pendingShipmentsCount = useAuctionEventsStore((s) => s.pendingShipmentsCount);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -222,7 +225,18 @@ export default function BasicTabs() {
             transform: 'translate(0%, -8%)',
           }}
         >
-          <Tab label="Dashboard" {...createTabs(0)} />
+          <Tab
+            label={
+              <Badge
+                badgeContent={pendingShipmentsCount || null}
+                color="warning"
+                sx={{ '& .MuiBadge-badge': { right: -10, top: 2 } }}
+              >
+                Dashboard
+              </Badge>
+            }
+            {...createTabs(0)}
+          />
           <Tab label="Post Tracking" {...createTabs(1)} />
           <Tab label="Orders" sx={premiumTabSx} {...createTabs(2)} />
           <Tab label="Products" sx={premiumTabSx} {...createTabs(3)} />
