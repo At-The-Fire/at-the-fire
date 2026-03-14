@@ -27,19 +27,7 @@ export default function GalleryCard({ item }) {
 
   const handleBuyNow = (e) => {
     e.stopPropagation();
-    navigate('/checkout', {
-      state: {
-        item: {
-          postId: item.id,
-          title: item.title,
-          price: Number(item.price),
-          quantity: 1,
-          imageUrl: item.image_url,
-          sellerCustomerId: item.customer_id,
-          shippingCost: Number(item.shipping_cost) || 0,
-        },
-      },
-    });
+    navigate(`/gallery/${item.id}`);
   };
 
   // Observer to handle lazy-loading images
@@ -220,7 +208,7 @@ export default function GalleryCard({ item }) {
               }
             </Box>
           </Box>
-          {!item.sold && item.price > 0 && item.quantity > 0 && (
+          {!item.sold && item.price > 0 && (item.quantity === null || item.quantity > 0) && (
             <Box onClick={(e) => e.stopPropagation()} sx={{ px: 1, pb: 1 }}>
               <Button
                 size="small"
