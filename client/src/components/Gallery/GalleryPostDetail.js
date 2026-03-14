@@ -387,7 +387,7 @@ export default function GalleryPostDetail() {
         {!postDetail.sold && postDetail.price > 0 && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, ml: '1.5rem', mt: 1, mb: 1 }}>
             <Select size="small" value={qty} onChange={(e) => setQty(e.target.value)} sx={{ minWidth: 70 }}>
-              {Array.from({ length: postDetail.quantity || 1 }, (_, i) => i + 1).map((n) => (
+              {Array.from({ length: postDetail.quantity ?? 1 }, (_, i) => i + 1).map((n) => (
                 <MenuItem key={n} value={n}>
                   {n}
                 </MenuItem>
@@ -398,7 +398,9 @@ export default function GalleryPostDetail() {
             </Button>
           </Box>
         )}
-        <Typography sx={{ marginLeft: '1.5rem', textAlign: 'left' }}>{postDetail.quantity} in stock</Typography>
+        {postDetail.quantity !== null && postDetail.quantity !== undefined && (
+          <Typography sx={{ marginLeft: '1.5rem', textAlign: 'left' }}>{postDetail.quantity} in stock</Typography>
+        )}
         <Typography sx={{ marginLeft: '1.5rem', textAlign: 'left' }}>{postDetail.description}</Typography>
       </Box>
     </Box>
