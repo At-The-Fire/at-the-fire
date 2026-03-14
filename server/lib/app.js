@@ -28,6 +28,7 @@ app.use(
       'https://www.atthefire.com',
       'https://at-the-fire.herokuapp.com', //! production server
       'https://at-the-fire-dev-68560297982b.herokuapp.com', //^ development server
+      '  /\.trycloudflare\.com$/',
     ],
     credentials: true,
   }),
