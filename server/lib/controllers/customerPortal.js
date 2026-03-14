@@ -11,17 +11,17 @@ module.exports = Router().post('/', async (req, res, next) => {
       return res.status(403).json({ code: 403, message: 'No customer ID found for this account.' });
     }
 
-    const [{ data: activeSubscriptions }, subscription, invoice] = await Promise.all([
-      stripe.subscriptions.list({ customer: customerId, status: 'active', limit: 1 }),
+    const [stripeCustomer, subscription, invoice] = await Promise.all([
+      stripe.customers.retrieve(customerId),
       getSubscriptionByCustomerId({ customerId }),
       getBillingPeriodByCustomerId(customerId),
     ]);
 
-    if (!activeSubscriptions.length) {
+    if (!stripeCustomer || stripeCustomer.deleted) {
       return res.status(403).json({
         code: 403,
         message:
-          'No active Stripe subscription found for this customer. The customer ID in this environment may be stale or mismatched.',
+          'Customer ID not found in Stripe. The customer ID in this environment may be stale or mismatched.',
       });
     }
 
