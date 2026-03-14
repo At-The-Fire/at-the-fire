@@ -19,8 +19,17 @@ export default function Dashboard() {
   const [daysRemaining, setDaysRemaining] = useState();
   const [trialSubscription, setTrialSubscription] = useState();
 
-  const { isAuthenticated, handleSignOut, email, setUser, setIsAuthenticated, setCustomerId, customerId, trialStatus } =
-    useAuthStore();
+  const {
+    isAuthenticated,
+    handleSignOut,
+    email,
+    setUser,
+    setIsAuthenticated,
+    setCustomerId,
+    customerId,
+    trialStatus,
+    betaAccess,
+  } = useAuthStore();
 
   const { fetchBillingPeriod } = useStripeCustomer();
   const navigate = useNavigate();
@@ -116,7 +125,40 @@ export default function Dashboard() {
     navigate('/subscription/form');
   };
 
-  if (!customerId) return null;
+  if (betaAccess) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', padding: '16px' }}>
+        <Typography
+          variant="body2"
+          sx={{
+            border: '1px solid',
+            borderColor: (theme) => theme.palette.primary.main,
+            borderRadius: '4px',
+            padding: '6px 16px',
+            color: (theme) => theme.palette.primary.light,
+          }}
+        >
+          Beta Access — Free
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (!customerId) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', padding: '16px' }}>
+        <Button
+          size="small"
+          variant="contained"
+          onClick={() => navigate('/subscription')}
+          startIcon={<AccountBalanceOutlinedIcon />}
+          sx={{ width: '300px', borderRadius: '5px' }}
+        >
+          Get Premium
+        </Button>
+      </Box>
+    );
+  }
 
   return (
     <>
