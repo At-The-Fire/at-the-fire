@@ -87,7 +87,16 @@ export default function Dashboard() {
       }
       return data;
     } catch (e) {
-      if (e.code !== 401 && e.code !== 403) {
+      if (e.code === 401) {
+        useAuthStore.getState().handleAuthError(e.code, e.message);
+      } else if (e.code === 403) {
+        toast.error(e.message, {
+          theme: 'colored',
+          draggable: true,
+          draggablePercent: 60,
+          autoClose: false,
+        });
+      } else {
         if (process.env.REACT_APP_APP_ENV === 'development') {
           // eslint-disable-next-line no-console
           console.error('Error contacting Stripe :', e);
@@ -97,8 +106,6 @@ export default function Dashboard() {
           draggable: true,
           draggablePercent: 60,
         });
-      } else {
-        useAuthStore.getState().handleAuthError(e.code, e.message);
       }
     } finally {
       setPageLoading(false);
