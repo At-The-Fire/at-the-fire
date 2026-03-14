@@ -61,6 +61,7 @@ export default function ResponsiveAppBar() {
   let userMenuItems = [];
 
   const messages = unreadCount === 0 ? 'Messages' : `Messages (${unreadCount})`;
+  const workspace = pendingShipmentsCount > 0 ? `Workspace (${pendingShipmentsCount})` : 'Workspace';
 
   const timerRef = useRef(null);
   let isLocal = window.REACT_APP_BASE_URL.includes('localhost');
@@ -77,7 +78,7 @@ export default function ResponsiveAppBar() {
 
   userMenuItems =
     isAuthenticated && !loadingCustomerId
-      ? [messages, 'Workspace', 'Purchases', 'Profile', 'User Guide', 'Logout']
+      ? [messages, workspace, 'Purchases', 'Profile', 'User Guide', 'Logout']
       : [];
 
   const pages = user
