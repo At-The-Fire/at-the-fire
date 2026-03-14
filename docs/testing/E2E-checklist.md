@@ -144,20 +144,28 @@
   - [ ] Verify auction closes immediately
   - [ ] Verify purchase appears in buyer's purchases
   - [ ] Verify a congratulations message appears in the messaging system from the seller
+  - [ ] Buyer receives "You won!" success toast in real-time (on-site, no page refresh needed)
+  - [ ] _Messages_ badge increments immediately in the avatar menu — does not require navigating away and back
+  - [ ] Avatar badge reflects updated combined total (messages + won + outbid)
 - [ ] Outbid notification (buyer)
   - [ ] Warning toast appears if on-site when outbid
   - [ ] _Purchases_ menu shows orange "N outbid" count on next login if offline when outbid
   - [ ] Badge clears on navigating to _My Purchases_
 - [ ] Auction end — winner (buyer)
-  - [ ] Success toast appears if on-site when auction closes
+  - [ ] Success toast appears if on-site when auction closes (applies to both BIN and natural expiry)
   - [ ] _Purchases_ menu shows green "N won" shimmer/count on next login
   - [ ] Avatar badge shows combined total (messages + won + outbid)
   - [ ] Badge clears on navigating to _My Purchases_
   - [ ] Verify a congratulations message appears in the messaging system from the seller
-- [ ] Auction end — seller
-  - [ ] _Workspace_ button shows numeric orange badge for unshipped won auctions
-  - [ ] Badge is accurate immediately on page load/refresh (not only after visiting Dashboard)
-  - [ ] Badge decrements when tracking is entered; disappears when all auctions are tracked
+- [ ] Auction end — seller (BIN notification breadcrumb trail)
+  - > **Claude Code note:** All five indicators below are driven by the same `pendingShipmentsCount` store value. Test them together in a single BIN flow: trigger BIN as USER2, then immediately inspect all five as USER1 without navigating away. They should all light up simultaneously. Then enter a tracking number and verify they all clear.
+  - [ ] "Your auction sold!" success toast appears in real-time (on-site) — toast text directs seller to "Dashboard → Sales to enter tracking"
+  - [ ] _Workspace_ dropdown menu item shows shimmer effect and "(N)" count (e.g. "Workspace (1)") — same treatment as the Messages item
+  - [ ] _Workspace_ button in the navbar shows an orange numeric badge
+  - [ ] _Dashboard_ tab in the Workspace area shows an orange numeric badge on the tab label
+  - [ ] _Sales_ toggle button inside the Dashboard tab shows an orange numeric badge
+  - [ ] All five indicators are present immediately on login/refresh — not only reactive to the current session's BIN event
+  - [ ] Entering a tracking number in the Sales tab decrements all counts in real-time; all indicators disappear when all sales are tracked
   - [ ] Closed auction rows without tracking show an orange border in Dashboard > Sales tab
   - [ ] Gallery sale rows without tracking show an orange border in Dashboard > Sales tab
 - [ ] Archive auction — **automatic, not a user action**
