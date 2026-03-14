@@ -69,6 +69,7 @@ module.exports = class Invoices {
       `,
       [customerId]
     );
+    if (!rows[0]) return null;
     return new Invoices(rows[0]);
   }
 
