@@ -88,7 +88,7 @@ export default function NewPost() {
         num_days: 1,
         type: 'inventory',
         date: new Date().setHours(0, 0, 0, 0),
-        qty: 1,
+        qty: newPost.quantity || 1,
         sold: newPost.sold,
         date_sold: newPost.date_sold,
         sales: [],
