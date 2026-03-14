@@ -97,6 +97,10 @@ class WebSocketService {
         this.emit('auction-paid', data);
       });
 
+      this.socket.on('auction-sold', (data) => {
+        this.emit('auction-sold', data);
+      });
+
       // Gallery sale events (future use)
       this.socket.on('sale-paid', (data) => {
         this.emit('sale-paid', data);

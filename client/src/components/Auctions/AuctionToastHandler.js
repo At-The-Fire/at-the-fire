@@ -21,12 +21,21 @@ export default function AuctionToastHandler() {
       useAuctionNotificationStore.getState().incrementOutbidCount();
     };
 
+    const handleSold = ({ auctionId }) => {
+      toast.success('Your auction sold! Go to Dashboard → Sales to enter tracking.', {
+        toastId: `sold-${auctionId}`,
+        autoClose: 10000,
+      });
+    };
+
     websocketService.on('user-won', handleWon);
     websocketService.on('user-outbid', handleOutbid);
+    websocketService.on('auction-sold', handleSold);
 
     return () => {
       websocketService.off('user-won', handleWon);
       websocketService.off('user-outbid', handleOutbid);
+      websocketService.off('auction-sold', handleSold);
     };
   }, []);
 

@@ -6,6 +6,7 @@ const Conversations = require('../models/Conversations');
 const AuctionNotification = require('../models/AuctionNotification.js');
 const auctionTimers = require('../jobs/auctionTimers');
 const pool = require('../utils/pool');
+const getRedisClient = require('../../redisClient.js');
 
 module.exports = Router()
   // GET bids for auction with user profiles
@@ -202,27 +203,66 @@ module.exports = Router()
           client,
         );
 
+        // persist won notification in the same transaction
+        await client.query(
+          `
+          INSERT INTO auction_notifications (user_sub, auction_id, type)
+          VALUES ($1, $2, 'won')
+          `,
+          [buyerSub, auctionId],
+        );
+
         await client.query('COMMIT');
+
+        const io = req.app.get('io');
 
         // System message to winner (non-fatal)
         if (auction.sellerSub && buyerSub && auction.sellerSub !== buyerSub) {
           try {
-            let conversationId = await Conversations.findConversationByParticipants([auction.sellerSub, buyerSub]);
+            let conversationId = await Conversations.findConversationByParticipants([
+              auction.sellerSub,
+              buyerSub,
+            ]);
             if (!conversationId) {
-              conversationId = await Conversations.createConversation([auction.sellerSub, buyerSub], auction.sellerSub);
+              conversationId = await Conversations.createConversation(
+                [auction.sellerSub, buyerSub],
+                auction.sellerSub,
+              );
             }
             const content = `Congratulations! You won "${auction.title}"! Head to your purchases to complete payment and we'll get it shipped to you.`;
-            await Conversations.createMessage({ conversation_id: conversationId, sender_sub: auction.sellerSub, content });
+            await Conversations.createMessage({
+              conversation_id: conversationId,
+              sender_sub: auction.sellerSub,
+              content,
+            });
+
+            // Notify buyer of new message in real-time
+            if (io) {
+              const redisClient = await getRedisClient();
+              await redisClient.del(`conversation:${buyerSub}`);
+              await redisClient.del(`conversation:${auction.sellerSub}`);
+              const updatedUnreadCount = await Conversations.getIsReadCount(buyerSub);
+              io.to(`user_${buyerSub}`).emit('new message', {
+                recipient: buyerSub,
+                unreadCount: parseInt(updatedUnreadCount.unread_count, 10),
+                conversationId,
+                senderSub: auction.sellerSub,
+                content,
+              });
+            }
           } catch (msgErr) {
             console.error('Failed to send winner message on BIN', msgErr);
           }
         }
 
-        // Emit WebSocket event for real-time updates after a successful commit
-        const io = req.app.get('io');
+        // Emit WebSocket events for real-time updates after a successful commit
         if (io) {
-          io.emit('auction-BIN', auctionId); // bare auctionId, no wrapper
+          io.emit('auction-BIN', auctionId);
           io.emit('bid-placed', { auctionId });
+          io.to(`user_${buyerSub}`).emit('user-won', { auctionId });
+          if (auction.sellerSub) {
+            io.to(`user_${auction.sellerSub}`).emit('auction-sold', { auctionId });
+          }
         }
 
         res.status(200).json({ message: 'Auction purchased successfully', result, bid: newBid });

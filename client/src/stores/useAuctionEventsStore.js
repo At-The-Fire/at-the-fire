@@ -79,10 +79,15 @@ export const useAuctionEventsStore = create((set, get) => ({
 
     websocketService.on('tracking-info', ({ auctionId, trackingNumber }) => {
       get().setTracking(auctionId, trackingNumber);
+      get().fetchPendingShipments();
     });
 
     websocketService.on('auction-paid', ({ auctionId, isPaid }) => {
       get().setPaid(auctionId, isPaid);
+    });
+
+    websocketService.on('auction-sold', () => {
+      get().fetchPendingShipments();
     });
   },
 }));
