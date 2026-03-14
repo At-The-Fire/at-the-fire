@@ -121,9 +121,6 @@ export default function Dashboard() {
     }
   };
 
-  const oldCustomerNewSubscription = () => {
-    navigate('/subscription/form');
-  };
 
   if (betaAccess) {
     return (
@@ -245,27 +242,15 @@ export default function Dashboard() {
                 </Box>
               )}
             </Box>
-            {!restricted ? (
-              <Button
-                size="small"
-                variant="contained"
-                onClick={handleOpenCustomerPortal}
-                startIcon={<AccountBalanceOutlinedIcon />}
-                sx={{ width: '300px', borderRadius: '5px', marginTop: '8px' }}
-              >
-                Subscription Billing
-              </Button>
-            ) : (
-              <Button
-                size="small"
-                variant="contained"
-                onClick={oldCustomerNewSubscription}
-                sx={{ width: '300px' }}
-                startIcon={<AccountBalanceOutlinedIcon />}
-              >
-                Renew Subscription
-              </Button>
-            )}
+            <Button
+              size="small"
+              variant="contained"
+              onClick={handleOpenCustomerPortal}
+              startIcon={<AccountBalanceOutlinedIcon />}
+              sx={{ width: '300px', borderRadius: '5px', marginTop: '8px' }}
+            >
+              Subscription Billing
+            </Button>
           </Container>
         </Box>
       ) : (
