@@ -13,7 +13,6 @@ import {
   Select,
   TextField,
   Typography,
-  useMediaQuery,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import DashboardSubMgt from '../Subscription/SubscriptionPages/DashboardSubMgt/DashboardSubMgt.js';
@@ -74,8 +73,6 @@ export default function PostForm({
   const [quantityInput, setQuantityInput] = useState(quantity || '');
   const [shippingCostInput, setShippingCostInput] = useState(shipping_cost ?? 0);
 
-  const isMobile = useMediaQuery('(max-width:767px)');
-
   const [files, setFiles] = useState([]);
   const onDrop = useCallback((acceptedFiles) => {
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
@@ -111,7 +108,7 @@ export default function PostForm({
 
   // Display thumbnails
   const thumbs = !loading && (files.length > 0 || currentImages.length > 0) && (
-    <Box className="thumbnails-container" sx={{ minHeight: '100px', marginTop: '20px' }}>
+    <Box className="thumbnails-container" sx={{ minHeight: '100px' }}>
       {/* Display newly selected files */}
       {files.map((file, index) => (
         <div key={file.name} className="thumbnail-wrapper">
@@ -489,8 +486,7 @@ export default function PostForm({
               </div>
             </div>
 
-            <div className="desk-quantity-input">
-              <br />
+            <div className="desk-qty-ship-row">
               <TextField
                 placeholder="Quantity (optional)"
                 className="image-input"
@@ -500,10 +496,6 @@ export default function PostForm({
                 value={quantityInput}
                 onChange={(e) => handleQuantityEdit(e.target.value)}
               />
-            </div>
-
-            <div className="desk-quantity-input">
-              <br />
               <TextField
                 placeholder="Shipping cost (optional)"
                 className="image-input"
@@ -516,87 +508,85 @@ export default function PostForm({
               />
             </div>
 
-            <FormControl component="fieldset" className="sold-radio-group " sx={{ marginTop: '20px' }}>
-              <RadioGroup
-                className=".sold-radio-group"
-                aria-label="sold status"
-                name="sold-status-group"
-                value={soldInput ? soldInput : 'false'}
-                row
-              >
-                <FormControlLabel
-                  value="true"
-                  checked={soldInput === true}
-                  onChange={() => setSoldInput(true)}
-                  control={<Radio />}
-                  label="Sold"
-                />
-                <FormControlLabel
-                  value="false"
-                  checked={soldInput === false}
-                  onChange={() => {
-                    setSoldInput(false);
-                    setDateSoldInput(null);
-                  }}
-                  control={<Radio />}
-                  label="Available"
-                />
-              </RadioGroup>
-            </FormControl>
+            <div className="sold-status-section">
+              <FormControl component="fieldset" className="sold-radio-group">
+                <RadioGroup
+                  className="sold-radio-options"
+                  aria-label="sold status"
+                  name="sold-status-group"
+                  value={soldInput ? soldInput : 'false'}
+                  row
+                >
+                  <FormControlLabel
+                    value="true"
+                    checked={soldInput === true}
+                    onChange={() => setSoldInput(true)}
+                    control={<Radio />}
+                    label="Sold"
+                  />
+                  <FormControlLabel
+                    value="false"
+                    checked={soldInput === false}
+                    onChange={() => {
+                      setSoldInput(false);
+                      setDateSoldInput(null);
+                    }}
+                    control={<Radio />}
+                    label="Available"
+                  />
+                </RadioGroup>
+              </FormControl>
 
-            {soldInput && (
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DatePicker
-                  className="date-sold-date-picker"
-                  label="Date Sold"
-                  value={getDateSoldValue()}
-                  onChange={(newValue) => {
-                    const newDateValue = newValue ? newValue.getTime() : null;
-                    setDateSoldInput(newDateValue);
-                  }}
-                  required={soldInput}
-                  slotProps={{
-                    textField: {
-                      fullWidth: true,
-                      required: soldInput,
-                      error: soldInput && !dateSoldInput,
-                      helperText:
-                        soldInput && !dateSoldInput ? 'Date sold is required when item is marked as sold' : '',
-                      sx: {
-                        mt: 1,
-                        '& .MuiFormLabel-root': {
-                          fontSize: '0.75rem',
+              {soldInput && (
+                <div className="sold-date-field">
+                  <LocalizationProvider dateAdapter={AdapterDateFns}>
+                    <DatePicker
+                      className="date-sold-date-picker"
+                      label="Date Sold"
+                      value={getDateSoldValue()}
+                      onChange={(newValue) => {
+                        const newDateValue = newValue ? newValue.getTime() : null;
+                        setDateSoldInput(newDateValue);
+                      }}
+                      required={soldInput}
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          required: soldInput,
+                          error: soldInput && !dateSoldInput,
+                          helperText:
+                            soldInput && !dateSoldInput ? 'Date sold is required when item is marked as sold' : '',
+                          sx: {
+                            '& .MuiFormLabel-root': {
+                              fontSize: '0.75rem',
+                            },
+                            '& .MuiInputBase-root': {
+                              height: 45,
+                            },
+                          },
                         },
-                        '& .MuiInputBase-root': {
-                          height: 45,
-                        },
-                      },
-                    },
-                  }}
-                />
-              </LocalizationProvider>
-            )}
+                      }}
+                    />
+                  </LocalizationProvider>
+                </div>
+              )}
+            </div>
 
-            {!restricted ? (
-              <Box
-                {...getRootProps()}
-                className="dropzone"
-                sx={{
-                  marginTop: soldInput ? (isMobile ? '30px' : '100px') : '10px',
-                }}
-              >
-                <input {...getInputProps()} />
-                <label className="file-upload-label" style={{ color: 'lightgreen' }}>
-                  {files.length === 0
-                    ? 'Choose up to 10 images'
-                    : `${files.length} file${files.length > 1 ? 's' : ''} selected`}
-                </label>
-              </Box>
-            ) : (
-              <Typography>Image Select Disabled</Typography>
-            )}
-            {/* {thumbs} */}
-            {!restricted ? thumbs : ''}
+            <div className="desk-media-section">
+              {!restricted ? (
+                <Box {...getRootProps()} className="dropzone">
+                  <input {...getInputProps()} />
+                  <label className="file-upload-label" style={{ color: 'lightgreen' }}>
+                    {files.length === 0
+                      ? 'Choose up to 10 images'
+                      : `${files.length} file${files.length > 1 ? 's' : ''} selected`}
+                  </label>
+                </Box>
+              ) : (
+                <Typography>Image Select Disabled</Typography>
+              )}
+              {!restricted ? thumbs : ''}
+            </div>
 
             <Box className="btn-container" sx={{ marginBottom: '40px' }}>
               <Button variant="outlined" onClick={() => navigate('/dashboard')} sx={{ margin: '0px 15px' }}>
