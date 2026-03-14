@@ -12,12 +12,12 @@ export function usePost(id) {
   const { isAuthenticated, setError, error, user } = useAuthStore();
 
   useEffect(() => {
+    if (!user || !isAuthenticated || error === 401 || error === 403) {
+      return;
+    }
     setLoading(true);
     const fetchData = async () => {
       try {
-        if (!user || !isAuthenticated || error === 401 || error === 403) {
-          return;
-        }
         const postDetail = await getPostDetail(id);
         const additionalImages = await getAdditionalImageUrlsPublicIds(id);
         const additionalImageUrlsPublicIds = additionalImages.map((image) => image.image_url);
@@ -48,8 +48,7 @@ export function usePost(id) {
       }
     };
     fetchData();
-    // eslint-disable-next-line
-  }, []);
+  }, [id, isAuthenticated, user]);
 
   return {
     postDetail,
