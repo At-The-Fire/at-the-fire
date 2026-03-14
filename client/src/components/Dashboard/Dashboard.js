@@ -7,6 +7,7 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Badge,
   Box,
   Button,
   List,
@@ -59,6 +60,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
   const location = useLocation();
   const [dashboardView, setDashboardView] = useState(location.state?.view === 'auctions' ? 'auctions' : 'posts');
   const setPendingShipments = useAuctionEventsStore((s) => s.setPendingShipments);
+  const pendingShipmentsCount = useAuctionEventsStore((s) => s.pendingShipmentsCount);
   const [sellerAuctions, setSellerAuctions] = useState([]);
   const [auctionsLoading, setAuctionsLoading] = useState(false);
   const [auctionFilter, setAuctionFilter] = useState('all');
@@ -423,7 +425,15 @@ export default function Dashboard({ products, setProducts, customerId }) {
           >
             <ToggleButton value="posts">Posts</ToggleButton>
             <ToggleButton value="auctions">Auctions</ToggleButton>
-            <ToggleButton value="sales">Sales</ToggleButton>
+            <ToggleButton value="sales">
+              <Badge
+                badgeContent={pendingShipmentsCount || null}
+                color="warning"
+                sx={{ '& .MuiBadge-badge': { right: -8, top: 0 } }}
+              >
+                Sales
+              </Badge>
+            </ToggleButton>
           </ToggleButtonGroup>
         </Box>
 
