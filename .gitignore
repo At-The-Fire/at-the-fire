@@ -20,3 +20,10 @@ add_tracking_to_purchases.sql
 seed-kdog-seller.js
 .claude/reports/
 .claude/tasks/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
