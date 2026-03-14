@@ -19,6 +19,8 @@ export default function UserMenu({ anchorElUser, userMenuItems, setAnchorElNav, 
   const unreadWonCount = useAuctionNotificationStore((state) => state.unreadWonCount);
   const unreadOutbidCount = useAuctionNotificationStore((state) => state.unreadOutbidCount);
   const totalBadgeCount = unreadCount + unreadWonCount + unreadOutbidCount;
+  // pendingShipmentsCount is embedded in the workspace string — detect by checking if it differs from plain 'Workspace'
+  const isWorkspaceItemFn = (setting) => setting.startsWith('Workspace') && setting !== 'Workspace';
 
   return (
     <>
@@ -75,15 +77,16 @@ export default function UserMenu({ anchorElUser, userMenuItems, setAnchorElNav, 
               const isMessageItem = unreadCount > 0 && setting === `Messages (${unreadCount})`;
               const isPurchasesItem = (unreadWonCount > 0 || unreadOutbidCount > 0) && setting === 'Purchases';
               const purchasesColor = unreadWonCount > 0 ? 'success.light' : 'warning.light';
+              const isWorkspaceItem = isWorkspaceItemFn(setting);
               return (
                 <MenuItem key={setting} value={setting} data-value={setting} onClick={(e) => handleCloseUserMenu(e)}>
                   <Typography
                     textAlign="center"
-                    className={isMessageItem || isPurchasesItem ? 'shimmer' : ''}
+                    className={isMessageItem || isPurchasesItem || isWorkspaceItem ? 'shimmer' : ''}
                     sx={{
-                      fontWeight: isMessageItem || isPurchasesItem ? 'bold' : '',
-                      color: isMessageItem ? 'secondary.light' : isPurchasesItem ? purchasesColor : '',
-                      textShadow: isMessageItem || isPurchasesItem ? '0 0 1px black' : '',
+                      fontWeight: isMessageItem || isPurchasesItem || isWorkspaceItem ? 'bold' : '',
+                      color: isMessageItem ? 'secondary.light' : isPurchasesItem ? purchasesColor : isWorkspaceItem ? 'warning.light' : '',
+                      textShadow: isMessageItem || isPurchasesItem || isWorkspaceItem ? '0 0 1px black' : '',
                     }}
                   >
                     {setting}
