@@ -11,5 +11,9 @@
     "start": "cd server && node -r dotenv/config server.js",
     "test:server": "npm test --prefix server",
     "test:client": "npm test --prefix client -- --watchAll=false --passWithNoTests"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@types/node": "^25.5.0"
   }
 }
