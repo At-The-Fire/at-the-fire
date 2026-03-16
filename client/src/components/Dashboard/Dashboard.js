@@ -42,7 +42,7 @@ const logo = require('../../assets/logo-icon-6.png');
 export default function Dashboard({ products, setProducts, customerId }) {
   // state
   const { bizProfile, profileLoading } = useProfileContext();
-  const { user, authenticateUser, isAuthenticated, isConfirmed, hasPremiumAccess } = useAuthStore();
+  const { user, authenticateUser, isAuthenticated, isConfirmed, hasPremiumAccess, betaAccess } = useAuthStore();
 
   const { restricted, loading, posts, setPosts } = usePostStore();
   usePosts();
@@ -219,13 +219,32 @@ export default function Dashboard({ products, setProducts, customerId }) {
 
   const handleOpenCustomerPortal = async () => {
     setPageLoading(true);
-    const data = await fetchStripeCustomerPortal({ customerId });
-
-    return data;
-  };
-
-  const handleNavToRenewSubscription = () => {
-    navigate('/subscription');
+    try {
+      const data = await fetchStripeCustomerPortal();
+      if (!data.ok) {
+        throw new Error({ code: data.status, message: data.error });
+      }
+      return data;
+    } catch (e) {
+      if (e.code === 401) {
+        useAuthStore.getState().handleAuthError(e.code, e.message);
+      } else if (e.code === 403) {
+        toast.error(e.message, {
+          theme: 'colored',
+          draggable: true,
+          draggablePercent: 60,
+          autoClose: false,
+        });
+      } else {
+        toast.error('Error contacting Stripe: Please try again later or contact support', {
+          theme: 'colored',
+          draggable: true,
+          draggablePercent: 60,
+        });
+      }
+    } finally {
+      setPageLoading(false);
+    }
   };
 
   const handleAccordionChange = (event, isExpanded) => {
@@ -1187,7 +1206,29 @@ export default function Dashboard({ products, setProducts, customerId }) {
               >
                 Inventory CSV
               </Button>
-              {!restricted ? (
+              {betaAccess ? (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    border: '1px solid',
+                    borderColor: (theme) => theme.palette.primary.main,
+                    borderRadius: '4px',
+                    padding: '4px 8px',
+                    color: (theme) => theme.palette.primary.light,
+                  }}
+                >
+                  Beta Access
+                </Typography>
+              ) : !customerId ? (
+                <Button
+                  size="small"
+                  variant="contained"
+                  onClick={() => navigate('/subscription')}
+                  sx={{ fontSize: '.7rem', padding: '10px 5px' }}
+                >
+                  Get Premium
+                </Button>
+              ) : (
                 <Button
                   size="small"
                   variant="contained"
@@ -1196,36 +1237,6 @@ export default function Dashboard({ products, setProducts, customerId }) {
                 >
                   Manage Subscription
                 </Button>
-              ) : (
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    backgroundColor: 'yellow',
-                    color: 'black',
-                    borderRadius: '5px',
-                    width: '100px',
-                  }}
-                >
-                  <Button
-                    size="small"
-                    textAlign={'center'}
-                    padding={'10px'}
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'center',
-                      backgroundColor: 'yellow',
-                      color: 'black',
-                      borderRadius: '5px',
-                      width: '100px',
-                      fontSize: '.7rem',
-                      lineHeight: '1rem',
-                    }}
-                    onClick={handleNavToRenewSubscription}
-                  >
-                    Subscription Expired!
-                  </Button>
-                </Box>
               )}
             </Box>
 
