@@ -39,7 +39,8 @@ module.exports = Router().post('/', async (req, res, next) => {
       });
     }
 
-    const origin = req.headers.origin || process.env.CLIENT_URL;
+    // const origin = req.headers.origin || process.env.CLIENT_URL;
+    const origin = process.env.CLIENT_URL;
     const session = await stripe.billingPortal.sessions.create({
       customer: customerId,
       return_url: `${origin}/stripe-return?return_from_stripe=true`,
