@@ -24,6 +24,7 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
+  InputAdornment,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -472,6 +473,20 @@ export default function InventoryMgtForm({
     handleProductTemplateChange(e);
     setTemplateModalOpen(false);
   };
+
+  const isPrepOther = product.type === 'prep-other';
+  let priceHelperText = '';
+  if (showValidation && !product.price) priceHelperText = 'Price is required';
+  else if (isPrepOther) priceHelperText = 'Recorded as an expense';
+  const priceInputProps = isPrepOther
+    ? {
+      startAdornment: (
+        <InputAdornment position="start" sx={{ mr: 0.5, color: 'text.secondary' }}>
+          - $
+        </InputAdornment>
+      ),
+    }
+    : undefined;
 
   // Define tabs and their content
   const tabs = [
@@ -940,13 +955,14 @@ export default function InventoryMgtForm({
 
           <TextField
             fullWidth
-            label={product.type !== 'prep-other' ? 'Price' : 'Material Costs'}
+            label={isPrepOther ? 'Material Costs' : 'Price'}
             required
             name="price"
             type="number"
             value={product.price || ''}
             onChange={handleProductChange}
             inputProps={{ step: 1 }}
+            InputProps={priceInputProps}
             sx={{
               mb: 1,
               '& .MuiInputBase-root': {
@@ -956,7 +972,7 @@ export default function InventoryMgtForm({
               },
             }}
             error={showValidation && !product.price}
-            helpertext={showValidation && !product.price ? 'Price is required' : ''}
+            helperText={priceHelperText}
           />
         </Box>
       ),
