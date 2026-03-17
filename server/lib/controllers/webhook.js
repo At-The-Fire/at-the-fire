@@ -77,11 +77,13 @@ module.exports = app.post(
               // check if customer already exists
               const customer = await StripeCustomer.getStripeByAWSSub(awsSub);
 
-              if (customer) {
+              if (customer && !customer.customerId.startsWith('beta_')) {
                 break;
+              } else if (customer && customer.customerId.startsWith('beta_')) {
+                console.info('Found stale beta placeholder, replacing with real Stripe customer');
+                await StripeCustomer.replaceBetaPlaceholder(customer.customerId, customerId, awsSub);
               } else {
                 console.info('No customer found, inserting new customer');
-                // Insert the customer with all available data
                 await StripeCustomer.insertNewStripeCustomerAndAwsUser(customerId, awsSub);
               }
             } catch (e) {
@@ -225,7 +227,7 @@ module.exports = app.post(
                     subscriptionData.subscriptionEndDate,
                     subscriptionData.subscriptionStartDate,
                     subscriptionData.subscriptionEndDate,
-                    isTrial ? 'trialing' : '',
+                    isTrial ? 'trialing' : 'active',
                   );
 
                   await StripeCustomer.updateCustomerConfirmedStatus(dataObject['customer'], true);
