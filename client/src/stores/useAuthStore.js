@@ -374,7 +374,8 @@ export const useAuthStore = create((set, get) => ({
             hasPremiumAccess:
               betaAccess ||
               (customerData?.data?.confirmed &&
-                ['active', 'trialing'].includes(customerData?.data?.subscription?.status)),
+                (customerData?.data?.subscription?.isActive ||
+                  ['active', 'trialing'].includes(customerData?.data?.subscription?.status))),
           });
           return true;
         }
@@ -481,7 +482,8 @@ export const useAuthStore = create((set, get) => ({
           hasPremiumAccess:
             betaAccess ||
             (customerData?.data?.confirmed &&
-              ['active', 'trialing'].includes(customerData?.data?.subscription?.status)),
+              (customerData?.data?.subscription?.isActive ||
+                ['active', 'trialing'].includes(customerData?.data?.subscription?.status))),
         });
         websocketService.connect();
       } else {
