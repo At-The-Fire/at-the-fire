@@ -435,6 +435,11 @@ INSERT INTO "inventory_snapshot"
 VALUES
 ('{"Beads":2,"Marbles":3,"Bubblers":1,"Recyclers":1,"Dry Pieces":2}',  '123e4567-e89b-42d3-a456-426614174104', '{"Beads":916,"Marbles":950,"Bubblers":500,"Recyclers":2000,"Dry Pieces":1400}');
 
+INSERT INTO "subscriptions"
+("customer_id", "subscription_id", "is_active", "interval", "subscription_start_date", "subscription_end_date", "status")
+VALUES
+('cus_OVLKmXa6lrzktm', 'sub_1Q6MzaGO3TmEVjN2qhRhKIMP', true, 'month', 1728092470, 1762925540, 'active');
+
 INSERT INTO "invoices"
 ("customer_id", "invoice_id","start_date","end_date","invoice_status","subscription_id","amount_due","amount_paid","created_at")
 VALUES
