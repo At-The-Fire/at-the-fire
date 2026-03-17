@@ -116,6 +116,35 @@ module.exports = class StripeCustomer {
     }
   }
 
+  static async replaceBetaPlaceholder(betaCustomerId, realCustomerId, awsSub) {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(
+        'UPDATE stripe_customers SET customer_id = $1 WHERE customer_id = $2',
+        [realCustomerId, betaCustomerId],
+      );
+      await client.query(
+        'UPDATE cognito_users SET customer_id = $1 WHERE sub = $2',
+        [realCustomerId, awsSub],
+      );
+      await client.query(
+        'UPDATE subscriptions SET customer_id = $1 WHERE customer_id = $2',
+        [realCustomerId, betaCustomerId],
+      );
+      await client.query(
+        'UPDATE invoices SET customer_id = $1 WHERE customer_id = $2',
+        [realCustomerId, betaCustomerId],
+      );
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
+  }
+
   static async getStripeByCustomerId(customerId) {
     const { rows } = await pool.query(
       `
