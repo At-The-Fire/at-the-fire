@@ -201,6 +201,9 @@ module.exports = Router()
       }
 
       const { customerId, email, name, confirmed } = stripeCustomer;
+
+      const betaModeActive = process.env.BETA_MODE === 'true';
+
       if (stripeCustomer.customerId) {
         subscription = await getSubscriptionByCustomerId({ customerId });
       }
@@ -213,7 +216,7 @@ module.exports = Router()
         name,
         admin: customerId === process.env.ADMIN_ID,
         confirmed,
-        betaAccess: process.env.BETA_MODE === 'true',
+        betaAccess: betaModeActive,
       });
     } catch (e) {
       if (e.message.includes('User not found')) {
