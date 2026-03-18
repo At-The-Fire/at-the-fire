@@ -178,12 +178,12 @@
 
 > **Claude Code note:** The checkout uses a placeholder payment processor — no real payment provider is integrated yet. Any card details entered will result in a successful transaction. Do not use Stripe test card numbers; they have no meaning here. The "Failed checkout" block cannot be tested until a real payment processor is integrated.
 >
-> The cart/add-to-cart model has been replaced with a direct Buy Now flow. Clicking "Buy Now" on a gallery card or post detail navigates straight to checkout with that single item — there is no cart or cart drawer.
+> The cart/add-to-cart model has been replaced with a Buy Now flow. Clicking "Buy Now" on a gallery card navigates to the post detail page (intentional — the detail page exposes the quantity selector, which matters when quantity > 1). From the detail page, clicking "Buy Now" navigates straight to checkout. There is no cart or cart drawer.
 
 - [ ] Buy Now from gallery card
   - [ ] Verify "Buy Now" button is visible on purchasable items (not sold, price > 0, quantity > 0)
   - [ ] Verify "Buy Now" is not shown on sold items
-  - [ ] Click "Buy Now" — verify redirect to checkout with correct item title and price
+  - [ ] Click "Buy Now" — verify it navigates to the post detail page (this is intentional — the detail page has a quantity selector so buyers can choose how many to purchase when quantity > 1)
 - [ ] Buy Now from post detail
   - [ ] Select quantity from dropdown
   - [ ] Click "Buy Now" — verify checkout shows correct item and selected quantity
