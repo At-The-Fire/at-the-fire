@@ -220,4 +220,32 @@ ALTER TABLE inventory_snapshot ALTER COLUMN user_sub SET NOT NULL;
 ALTER TABLE inventory_snapshot DROP COLUMN customer_id;   -- auto-drops the FK constraint
 
 
+-- ============================================================
+-- 12. Performance indexes
+--     Uses CREATE INDEX CONCURRENTLY — safe on live databases,
+--     does NOT lock the table. Run outside a transaction block
+--     (psql/Beekeeper: execute each statement individually, or
+--     remove the BEGIN/COMMIT wrapping if re-running this file).
+-- ============================================================
+
+-- Auctions: queried by seller, filtered by active status
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_auctions_seller_sub ON auctions(seller_sub);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_auctions_is_active ON auctions(is_active);
+
+-- Bids: high-frequency lookups by auction + ordered by amount
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_bids_auction_bid_amount ON bids(auction_id, bid_amount DESC);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_bids_bidder_sub ON bids(bidder_sub);
+
+-- Purchases: buyer/seller lookups
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_purchases_buyer_sub ON purchases(buyer_sub);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_purchases_seller_sub ON purchases(seller_sub);
+
+-- Auction notifications: user sub lookups
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_auction_notifications_user_sub ON auction_notifications(user_sub);
+
+-- Gallery posts: seller sub lookups + soft-delete filtering
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_gallery_posts_seller_sub ON gallery_posts(seller_sub);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_gallery_posts_deleted_at ON gallery_posts(deleted_at) WHERE deleted_at IS NULL;
+
+
 COMMIT;
