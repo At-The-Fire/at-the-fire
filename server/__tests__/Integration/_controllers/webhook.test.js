@@ -288,7 +288,7 @@ describe('POST /api/v1/webhook', () => {
       1100000,
       1000000,
       1100000,
-      '', // not a trial
+      'active', // not a trial
     );
     expect(StripeCustomer.updateCustomerConfirmedStatus).toHaveBeenCalledWith('cus_123', true);
   });
