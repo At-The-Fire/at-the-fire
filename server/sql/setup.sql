@@ -345,6 +345,17 @@ CREATE TABLE purchases (
   created_at              TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Performance indexes
+CREATE INDEX idx_auctions_seller_sub ON auctions(seller_sub);
+CREATE INDEX idx_auctions_is_active ON auctions(is_active);
+CREATE INDEX idx_bids_auction_bid_amount ON bids(auction_id, bid_amount DESC);
+CREATE INDEX idx_bids_bidder_sub ON bids(bidder_sub);
+CREATE INDEX idx_purchases_buyer_sub ON purchases(buyer_sub);
+CREATE INDEX idx_purchases_seller_sub ON purchases(seller_sub);
+CREATE INDEX idx_auction_notifications_user_sub ON auction_notifications(user_sub);
+CREATE INDEX idx_gallery_posts_seller_sub ON gallery_posts(seller_sub);
+CREATE INDEX idx_gallery_posts_deleted_at ON gallery_posts(deleted_at) WHERE deleted_at IS NULL;
+
 --  adding users for testing --
 -- User with no profile data
 INSERT INTO "cognito_users"
