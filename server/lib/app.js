@@ -1,5 +1,6 @@
 const express = require('express');
 const cookieParser = require('cookie-parser');
+const compression = require('compression');
 const jsonParser = express.json();
 const cors = require('cors');
 const app = express();
@@ -14,6 +15,7 @@ const fs = require('fs');
 
 // Built in middleware
 app.use(cookieParser());
+app.use(compression());
 
 app.set('trust proxy', 1);
 
