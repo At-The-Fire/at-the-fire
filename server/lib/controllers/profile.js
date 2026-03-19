@@ -28,7 +28,10 @@ const upload = multer({
   storage,
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    cb(ALLOWED_MIME_TYPES.includes(file.mimetype) ? null : new Error('Invalid file type'), ALLOWED_MIME_TYPES.includes(file.mimetype));
+    cb(
+      ALLOWED_MIME_TYPES.includes(file.mimetype) ? null : new Error('Invalid file type'),
+      ALLOWED_MIME_TYPES.includes(file.mimetype),
+    );
   },
 });
 
@@ -54,11 +57,9 @@ const s3UploadHelper = async (file, folder) => {
 
     await s3Client.send(command);
 
-    // Use S3 URL in dev, CloudFront in prod
-    const secureUrl =
-      process.env.APP_ENV === 'development'
-        ? `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`
-        : `https://${process.env.CLOUDFRONT_DOMAIN}/${key}`;
+    const secureUrl = process.env.CLOUDFRONT_DOMAIN
+      ? `https://${process.env.CLOUDFRONT_DOMAIN}/${key}`
+      : `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
     return {
       publicId: key,
       secureUrl,
@@ -178,7 +179,7 @@ module.exports = Router()
           socialMediaLinks,
           imageUrl,
           publicId,
-        }
+        },
       );
 
       const redisClient = await getRedisClient();
@@ -222,7 +223,7 @@ module.exports = Router()
       } catch (err) {
         next(err);
       }
-    }
+    },
   )
 
   //* Upload user avatar image to S3 ---------------------------------
@@ -233,6 +234,7 @@ module.exports = Router()
       if (!validateImageBuffer(file.buffer)) {
         return res.status(400).json({ error: 'Invalid file type' });
       }
+
       const s3Folder = 'user-avatars';
       const { publicId, secureUrl } = await s3UploadHelper(file, s3Folder);
       uploadedKey = publicId;
@@ -346,7 +348,7 @@ module.exports = Router()
         }
         res.status(500).json('An error occurred while uploading the images');
       }
-    }
+    },
   )
 
   // DELETE user logo image from S3 /////////////////////////////////
@@ -404,5 +406,5 @@ module.exports = Router()
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
       }
-    }
+    },
   );

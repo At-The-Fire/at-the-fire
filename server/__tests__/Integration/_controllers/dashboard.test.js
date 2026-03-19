@@ -95,6 +95,7 @@ describe('posts/ post details/ S3 routes', () => {
     mockRestricted = false;
     process.env.AWS_BUCKET_NAME = 'test-bucket';
     process.env.AWS_REGION = 'us-west-2';
+    process.env.CLOUDFRONT_DOMAIN = 'd5fmwpj8iaraa.cloudfront.net';
     return setup(pool);
   });
 

@@ -63,6 +63,7 @@ describe('Profile routes that use mocked middleware: /profile/user-update/:sub a
   beforeEach(() => {
     process.env.AWS_BUCKET_NAME = 'test-bucket';
     process.env.AWS_REGION = 'us-west-2';
+    process.env.CLOUDFRONT_DOMAIN = 'test-cdn.cloudfront.net';
     return setup(pool);
   });
 
@@ -452,7 +453,11 @@ describe('Profile routes that use mocked middleware: /profile/user-update/:sub a
       .attach('avatar', fakeImageBuffer1, 'test-image-1.jpg');
 
     expect(response.status).toBe(200);
-    expect(response.text).toContain(process.env.CLOUDFRONT_DOMAIN);
+    expect(response.body).toEqual({
+      publicId: expect.any(String),
+      secureUrl: expect.stringMatching(/https:\/\/test-cdn\.cloudfront\.net\/.*/),
+    });
+    expect(response.body.secureUrl).toContain(process.env.CLOUDFRONT_DOMAIN);
   });
 
   // test delete user avatar image from S3
@@ -471,9 +476,9 @@ describe('Profile routes that use mocked middleware: /profile/user-update/:sub a
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
       publicId: expect.any(String),
-      secureUrl: expect.stringMatching(/https:\/\/.*\.cloudfront\.net\/.*/),
+      secureUrl: expect.stringMatching(/https:\/\/test-cdn\.cloudfront\.net\/.*/),
     });
-    expect(response.text).toContain(process.env.CLOUDFRONT_DOMAIN);
+    expect(response.body.secureUrl).toContain(process.env.CLOUDFRONT_DOMAIN);
   });
 
   it('POST /profile/avatar-delete should return a 400 error if public_id is not provided', async () => {
