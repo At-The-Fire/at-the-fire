@@ -63,22 +63,25 @@ module.exports = Router()
         }
       }
 
-      const itemDetails = [];
-      for (const item of normalizedItems) {
-        const { rows: postRows } = await client.query(
-          `
-          SELECT id, seller_sub, price, quantity AS available_quantity, sold, shipping_cost
-          FROM gallery_posts
-          WHERE id = $1
-          `,
-          [item.postId],
-        );
+      // Fetch all posts in parallel — reads don't need the transaction client
+      const postResults = await Promise.all(
+        normalizedItems.map((item) =>
+          pool.query(
+            `SELECT id, seller_sub, price, quantity AS available_quantity, sold, shipping_cost
+             FROM gallery_posts WHERE id = $1`,
+            [item.postId],
+          )
+        )
+      );
 
-        if (!postRows[0]) {
+      const itemDetails = [];
+      for (let i = 0; i < normalizedItems.length; i++) {
+        const item = normalizedItems[i];
+        const post = postResults[i].rows[0];
+
+        if (!post) {
           return res.status(404).json({ error: `Post ${item.postId} not found` });
         }
-
-        const post = postRows[0];
         if (post.sold) {
           return res.status(409).json({ error: `Post ${item.postId} is already sold` });
         }
