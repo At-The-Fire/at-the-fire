@@ -76,23 +76,13 @@ module.exports = class Post {
 
   // add additional image urls/ public_id's beyond the first one
   static async addGalleryImages(post_id, image_urls, image_public_ids, resource_types) {
-    const insertQuery = `
-      INSERT INTO posts_imgs (post_id, image_url, public_id, resource_type)
-      VALUES ($1, $2, $3,$4)
-      RETURNING *;
-    `;
-
-    const addedImages = [];
-    for (let i = 0; i < image_urls.length; i++) {
-      const { rows } = await pool.query(insertQuery, [
-        post_id,
-        image_urls[i],
-        image_public_ids[i],
-        resource_types[i],
-      ]);
-      addedImages.push(new Post(rows[0]));
-    }
-    return addedImages;
+    const { rows } = await pool.query(
+      `INSERT INTO posts_imgs (post_id, image_url, public_id, resource_type)
+       SELECT $1, unnest($2::text[]), unnest($3::text[]), unnest($4::text[])
+       RETURNING *`,
+      [post_id, image_urls, image_public_ids, resource_types]
+    );
+    return rows.map((row) => new Post(row));
   }
 
   // update a post
