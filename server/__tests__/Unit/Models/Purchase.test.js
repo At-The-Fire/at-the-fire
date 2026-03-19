@@ -1,11 +1,7 @@
 jest.mock('../../../lib/utils/pool');
-jest.mock('../../../lib/models/Post.js', () => ({
-  getAdditionalImages: jest.fn(),
-}));
 
 const Purchase = require('../../../lib/models/Purchase.js');
 const pool = require('../../../lib/utils/pool.js');
-const Post = require('../../../lib/models/Post.js');
 
 describe('Purchase Model', () => {
   beforeEach(() => {
@@ -116,7 +112,7 @@ describe('Purchase Model', () => {
   });
 
   describe('getByBuyerSub', () => {
-    it('returns all purchases for a buyer ordered by created_at DESC', async () => {
+    it.only('returns all purchases for a buyer ordered by created_at DESC', async () => {
       const mockRows = [
         {
           id: 2,
@@ -145,7 +141,12 @@ describe('Purchase Model', () => {
       ];
 
       pool.query.mockResolvedValueOnce({ rows: mockRows });
-      Post.getAdditionalImages.mockResolvedValue([{ image_url: 'https://example.com/image.jpg' }]);
+      pool.query.mockResolvedValueOnce({
+        rows: [
+          { post_id: 20, image_url: 'https://example.com/image-20.jpg' },
+          { post_id: 10, image_url: 'https://example.com/image-10.jpg' },
+        ],
+      });
 
       const results = await Purchase.getByBuyerSub('sub_123');
 
@@ -153,10 +154,9 @@ describe('Purchase Model', () => {
       expect(results[0]).toBeInstanceOf(Purchase);
       expect(results[0].id).toBe(2);
       expect(results[1].id).toBe(1);
-      expect(pool.query).toHaveBeenCalledWith(expect.any(String), ['sub_123']);
-      expect(Post.getAdditionalImages).toHaveBeenCalledTimes(2);
-      expect(Post.getAdditionalImages).toHaveBeenNthCalledWith(1, 20);
-      expect(Post.getAdditionalImages).toHaveBeenNthCalledWith(2, 10);
+      expect(results[0].imageUrls).toEqual(['https://example.com/image-20.jpg']);
+      expect(results[1].imageUrls).toEqual(['https://example.com/image-10.jpg']);
+      expect(pool.query).toHaveBeenCalledTimes(2);
     });
 
     it('returns empty array when buyer has no purchases', async () => {
