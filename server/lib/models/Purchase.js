@@ -1,5 +1,4 @@
 const pool = require('../utils/pool');
-const Post = require('./Post');
 
 module.exports = class Purchase {
   id;
@@ -74,18 +73,12 @@ module.exports = class Purchase {
       [sub],
     );
 
-    const purchases = await Promise.all(
-      rows.map(async (row) => {
-        const purchase = new Purchase(row);
-        if (row.item_type === 'gallery_post' && row.item_id) {
-          const imgs = await Post.getAdditionalImages(row.item_id);
-          purchase.imageUrls = imgs.map((i) => i.image_url);
-        }
-        return purchase;
-      }),
-    );
-
-    return purchases;
+    const imageMap = await Purchase.fetchImageMap(rows);
+    return rows.map((row) => {
+      const purchase = new Purchase(row);
+      purchase.imageUrls = imageMap[row.item_id] ?? null;
+      return purchase;
+    });
   }
 
   static async updateStatus(id, status) {
@@ -130,16 +123,41 @@ module.exports = class Purchase {
       [sub],
     );
 
-    return Promise.all(
-      rows.map(async (row) => {
-        const purchase = new Purchase(row);
-        if (row.item_type === 'gallery_post' && row.item_id) {
-          const imgs = await Post.getAdditionalImages(row.item_id);
-          purchase.imageUrls = imgs.map((i) => i.image_url);
-        }
-        return purchase;
-      }),
+    const imageMap = await Purchase.fetchImageMap(rows);
+    return rows.map((row) => {
+      const purchase = new Purchase(row);
+      purchase.imageUrls = imageMap[row.item_id] ?? null;
+      return purchase;
+    });
+  }
+
+  // Fetches all posts_imgs rows for gallery_post purchases in one query,
+  // returns a map of { [postId]: [url, ...] }
+  static async fetchImageMap(rows) {
+    const postIds = [
+      ...new Set(
+        rows
+          .filter((row) => row.item_type === 'gallery_post' && row.item_id)
+          .map((row) => row.item_id),
+      ),
+    ];
+
+    if (!postIds.length) return {};
+
+    const { rows: imgRows } = await pool.query(
+      `
+      SELECT post_id, image_url
+      FROM posts_imgs
+      WHERE post_id = ANY($1::bigint[])
+      `,
+      [postIds],
     );
+
+    return imgRows.reduce((map, img) => {
+      if (!map[img.post_id]) map[img.post_id] = [];
+      map[img.post_id].push(img.image_url);
+      return map;
+    }, {});
   }
 
   static async updateTracking(id, trackingNumber) {
