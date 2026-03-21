@@ -48,4 +48,24 @@ module.exports = class Like {
     );
     return rows.length > 0;
   }
+
+  static async getBatchLikes({ postIds, sub }) {
+    const [{ rows: countRows }, { rows: likedRows }] = await Promise.all([
+      pool.query(
+        'SELECT post_id, COUNT(*) AS count FROM likes WHERE post_id = ANY($1::int[]) GROUP BY post_id',
+        [postIds]
+      ),
+      sub
+        ? pool.query(
+            'SELECT post_id FROM likes WHERE sub = $1 AND post_id = ANY($2::int[])',
+            [sub, postIds]
+          )
+        : { rows: [] },
+    ]);
+
+    const countMap = Object.fromEntries(countRows.map((r) => [r.post_id, parseInt(r.count)]));
+    const likedSet = new Set(likedRows.map((r) => r.post_id));
+
+    return Object.fromEntries(postIds.map((id) => [id, { count: countMap[id] ?? 0, liked: likedSet.has(id) }]));
+  }
 };
