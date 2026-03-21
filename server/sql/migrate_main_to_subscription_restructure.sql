@@ -247,5 +247,8 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_auction_notifications_user_sub ON au
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_gallery_posts_seller_sub ON gallery_posts(seller_sub);
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_gallery_posts_deleted_at ON gallery_posts(deleted_at) WHERE deleted_at IS NULL;
 
+-- Auctions: end_time used for sorting active auctions and 2-hour recently-ended filter
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_auctions_end_time ON auctions(end_time);
+
 
 COMMIT;
