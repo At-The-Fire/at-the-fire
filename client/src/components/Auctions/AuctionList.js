@@ -11,6 +11,12 @@ import AuctionPreviewItem from './AuctionPreviewItem.js';
 export default function AuctionList() {
   const [auctions, setAuctions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const ticker = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(ticker);
+  }, []);
   const navigate = useNavigate();
   const { user, admin } = useAuthStore();
 
@@ -88,13 +94,13 @@ export default function AuctionList() {
   }, [lastAuctionExtended]);
 
   const displayAuctions = useMemo(() => {
-    const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000;
+    const twoHoursAgo = now - 2 * 60 * 60 * 1000;
     const active = auctions.filter((a) => a.isActive);
     const recentEnded = auctions.filter(
       (a) => !a.isActive && new Date(a.endTime).getTime() >= twoHoursAgo
     );
     return [...active, ...recentEnded];
-  }, [auctions]);
+  }, [auctions, now]);
 
   const handleItemClick = useCallback((id) => navigate(`/auctions/${id}`), [navigate]);
 
@@ -152,6 +158,7 @@ export default function AuctionList() {
                   key={auction.id}
                   auction={auction}
                   onClick={handleItemClick}
+                  now={now}
                 />
               ))}
             </div>

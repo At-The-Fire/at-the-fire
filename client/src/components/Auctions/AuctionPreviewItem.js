@@ -1,39 +1,18 @@
-import { memo, useEffect, useState } from 'react';
+import { memo } from 'react';
 
-function AuctionPreviewItem({ auction, onClick }) {
-  const [timeLeft, setTimeLeft] = useState('');
+function formatCountdown(diff) {
+  if (diff <= 0) return 'Auction ended';
+  const totalHours = Math.floor(diff / 3600000);
+  const days = Math.floor(totalHours / 24);
+  const hrs = totalHours % 24;
+  const mins = Math.floor((diff % 3600000) / 60000);
+  const secs = Math.floor((diff % 60000) / 1000);
+  return totalHours >= 24 ? `${days}d ${hrs}h ${mins}m ${secs}s` : `${hrs}h ${mins}m ${secs}s`;
+}
 
-  useEffect(() => {
-    if (!auction?.endTime) return;
-
-    const updateCountdown = () => {
-      const diff = new Date(auction.endTime) - new Date();
-
-      if (diff <= 0) {
-        setTimeLeft('Auction ended');
-        return;
-      }
-
-      const totalHours = Math.floor(diff / 3600000);
-      const days = Math.floor(totalHours / 24);
-      const hrs = totalHours % 24;
-      const mins = Math.floor((diff % 3600000) / 60000);
-      const secs = Math.floor((diff % 60000) / 1000);
-
-      if (totalHours >= 24) {
-        setTimeLeft(`${days}d ${hrs}h ${mins}m ${secs}s`);
-      } else {
-        setTimeLeft(`${hrs}h ${mins}m ${secs}s`);
-      }
-    };
-
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
-    return () => clearInterval(interval);
-  }, [auction?.endTime]);
-
+function AuctionPreviewItem({ auction, onClick, now }) {
   const hasEnded = !auction.isActive;
-
+  const timeLeft = auction.endTime ? formatCountdown(new Date(auction.endTime) - now) : '';
   const highBid =
     auction.currentBid && auction.currentBid > 0
       ? `$${auction.currentBid}`
