@@ -14,7 +14,7 @@ export default function AuctionList() {
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
-    const ticker = setInterval(() => setNow(Date.now()), 1000);
+    const ticker = setInterval(() => setNow(Date.now()), 60_000);
     return () => clearInterval(ticker);
   }, []);
   const navigate = useNavigate();
@@ -158,7 +158,6 @@ export default function AuctionList() {
                   key={auction.id}
                   auction={auction}
                   onClick={handleItemClick}
-                  now={now}
                 />
               ))}
             </div>

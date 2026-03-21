@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useState, useEffect } from 'react';
 
 function formatCountdown(diff) {
   if (diff <= 0) return 'Auction ended';
@@ -10,7 +10,15 @@ function formatCountdown(diff) {
   return totalHours >= 24 ? `${days}d ${hrs}h ${mins}m ${secs}s` : `${hrs}h ${mins}m ${secs}s`;
 }
 
-function AuctionPreviewItem({ auction, onClick, now }) {
+function AuctionPreviewItem({ auction, onClick }) {
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    if (!auction.isActive) return;
+    const ticker = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(ticker);
+  }, [auction.isActive]);
+
   const hasEnded = !auction.isActive;
   const timeLeft = auction.endTime ? formatCountdown(new Date(auction.endTime) - now) : '';
   const highBid =
