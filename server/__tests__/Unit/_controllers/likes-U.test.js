@@ -67,6 +67,7 @@ jest.mock('../../../lib/models/Likes.js', () => ({
   toggleLike: jest.fn(),
   getLikeCount: jest.fn(),
   getPostLikeStatus: jest.fn(),
+  getBatchLikes: jest.fn(),
 }));
 
 describe('Likes Routes', () => {
@@ -80,11 +81,8 @@ describe('Likes Routes', () => {
     it('toggles like and returns liked true when toggleLike returns a value', async () => {
       Likes.toggleLike.mockResolvedValue({ some: 'value' });
       Likes.getLikeCount.mockResolvedValue(5);
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       const res = await request(app)
         .post('/api/v1/likes/toggle/1')
@@ -106,11 +104,8 @@ describe('Likes Routes', () => {
     it('toggles like and returns liked false when toggleLike returns null', async () => {
       Likes.toggleLike.mockResolvedValue(null);
       Likes.getLikeCount.mockResolvedValue(10);
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       const res = await request(app)
         .post('/api/v1/likes/toggle/2')
@@ -132,40 +127,35 @@ describe('Likes Routes', () => {
 
   describe('POST /batch', () => {
     it('returns 400 when postIds is not an array', async () => {
-      const res = await request(app)
-        .post('/api/v1/likes/batch')
-        .send({ postIds: 'notAnArray' });
+      const res = await request(app).post('/api/v1/likes/batch').send({ postIds: 'notAnArray' });
       expect(res.status).toBe(400);
       expect(res.body).toEqual({ error: 'postIds must be an array' });
     });
 
     it('returns likes status and counts for unauthenticated user', async () => {
-      Likes.getLikeCount.mockImplementation((postId) =>
-        Promise.resolve(postId * 2)
-      );
+      Likes.getBatchLikes.mockResolvedValue({
+        1: { liked: false, count: 2 },
+        2: { liked: false, count: 4 },
+      });
       const res = await request(app)
         .post('/api/v1/likes/batch')
         .send({ postIds: [1, 2] });
+
       expect(res.status).toBe(200);
       expect(res.body).toEqual({
         1: { liked: false, count: 2 },
         2: { liked: false, count: 4 },
       });
-      expect(Likes.getPostLikeStatus).not.toHaveBeenCalled();
+      expect(Likes.getBatchLikes).toHaveBeenCalledWith({ postIds: [1, 2], sub: undefined });
     });
 
     it('returns likes status and counts for authenticated user', async () => {
-      Likes.getLikeCount.mockImplementation((postId) =>
-        Promise.resolve(postId * 3)
-      );
-      Likes.getPostLikeStatus.mockImplementation(({ post_id }) =>
-        Promise.resolve(post_id === 1)
-      );
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      Likes.getBatchLikes.mockResolvedValue({
+        1: { liked: true, count: 3 },
+        2: { liked: false, count: 6 },
+      });
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       const res = await request(app)
         .post('/api/v1/likes/batch')
@@ -181,13 +171,9 @@ describe('Likes Routes', () => {
         1: { liked: true, count: 3 },
         2: { liked: false, count: 6 },
       });
-      expect(Likes.getPostLikeStatus).toHaveBeenCalledWith({
+      expect(Likes.getBatchLikes).toHaveBeenCalledWith({
+        postIds: [1, 2],
         sub: process.env.TEST_SUB_WITH_PROFILE,
-        post_id: 1,
-      });
-      expect(Likes.getPostLikeStatus).toHaveBeenCalledWith({
-        sub: process.env.TEST_SUB_WITH_PROFILE,
-        post_id: 2,
       });
     });
   });
@@ -212,11 +198,8 @@ describe('Likes Routes', () => {
 
     it('returns isLiked status for authenticated user', async () => {
       Likes.getPostLikeStatus.mockResolvedValue(true);
-      const {
-        subscribedUserAccessToken,
-        subscribedUserIdToken,
-        subscribedUserRefreshToken,
-      } = setupSubscribedUserMocks();
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
 
       const res = await request(app)
         .get('/api/v1/likes/status/1')
