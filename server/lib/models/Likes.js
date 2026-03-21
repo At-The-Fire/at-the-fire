@@ -17,14 +17,14 @@ module.exports = class Like {
     // First try to delete (unlike)
     const { rowCount } = await pool.query(
       'DELETE FROM likes WHERE sub = $1 AND post_id = $2 RETURNING *',
-      [sub, post_id]
+      [sub, post_id],
     );
 
     // If nothing was deleted, create the like
     if (rowCount === 0) {
       const { rows } = await pool.query(
         'INSERT INTO likes (sub, post_id) VALUES ($1, $2) RETURNING *',
-        [sub, post_id]
+        [sub, post_id],
       );
       return new Like(rows[0]);
     }
@@ -34,38 +34,43 @@ module.exports = class Like {
   }
 
   static async getLikeCount(post_id) {
-    const { rows } = await pool.query(
-      'SELECT COUNT(*) as count FROM likes WHERE post_id = $1',
-      [post_id]
-    );
+    const { rows } = await pool.query('SELECT COUNT(*) as count FROM likes WHERE post_id = $1', [
+      post_id,
+    ]);
     return parseInt(rows[0].count);
   }
 
   static async getPostLikeStatus({ sub, post_id }) {
-    const { rows } = await pool.query(
-      'SELECT * FROM likes WHERE sub = $1 AND post_id = $2',
-      [sub, post_id]
-    );
+    const { rows } = await pool.query('SELECT * FROM likes WHERE sub = $1 AND post_id = $2', [
+      sub,
+      post_id,
+    ]);
     return rows.length > 0;
   }
 
   static async getBatchLikes({ postIds, sub }) {
+    let likedRowsQuery = Promise.resolve({ rows: [] });
+
+    if (sub) {
+      likedRowsQuery = pool.query(
+        'SELECT post_id FROM likes WHERE sub = $1 AND post_id = ANY($2::int[])',
+        [sub, postIds],
+      );
+    }
+
     const [{ rows: countRows }, { rows: likedRows }] = await Promise.all([
       pool.query(
         'SELECT post_id, COUNT(*) AS count FROM likes WHERE post_id = ANY($1::int[]) GROUP BY post_id',
-        [postIds]
+        [postIds],
       ),
-      sub
-        ? pool.query(
-            'SELECT post_id FROM likes WHERE sub = $1 AND post_id = ANY($2::int[])',
-            [sub, postIds]
-          )
-        : { rows: [] },
+      likedRowsQuery,
     ]);
 
     const countMap = Object.fromEntries(countRows.map((r) => [r.post_id, parseInt(r.count)]));
     const likedSet = new Set(likedRows.map((r) => r.post_id));
 
-    return Object.fromEntries(postIds.map((id) => [id, { count: countMap[id] ?? 0, liked: likedSet.has(id) }]));
+    return Object.fromEntries(
+      postIds.map((id) => [id, { count: countMap[id] ?? 0, liked: likedSet.has(id) }]),
+    );
   }
 };
