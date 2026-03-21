@@ -355,6 +355,7 @@ CREATE INDEX idx_purchases_seller_sub ON purchases(seller_sub);
 CREATE INDEX idx_auction_notifications_user_sub ON auction_notifications(user_sub);
 CREATE INDEX idx_gallery_posts_seller_sub ON gallery_posts(seller_sub);
 CREATE INDEX idx_gallery_posts_deleted_at ON gallery_posts(deleted_at) WHERE deleted_at IS NULL;
+CREATE INDEX idx_auctions_end_time ON auctions(end_time);
 
 --  adding users for testing --
 -- User with no profile data
