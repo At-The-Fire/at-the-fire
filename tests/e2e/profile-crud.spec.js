@@ -7,6 +7,7 @@ const MINIMAL_PNG = Buffer.from(
 );
 
 async function navigateToProfile(page) {
+  await page.goto('/');
   await page.getByRole('button', { name: 'Open settings' }).click();
   await page.getByRole('menuitem', { name: 'Profile' }).click();
   await page.waitForURL('**/profile/**');
@@ -76,23 +77,21 @@ test.describe('Profile CRUD', () => {
   });
 
   test('Replace avatar — upload a new image after one already exists', async ({ user1Page: page }) => {
+    // NOTE: /api/v1/profile/avatar-upload is rate-limited to 10 uploads per hour (server/lib/app.js).
+    // This test uses 1 upload. After previous test runs have seeded an avatar, this single upload
+    // exercises the delete-old + upload-new path (shouldProcessAvatarImage = true).
+    // If the rate limit is hit (HTTP 429), wait ~1 hour or restart the dev dyno: heroku restart.
     await navigateToProfile(page);
     await openEditMode(page);
 
-    // Upload first avatar and save
+    // Upload a new avatar — replaces whatever exists (delete-old + upload-new path on the server)
     const avatarInput = page.locator('input[name="avatar"]');
-    await avatarInput.setInputFiles({ name: 'avatar-v1.png', mimeType: 'image/png', buffer: MINIMAL_PNG });
+    await avatarInput.setInputFiles({ name: 'avatar-replacement.png', mimeType: 'image/png', buffer: MINIMAL_PNG });
     await page.getByRole('button', { name: 'Save Changes' }).click();
-    await page.waitForLoadState('networkidle');
+    // Avatar upload goes to S3 via the server — allow up to 30s for the round-trip
+    await page.getByText('Edit').waitFor({ state: 'visible', timeout: 30_000 });
 
-    // Re-enter edit mode and upload a replacement image
-    await openEditMode(page);
-    const avatarInputV2 = page.locator('input[name="avatar"]');
-    await avatarInputV2.setInputFiles({ name: 'avatar-v2.png', mimeType: 'image/png', buffer: MINIMAL_PNG });
-    await page.getByRole('button', { name: 'Save Changes' }).click();
-    await page.waitForLoadState('networkidle');
-
-    // Profile should still be in view mode after saving replacement
+    // Profile should be back in view mode — upload succeeded
     await expect(page.getByText('Edit')).toBeVisible();
   });
 
@@ -114,7 +113,7 @@ test.describe('Profile CRUD', () => {
     await page.getByRole('textbox', { name: 'Bio' }).fill('E2E test bio entry updated');
 
     await page.getByRole('button', { name: 'Save Changes' }).click();
-    await page.waitForLoadState('networkidle');
+    await page.getByText('Edit').waitFor({ state: 'visible', timeout: 10_000 });
 
     // Should return to view mode (edit button visible again) — no save error
     await expect(page.getByText('Edit')).toBeVisible();
@@ -136,10 +135,10 @@ test.describe('Profile CRUD', () => {
     await page.getByRole('textbox', { name: 'Bio' }).fill('E2E test bio entry updated');
 
     await page.getByRole('button', { name: 'Save Changes' }).click();
-    await page.waitForLoadState('networkidle');
+    await page.getByText('Edit').waitFor({ state: 'visible', timeout: 10_000 });
 
     // Reload to verify persistence (not just in-memory state)
-    await page.reload();
+    await page.reload({ waitUntil: 'domcontentloaded' });
 
     await expect(page.getByRole('heading', { level: 4 })).toContainText('E2E Test User');
     await expect(page.getByText('E2E test bio entry updated')).toBeVisible();
