@@ -13,6 +13,8 @@ module.exports = class Purchase {
   trackingNumber;
   shippedAt;
   createdAt;
+  platformFee;
+  sellerNet;
   // Optional join fields
   title;
   imageUrls;
@@ -31,8 +33,28 @@ module.exports = class Purchase {
     this.shippedAt = row.shipped_at || null;
     this.createdAt = row.created_at;
     this.shippingCost = row.shipping_cost ?? 0;
+    this.platformFee = row.platform_fee ?? 0;
+    this.sellerNet = row.seller_net ?? 0;
     this.title = row.title || null;
     this.imageUrls = null;
+  }
+
+  // Insert a completed purchase within a transaction.
+  // client must be provided (pool client mid-transaction).
+  static async insertCompleted(
+    { buyerSub, sellerSub, itemType, itemId, quantity, amountPaid, shippingCost, platformFee, sellerNet, processorTransactionId },
+    client
+  ) {
+    const { rows } = await client.query(
+      `INSERT INTO purchases
+         (buyer_sub, seller_sub, item_type, item_id, quantity, amount_paid,
+          shipping_cost, platform_fee, seller_net, processor_transaction_id, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'completed')
+       RETURNING id`,
+      [buyerSub, sellerSub, itemType, itemId, quantity, amountPaid,
+       shippingCost, platformFee, sellerNet, processorTransactionId]
+    );
+    return rows[0];
   }
 
   static async insert({ buyerSub, sellerSub, itemType, itemId, quantity, amountPaid }) {

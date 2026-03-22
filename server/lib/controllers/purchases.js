@@ -1,5 +1,7 @@
 const { Router } = require('express');
 const authenticateAWS = require('../middleware/authenticateAWS');
+const Auction = require('../models/Auction');
+const Post = require('../models/Post');
 const Purchase = require('../models/Purchase');
 const paymentService = require('../services/paymentService');
 const pool = require('../utils/pool');
@@ -18,7 +20,6 @@ module.exports = Router()
         return res.status(400).json({ error: 'totalAmount and items are required' });
       }
 
-      // Call payment service (will throw 503 if NullAdapter)
       const result = await paymentService.createPaymentIntent(totalAmount, 'usd', {
         buyerSub,
         items,
@@ -32,7 +33,6 @@ module.exports = Router()
 
   // POST /api/v1/purchases/confirm
   // Body: { intentId, items: [{ postId, quantity }] }
-  // Creates purchases row(s)
   // For each item: decrements gallery_posts.quantity; if quantity=0, sets sold=true
   // Returns { purchaseIds, summary }
   .post('/confirm', authenticateAWS, async (req, res, next) => {
@@ -48,7 +48,6 @@ module.exports = Router()
         return res.status(400).json({ error: 'intentId and items are required' });
       }
 
-      // Validate items + calculate totals BEFORE capturing payment
       const normalizedItems = items.map((item) => ({
         postId: Number(item?.postId),
         quantity: Number(item?.quantity),
@@ -63,21 +62,15 @@ module.exports = Router()
         }
       }
 
-      // Fetch all posts in parallel — reads don't need the transaction client
-      const postResults = await Promise.all(
-        normalizedItems.map((item) =>
-          pool.query(
-            `SELECT id, seller_sub, price, quantity AS available_quantity, sold, shipping_cost
-             FROM gallery_posts WHERE id = $1`,
-            [item.postId],
-          )
-        )
+      // Fetch all posts in parallel — reads outside the transaction
+      const posts = await Promise.all(
+        normalizedItems.map((item) => Post.getForPurchase(item.postId))
       );
 
       const itemDetails = [];
       for (let i = 0; i < normalizedItems.length; i++) {
         const item = normalizedItems[i];
-        const post = postResults[i].rows[0];
+        const post = posts[i];
 
         if (!post) {
           return res.status(404).json({ error: `Post ${item.postId} not found` });
@@ -95,19 +88,24 @@ module.exports = Router()
         }
 
         const shippingCost = Number.parseFloat(post.shipping_cost) || 0;
+        const amountPaid = pricePerItem * item.quantity + shippingCost;
+        const feePct = Number.parseFloat(process.env.PLATFORM_FEE_PCT) || 0;
+        const platformFee = Math.round((amountPaid - shippingCost) * feePct * 100) / 100;
+        const sellerNet = Math.round((amountPaid - platformFee) * 100) / 100;
 
         itemDetails.push({
           postId: post.id,
           sellerSub: post.seller_sub,
-          pricePerItem,
           availableQuantity: post.available_quantity,
           quantity: item.quantity,
           shippingCost,
-          amountPaid: pricePerItem * item.quantity + shippingCost,
+          amountPaid,
+          platformFee,
+          sellerNet,
         });
       }
 
-      // Capture payment (mock or real processor). If processor isn't configured, this will 503.
+      // Capture payment before transaction (refund on fulfillment failure)
       const captureResult = await paymentService.capturePayment(intentId, payment);
       capturedTransactionId = captureResult?.transactionId || null;
 
@@ -118,51 +116,29 @@ module.exports = Router()
       const summary = [];
 
       for (const item of itemDetails) {
-        // 1) Create purchase record
-        const { rows: purchaseRows } = await client.query(
-          `
-          INSERT INTO purchases (
-            buyer_sub,
-            seller_sub,
-            item_type,
-            item_id,
-            quantity,
-            amount_paid,
-            shipping_cost,
-            processor_transaction_id,
-            status
-          )
-          VALUES ($1, $2, 'gallery_post', $3, $4, $5, $6, $7, 'completed')
-          RETURNING id
-          `,
-          [
-            buyerSub,
-            item.sellerSub,
-            item.postId,
-            item.quantity,
-            item.amountPaid,
-            item.shippingCost,
-            capturedTransactionId,
-          ],
-        );
+        const purchase = await Purchase.insertCompleted({
+          buyerSub,
+          sellerSub: item.sellerSub,
+          itemType: 'gallery_post',
+          itemId: item.postId,
+          quantity: item.quantity,
+          amountPaid: item.amountPaid,
+          shippingCost: item.shippingCost,
+          platformFee: item.platformFee,
+          sellerNet: item.sellerNet,
+          processorTransactionId: capturedTransactionId,
+        }, client);
 
-        purchaseIds.push(purchaseRows[0].id);
+        purchaseIds.push(purchase.id);
 
-        // 2) Decrement inventory atomically and prevent negative quantities
         const newQuantity = item.availableQuantity - item.quantity;
         const isSold = newQuantity === 0;
 
-        const updateResult = await client.query(
-          `
-          UPDATE gallery_posts
-          SET quantity = $2, sold = $3
-          WHERE id = $1 AND sold = false AND quantity >= $4
-          RETURNING id
-          `,
-          [item.postId, newQuantity, isSold, item.quantity],
+        const decremented = await Post.decrementQuantity(
+          item.postId, newQuantity, isSold, item.quantity, client
         );
 
-        if (!updateResult.rows[0]) {
+        if (!decremented) {
           const err = new Error(`Insufficient quantity for post ${item.postId}`);
           err.status = 409;
           throw err;
@@ -186,22 +162,127 @@ module.exports = Router()
       res.json({ purchaseIds, summary });
     } catch (e) {
       if (transactionStarted) {
-        try {
-          await client.query('ROLLBACK');
-        } catch (_) {
-          // ignore rollback errors
-        }
+        try { await client.query('ROLLBACK'); } catch (_) {}
       }
-
-      // Best-effort refund if we captured but failed to fulfill.
       if (capturedTransactionId) {
-        try {
-          await paymentService.refundPayment(capturedTransactionId);
-        } catch (_) {
-          // Do not mask original error
-        }
+        try { await paymentService.refundPayment(capturedTransactionId); } catch (_) {}
+      }
+      next(e);
+    } finally {
+      client.release();
+    }
+  })
+
+  // POST /api/v1/purchases/auction-intent
+  // Body: { auctionId }
+  // Verifies buyer is the auction winner, creates a payment intent for final_bid + shipping_cost
+  // Returns { intentId, clientSecret, totalAmount }
+  .post('/auction-intent', authenticateAWS, async (req, res, next) => {
+    try {
+      const { auctionId } = req.body;
+      const buyerSub = req.userAWSSub;
+
+      if (!auctionId) {
+        return res.status(400).json({ error: 'auctionId is required' });
       }
 
+      const result = await Auction.getResultForPayment(auctionId);
+      if (!result) return res.status(404).json({ error: 'Auction result not found' });
+      if (result.winner_sub !== buyerSub) return res.status(403).json({ error: 'Forbidden' });
+      if (result.is_paid) return res.status(409).json({ error: 'Already paid' });
+
+      const shippingCost = Number.parseFloat(result.shipping_cost) || 0;
+      const finalBid = Number.parseFloat(result.final_bid);
+      const totalAmount = Math.round((finalBid + shippingCost) * 100) / 100;
+
+      const intentResult = await paymentService.createPaymentIntent(totalAmount, 'usd', {
+        buyerSub,
+        auctionId,
+      });
+
+      res.json({ ...intentResult, totalAmount });
+    } catch (e) {
+      next(e);
+    }
+  })
+
+  // POST /api/v1/purchases/auction-confirm
+  // Body: { intentId, auctionId, payment? }
+  // Atomically: captures payment, flips auction_results.is_paid, creates purchases row
+  // Returns { purchaseId }
+  .post('/auction-confirm', authenticateAWS, async (req, res, next) => {
+    const client = await pool.connect();
+    let capturedTransactionId = null;
+    let transactionStarted = false;
+    try {
+      const { intentId, auctionId } = req.body;
+      const payment = req.body?.payment;
+      const buyerSub = req.userAWSSub;
+
+      if (!intentId || !auctionId) {
+        return res.status(400).json({ error: 'intentId and auctionId are required' });
+      }
+
+      const auctionData = await Auction.getResultForPayment(auctionId);
+      if (!auctionData) return res.status(404).json({ error: 'Auction result not found' });
+      if (auctionData.winner_sub !== buyerSub) return res.status(403).json({ error: 'Forbidden' });
+      if (auctionData.is_paid) return res.status(409).json({ error: 'Already paid' });
+
+      const shippingCost = Number.parseFloat(auctionData.shipping_cost) || 0;
+      const finalBid = Number.parseFloat(auctionData.final_bid);
+      const amountPaid = Math.round((finalBid + shippingCost) * 100) / 100;
+      const feePct = Number.parseFloat(process.env.PLATFORM_FEE_PCT) || 0;
+      const platformFee = Math.round(finalBid * feePct * 100) / 100;
+      const sellerNet = Math.round((finalBid - platformFee + shippingCost) * 100) / 100;
+
+      const captureResult = await paymentService.capturePayment(intentId, payment);
+      capturedTransactionId = captureResult?.transactionId || null;
+
+      await client.query('BEGIN');
+      transactionStarted = true;
+
+      const updated = await Auction.setIsPaidWithFees(
+        auctionId, buyerSub, { platformFee, sellerNet }, client
+      );
+
+      if (!updated) {
+        const err = new Error('Auction result not found or already paid');
+        err.status = 409;
+        throw err;
+      }
+
+      const purchase = await Purchase.insertCompleted({
+        buyerSub,
+        sellerSub: auctionData.seller_sub,
+        itemType: 'auction',
+        itemId: auctionId,
+        quantity: 1,
+        amountPaid,
+        shippingCost,
+        platformFee,
+        sellerNet,
+        processorTransactionId: capturedTransactionId,
+      }, client);
+
+      await client.query('COMMIT');
+      transactionStarted = false;
+
+      const io = req.app.get('io');
+      if (io) {
+        io.to(`user_${auctionData.seller_sub}`).emit('auction-paid', {
+          auctionId: Number(auctionId),
+          isPaid: true,
+        });
+      }
+
+      res.json({ purchaseId: purchase.id });
+    } catch (e) {
+      if (transactionStarted) {
+        try { await client.query('ROLLBACK'); } catch (_) {}
+      }
+      if (capturedTransactionId) {
+        try { await paymentService.refundPayment(capturedTransactionId); } catch (_) {}
+      }
       next(e);
     } finally {
       client.release();
@@ -221,8 +302,7 @@ module.exports = Router()
   // GET /api/v1/purchases - get user's purchase history
   .get('/', authenticateAWS, async (req, res, next) => {
     try {
-      const buyerSub = req.userAWSSub;
-      const purchases = await Purchase.getByBuyerSub(buyerSub);
+      const purchases = await Purchase.getByBuyerSub(req.userAWSSub);
       res.json(purchases);
     } catch (e) {
       next(e);
@@ -242,7 +322,6 @@ module.exports = Router()
       const purchase = await Purchase.getById(id);
       if (!purchase) return res.status(404).json({ error: 'Purchase not found' });
 
-      // Verify seller ownership
       if (purchase.sellerSub !== req.userAWSSub) {
         return res.status(403).json({ error: 'Forbidden' });
       }
