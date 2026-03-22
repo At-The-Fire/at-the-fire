@@ -819,102 +819,102 @@ export default function Dashboard({ products, setProducts, customerId }) {
                           <Typography sx={{ color: 'text.secondary', px: 0.5 }}>No gallery sales yet.</Typography>
                         ) : (
                           sellerPurchases.map((sale) => (
-                        <Box
-                          key={sale.id}
-                          sx={{
-                            width: '100%',
-                            minWidth: 0,
-                            display: 'grid',
-                            gridTemplateColumns: {
-                              xs: '60px minmax(0, 1fr) auto',
-                              sm: '80px minmax(0, 1fr) auto',
-                            },
-                            alignItems: 'center',
-                            border: '1px solid',
-                            borderColor: sale.trackingNumber ? 'divider' : 'warning.main',
-                            mb: 1,
-                            borderRadius: 1,
-                            backgroundColor: 'rgba(255,255,255,0.05)',
-                            overflow: 'hidden',
-                          }}
-                        >
-                          {sale.imageUrls?.[0] ? (
                             <Box
-                              component="img"
-                              src={sale.imageUrls[0]}
-                              alt={sale.title}
-                              sx={{ width: { xs: 60, sm: 80 }, height: { xs: 60, sm: 80 }, objectFit: 'cover' }}
-                            />
-                          ) : (
-                            <Box
+                              key={sale.id}
                               sx={{
-                                width: { xs: 60, sm: 80 },
-                                height: { xs: 60, sm: 80 },
+                                width: '100%',
+                                minWidth: 0,
+                                display: 'grid',
+                                gridTemplateColumns: {
+                                  xs: '60px minmax(0, 1fr) auto',
+                                  sm: '80px minmax(0, 1fr) auto',
+                                },
+                                alignItems: 'center',
+                                border: '1px solid',
+                                borderColor: sale.trackingNumber ? 'divider' : 'warning.main',
+                                mb: 1,
+                                borderRadius: 1,
                                 backgroundColor: 'rgba(255,255,255,0.05)',
-                              }}
-                            />
-                          )}
-                          <Box sx={{ px: 1.5, overflow: 'hidden', minWidth: 0 }}>
-                            <Typography
-                              fontWeight={700}
-                              sx={{
-                                fontSize: { xs: '.8rem', sm: '.9rem' },
                                 overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'left',
                               }}
                             >
-                              {sale.title || `Post #${sale.itemId}`}
-                            </Typography>
-
-                            {/* Mobile / small-screen details */}
-                            <Box sx={{ display: 'block' }}>
-                              <Typography
-                                variant="body2"
-                                sx={{ color: 'text.secondary', fontSize: '.75rem', textAlign: 'left' }}
-                              >
-                                ${Number(sale.amountPaid).toFixed(2)} · qty {sale.quantity} ·{' '}
-                                {new Date(sale.createdAt).toLocaleDateString()}
-                              </Typography>
-                              {sale.trackingNumber ? (
-                                (() => {
-                                  const tr = getTrackingUrl(sale.trackingNumber);
-                                  return (
-                                    <Typography variant="body2" sx={{ fontSize: '.75rem', textAlign: 'left' }}>
-                                      📦{tr.carrier ? ` ${tr.carrier}: ` : ' '}
-                                      <a
-                                        href={tr.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        style={{ color: 'inherit' }}
-                                      >
-                                        {sale.trackingNumber}
-                                      </a>
-                                    </Typography>
-                                  );
-                                })()
+                              {sale.imageUrls?.[0] ? (
+                                <Box
+                                  component="img"
+                                  src={sale.imageUrls[0]}
+                                  alt={sale.title}
+                                  sx={{ width: { xs: 60, sm: 80 }, height: { xs: 60, sm: 80 }, objectFit: 'cover' }}
+                                />
                               ) : (
-                                <Typography
-                                  variant="body2"
-                                  sx={{ fontSize: '.75rem', color: 'text.secondary', textAlign: 'left' }}
-                                >
-                                  No tracking yet
-                                </Typography>
+                                <Box
+                                  sx={{
+                                    width: { xs: 60, sm: 80 },
+                                    height: { xs: 60, sm: 80 },
+                                    backgroundColor: 'rgba(255,255,255,0.05)',
+                                  }}
+                                />
                               )}
-                            </Box>
-                          </Box>
+                              <Box sx={{ px: 1.5, overflow: 'hidden', minWidth: 0 }}>
+                                <Typography
+                                  fontWeight={700}
+                                  sx={{
+                                    fontSize: { xs: '.8rem', sm: '.9rem' },
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    textAlign: 'left',
+                                  }}
+                                >
+                                  {sale.title || `Post #${sale.itemId}`}
+                                </Typography>
 
-                          <Box sx={{ pr: 1.5 }}>
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              onClick={() => setTrackingModal({ open: true, type: 'purchase', id: sale.id })}
-                            >
-                              {sale.trackingNumber ? 'Update' : 'Add Tracking'}
-                            </Button>
-                          </Box>
-                        </Box>
+                                {/* Mobile / small-screen details */}
+                                <Box sx={{ display: 'block' }}>
+                                  <Typography
+                                    variant="body2"
+                                    sx={{ color: 'text.secondary', fontSize: '.75rem', textAlign: 'left' }}
+                                  >
+                                    ${Number(sale.amountPaid).toFixed(2)} · qty {sale.quantity} ·{' '}
+                                    {new Date(sale.createdAt).toLocaleDateString()}
+                                  </Typography>
+                                  {sale.trackingNumber ? (
+                                    (() => {
+                                      const tr = getTrackingUrl(sale.trackingNumber);
+                                      return (
+                                        <Typography variant="body2" sx={{ fontSize: '.75rem', textAlign: 'left' }}>
+                                          📦{tr.carrier ? ` ${tr.carrier}: ` : ' '}
+                                          <a
+                                            href={tr.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{ color: 'inherit' }}
+                                          >
+                                            {sale.trackingNumber}
+                                          </a>
+                                        </Typography>
+                                      );
+                                    })()
+                                  ) : (
+                                    <Typography
+                                      variant="body2"
+                                      sx={{ fontSize: '.75rem', color: 'text.secondary', textAlign: 'left' }}
+                                    >
+                                      No tracking yet
+                                    </Typography>
+                                  )}
+                                </Box>
+                              </Box>
+
+                              <Box sx={{ pr: 1.5 }}>
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  onClick={() => setTrackingModal({ open: true, type: 'purchase', id: sale.id })}
+                                >
+                                  {sale.trackingNumber ? 'Update' : 'Add Tracking'}
+                                </Button>
+                              </Box>
+                            </Box>
                           ))
                         )}
                       </Box>
@@ -960,105 +960,105 @@ export default function Dashboard({ products, setProducts, customerId }) {
                           <Typography sx={{ color: 'text.secondary', px: 0.5 }}>No closed auctions yet.</Typography>
                         ) : (
                           closedSellerAuctions.map((auction) => (
-                          <Box
-                            key={auction.id}
-                            sx={{
-                              width: '100%',
-                              minWidth: 0,
-                              display: 'grid',
-                              gridTemplateColumns: {
-                                xs: '60px minmax(0, 1fr) auto',
-                                sm: '80px minmax(0, 1fr) auto',
-                              },
-                              alignItems: 'center',
-                              border: '1px solid',
-                              borderColor: auction.winnerSub && !auction.trackingNumber ? 'warning.main' : 'divider',
-                              mb: 1,
-                              borderRadius: 1,
-                              backgroundColor: 'rgba(255,255,255,0.05)',
-                              overflow: 'hidden',
-                            }}
-                          >
-                            {auction.imageUrls?.[0] ? (
-                              <Box
-                                component="img"
-                                src={auction.imageUrls[0]}
-                                alt={auction.title}
-                                sx={{ width: { xs: 60, sm: 80 }, height: { xs: 60, sm: 80 }, objectFit: 'cover' }}
-                              />
-                            ) : (
-                              <Box
-                                sx={{
-                                  width: { xs: 60, sm: 80 },
-                                  height: { xs: 60, sm: 80 },
-                                  backgroundColor: 'rgba(255,255,255,0.05)',
-                                }}
-                              />
-                            )}
-                            <Box sx={{ px: 1.5, overflow: 'hidden', minWidth: 0 }}>
-                              <Typography
-                                fontWeight={700}
-                                sx={{
-                                  fontSize: { xs: '.8rem', sm: '.9rem' },
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap',
-                                  textAlign: 'left',
-                                }}
-                              >
-                                {auction.title}
-                              </Typography>
-
-                              {/* Mobile / small-screen details */}
-                              <Box sx={{ display: 'block' }}>
+                            <Box
+                              key={auction.id}
+                              sx={{
+                                width: '100%',
+                                minWidth: 0,
+                                display: 'grid',
+                                gridTemplateColumns: {
+                                  xs: '60px minmax(0, 1fr) auto',
+                                  sm: '80px minmax(0, 1fr) auto',
+                                },
+                                alignItems: 'center',
+                                border: '1px solid',
+                                borderColor: auction.winnerSub && !auction.trackingNumber ? 'warning.main' : 'divider',
+                                mb: 1,
+                                borderRadius: 1,
+                                backgroundColor: 'rgba(255,255,255,0.05)',
+                                overflow: 'hidden',
+                              }}
+                            >
+                              {auction.imageUrls?.[0] ? (
+                                <Box
+                                  component="img"
+                                  src={auction.imageUrls[0]}
+                                  alt={auction.title}
+                                  sx={{ width: { xs: 60, sm: 80 }, height: { xs: 60, sm: 80 }, objectFit: 'cover' }}
+                                />
+                              ) : (
+                                <Box
+                                  sx={{
+                                    width: { xs: 60, sm: 80 },
+                                    height: { xs: 60, sm: 80 },
+                                    backgroundColor: 'rgba(255,255,255,0.05)',
+                                  }}
+                                />
+                              )}
+                              <Box sx={{ px: 1.5, overflow: 'hidden', minWidth: 0 }}>
                                 <Typography
-                                  variant="body2"
-                                  sx={{ color: 'text.secondary', fontSize: '.75rem', textAlign: 'left' }}
+                                  fontWeight={700}
+                                  sx={{
+                                    fontSize: { xs: '.8rem', sm: '.9rem' },
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    textAlign: 'left',
+                                  }}
                                 >
-                                  Final bid: $
-                                  {Number(
-                                    auction.finalBid || auction.currentBid || auction.startPrice
-                                  ).toLocaleString()}
+                                  {auction.title}
                                 </Typography>
-                                {auction.trackingNumber ? (
-                                  (() => {
-                                    const tr = getTrackingUrl(auction.trackingNumber);
-                                    return (
-                                      <Typography variant="body2" sx={{ fontSize: '.75rem', textAlign: 'left' }}>
-                                        📦{tr.carrier ? ` ${tr.carrier}: ` : ' '}
-                                        <a
-                                          href={tr.url}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          style={{ color: 'inherit' }}
-                                        >
-                                          {auction.trackingNumber}
-                                        </a>
-                                      </Typography>
-                                    );
-                                  })()
-                                ) : (
+
+                                {/* Mobile / small-screen details */}
+                                <Box sx={{ display: 'block' }}>
                                   <Typography
                                     variant="body2"
-                                    sx={{ fontSize: '.75rem', color: 'text.secondary', textAlign: 'left' }}
+                                    sx={{ color: 'text.secondary', fontSize: '.75rem', textAlign: 'left' }}
                                   >
-                                    No tracking yet
+                                    Final bid: $
+                                    {Number(
+                                      auction.finalBid || auction.currentBid || auction.startPrice
+                                    ).toLocaleString()}
                                   </Typography>
-                                )}
+                                  {auction.trackingNumber ? (
+                                    (() => {
+                                      const tr = getTrackingUrl(auction.trackingNumber);
+                                      return (
+                                        <Typography variant="body2" sx={{ fontSize: '.75rem', textAlign: 'left' }}>
+                                          📦{tr.carrier ? ` ${tr.carrier}: ` : ' '}
+                                          <a
+                                            href={tr.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{ color: 'inherit' }}
+                                          >
+                                            {auction.trackingNumber}
+                                          </a>
+                                        </Typography>
+                                      );
+                                    })()
+                                  ) : (
+                                    <Typography
+                                      variant="body2"
+                                      sx={{ fontSize: '.75rem', color: 'text.secondary', textAlign: 'left' }}
+                                    >
+                                      No tracking yet
+                                    </Typography>
+                                  )}
+                                </Box>
+                              </Box>
+
+                              <Box sx={{ pr: 1.5 }}>
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  disabled={!auction.winnerSub}
+                                  onClick={() => setTrackingModal({ open: true, type: 'auction', id: auction.id })}
+                                >
+                                  {auction.trackingNumber ? 'Update' : 'Add Tracking'}
+                                </Button>
                               </Box>
                             </Box>
-
-                            <Box sx={{ pr: 1.5 }}>
-                              <Button
-                                size="small"
-                                variant="outlined"
-                                disabled={!auction.winnerSub}
-                                onClick={() => setTrackingModal({ open: true, type: 'auction', id: auction.id })}
-                              >
-                                {auction.trackingNumber ? 'Update' : 'Add Tracking'}
-                              </Button>
-                            </Box>
-                          </Box>
                           ))
                         )}
                       </Box>
