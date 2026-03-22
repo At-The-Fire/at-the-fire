@@ -340,6 +340,9 @@ describe('Bids routes', () => {
           closed_reason: 'buy_now',
           is_paid: false,
           tracking_number: null,
+          payout_id: null,
+          platform_fee: '0',
+          seller_net: '0',
         },
         bid: {
           id: expect.any(String),
