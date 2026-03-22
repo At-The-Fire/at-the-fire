@@ -243,6 +243,9 @@ app.use(
 app.use('/api/v1/cart', [jsonParser, authenticateAWS], require('./controllers/cart'));
 app.use('/api/v1/purchases', [jsonParser, authenticateAWS], require('./controllers/purchases'));
 
+// Seller payouts
+app.use('/api/v1/payouts', [jsonParser, authenticateAWS], require('./controllers/payouts'));
+
 // Stripe webhook
 app.use('/api/v1/webhook', require('./controllers/webhook'));
 
