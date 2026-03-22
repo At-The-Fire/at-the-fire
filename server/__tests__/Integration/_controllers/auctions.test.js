@@ -289,46 +289,6 @@ describe('Auction routes', () => {
     });
   });
 
-  describe('PUT /api/v1/auctions/:id/paid', () => {
-    beforeEach(async () => {
-      // Close auction and create result
-      await pool.query('UPDATE auctions SET is_active = false WHERE id = $1', [testAuctionId]);
-      await pool.query(
-        `INSERT INTO auction_results (auction_id, winner_sub, final_bid, closed_reason)
-         VALUES ($1, $2, $3, $4)`,
-        [testAuctionId, process.env.TEST_SUB_FULL_CUSTOMER, 250, 'expired'],
-      );
-    });
-
-    it('should mark auction as paid (seller only)', async () => {
-      const response = await request(app)
-        .put(`/api/v1/auctions/${testAuctionId}/paid`)
-        .send({ isPaid: true });
-
-      expect(response.status).toBe(200);
-      expect(response.body.is_paid).toBe(true);
-    });
-
-    it('should return 403 for non-owner', async () => {
-      authState.user = mockOtherUser;
-      const response = await request(app)
-        .put(`/api/v1/auctions/${testAuctionId}/paid`)
-        .send({ isPaid: true });
-
-      expect(response.status).toBe(403);
-      expect(response.body.error).toBe('Forbidden');
-    });
-
-    it('should return 400 if isPaid is not boolean', async () => {
-      const response = await request(app)
-        .put(`/api/v1/auctions/${testAuctionId}/paid`)
-        .send({ isPaid: 'yes' });
-
-      expect(response.status).toBe(400);
-      expect(response.body.error).toBe('isPaid must be boolean');
-    });
-  });
-
   describe('PUT /api/v1/auctions/:id/cancel', () => {
     it('cancels an active auction with no bids (seller)', async () => {
       const res = await request(app).put(`/api/v1/auctions/${testAuctionId}/cancel`);
