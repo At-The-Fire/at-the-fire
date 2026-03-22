@@ -27,7 +27,7 @@
 
 ## Subscription Purchase
 
-> **Claude Code: SKIP the initial purchase and the "Return to dashboard" block.** Purchasing a new subscription requires a real Stripe account and cannot be automated. Test users (`USER1`, `USER2`) already have active subscriptions. Start this section from "Return to dashboard signed in" onwards.
+> **Claude Code: SKIP the initial purchase, the "Return to dashboard" block, and Change/Cancel subscription items.** Purchasing a new subscription requires a real Stripe account and cannot be automated. Test users (`USER1`, `USER2`) already have customer IDs and the app launches in `BETA_MODE=true`, which bypasses all subscription checks — logo upload and profile branding fields are accessible without a Stripe purchase. Test the logo upload block below independently.
 
 - [ ] Purchase subscription
   - [ ] Verify payment flow
@@ -37,6 +37,11 @@
   - [ ] Verify _Profile_ updates with logo/ website/ social media accts
   - [ ] Upload logo image
   - [ ] Fill in some/ all text fields
+- [ ] Logo upload and profile branding (testable in beta mode — sign in as USER1)
+  - [ ] Navigate to _Profile_ via the avatar menu
+  - [ ] Upload a logo image — verify it appears in the profile header
+  - [ ] Verify the logo appears on USER1's gallery posts (navigate to a gallery post by USER1 and confirm logo is displayed)
+  - [ ] Verify the logo appears on USER1's auction listings (navigate to an active auction by USER1 and confirm logo is displayed)
 - [ ] Change subscription — SKIP (User 1 has no active Stripe subscription)
   - [ ] Upgrade
   - [ ] Downgrade
@@ -206,6 +211,72 @@
   - [x] **Claude Code: SKIP — placeholder processor always succeeds; no failure path exists until a real payment processor is integrated**
   - [ ] Verify inventory is not decremented on failure
   - [ ] Verify error message displayed
+
+## Seller Earnings Tab
+
+> **Claude Code note:** Test as a seller (USER1) who has at least one completed purchase against their listings. The Earnings tab is a new 4th toggle in the Dashboard tab group alongside Posts, Auctions, and Sales.
+
+- [ ] Seller navigates to Dashboard and clicks the **Earnings** toggle button
+  - [ ] Earnings view loads without error
+  - [ ] "Pending Payout" card is visible
+  - [ ] "Total Paid Out" card is visible
+  - [ ] Payout history section is visible
+
+- [ ] Seller has no sales — verify empty state
+  - [ ] "Pending Payout" shows $0.00
+  - [ ] "Total Paid Out" shows $0.00
+  - [ ] Payout history shows "No payouts recorded yet"
+
+- [ ] After a gallery post purchase is made against the seller's listing **[two-user: USER2 buys from USER1]**
+  - [ ] Seller clicks Earnings tab
+  - [ ] "Pending Payout" shows a non-zero dollar amount
+  - [ ] "Total Paid Out" still shows $0.00
+
+- [ ] After an auction payment is completed against the seller's auction **[two-user: USER2 pays for won auction from USER1]**
+  - [ ] Seller clicks Earnings tab
+  - [ ] "Pending Payout" reflects the auction seller net
+  - [ ] "Total Paid Out" still shows $0.00
+
+## Admin Payouts Panel
+
+> **Claude Code note:** Test as an admin user. Navigate to `/at-the-bon-fire` and click **Payouts** in the sidebar. This panel has two tables: "Owed to Sellers" and "Payout History."
+
+- [ ] Admin navigates to `/at-the-bon-fire` → clicks **Payouts** in the sidebar
+  - [ ] Payouts panel loads without error
+  - [ ] "Owed to Sellers" table is visible
+  - [ ] "Payout History" table is visible
+
+- [ ] With no sales in the system
+  - [ ] "Owed to Sellers" table is empty or all rows show $0.00 pending
+  - [ ] "Payout History" shows "No payouts recorded yet"
+
+- [ ] After a seller has completed sales **[two-user: USER2 makes a purchase from USER1 first]**
+  - [ ] Seller (USER1) appears in the "Owed to Sellers" table
+  - [ ] Pending balance shown for USER1 is greater than $0.00
+  - [ ] "Pay Now" button is enabled for USER1's row
+
+- [ ] Admin clicks "Pay Now" for a seller with a pending balance
+  - [ ] A dialog/modal opens
+  - [ ] Amount field is pre-filled with the seller's pending balance
+  - [ ] Notes field is present and editable
+  - [ ] Period start and end date fields are present (optional)
+  - [ ] Admin can edit the amount, enter notes, and confirm
+
+- [ ] Admin confirms the payout
+  - [ ] Dialog closes
+  - [ ] Seller's pending balance in the "Owed to Sellers" table updates to $0.00
+  - [ ] "Pay Now" button becomes disabled for that seller
+  - [ ] New row appears in "Payout History" with the correct seller name, amount, and date
+
+- [ ] Seller (USER1) returns to Dashboard → Earnings tab after payout is recorded
+  - [ ] "Pending Payout" now shows $0.00
+  - [ ] "Total Paid Out" reflects the payout amount
+  - [ ] Payout appears in the payout history list with the correct date and amount
+
+- [ ] Seller makes a new sale after receiving a payout **[two-user: USER2 makes another purchase]**
+  - [ ] Seller visits Earnings tab
+  - [ ] "Pending Payout" reflects only the new sale (not previously paid sales)
+  - [ ] "Total Paid Out" remains at the prior payout amount
 
 ## My Purchases
 
