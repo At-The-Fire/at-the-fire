@@ -8,7 +8,7 @@ This document summarizes the testing strategy, tools, and structure for the serv
 
 - **Unit tests** — Test individual functions, models, and utilities in isolation (`__tests__/Unit/`)
 - **Integration tests** — Test controllers and middleware against a real PostgreSQL and Redis instance (`__tests__/Integration/`)
-- **E2E tests** — Manual flows documented in `docs/testing/E2E checklist.md` and the linked Google Doc
+- **E2E tests** — Automated Playwright tests in `tests/e2e/`, generated from `docs/testing/E2E-checklist.md`
 
 ---
 
@@ -106,5 +106,35 @@ Tests run automatically on push/PR to `main` via GitHub Actions (`.github/workfl
 Client tests are **not** in CI — only server tests run automatically.
 
 ---
+
+---
+
+## E2E Tests (Playwright)
+
+Tests live in `tests/e2e/` and run against the Heroku dev environment (or localhost via `BASE_URL`).
+
+```bash
+npx playwright test                        # Run all E2E tests
+npx playwright test tests/e2e/foo.spec.js  # Run a single file
+npx playwright show-report                 # Open last HTML report
+```
+
+Auth sessions are established once per run via `tests/global-setup.js` (signs in, saves cookies to `tests/.auth/`) and reused by all tests — no per-test sign-in.
+
+### Browser Strategy
+
+**Default: Chromium only.** These tests verify functional correctness (logic, state, API round-trips), not CSS or rendering. React behavior is consistent across browsers; running all three multiplies test count 3× and causes HTTP 429 rate-limit errors on upload endpoints when parallel tests hit the same user account concurrently.
+
+**Re-enable Firefox/WebKit when:**
+- Running a pre-release cross-browser smoke check
+- Investigating a Safari- or Firefox-specific bug reported in production
+- Running against localhost (no rate-limit risk, lower latency)
+
+To run all browsers one-off without changing the config:
+```bash
+npx playwright test --project=chromium --project=firefox --project=webkit
+```
+
+Firefox and WebKit projects are commented out in `playwright.config.js` with full reasoning.
 
 For more, see the `__tests__/` directory and `docs/testing/stripe-testing.md`.
