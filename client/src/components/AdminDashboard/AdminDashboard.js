@@ -392,21 +392,24 @@ const AdminDashboard = () => {
             className={`nav-item ${activeView === 'users' ? 'active' : ''}`}
             onClick={() => handleSelectAdminMenu('users')}
           >
-            <Typography className="nav-icon">👥</Typography>
             Users
+          </Box>{' '}
+          <Box
+            className={`nav-item ${activeView === 'payouts' ? 'active' : ''}`}
+            onClick={() => handleSelectAdminMenu('payouts')}
+          >
+            Payouts
           </Box>
           <Box
             className={`nav-item ${activeView === 'content' ? 'active' : ''}`}
             onClick={() => handleSelectAdminMenu('content')}
           >
-            <Typography className="nav-icon">📄</Typography>
             Content
           </Box>
           <Box
             className={`nav-item ${activeView === 'analytics' ? 'active' : ''}`}
             onClick={() => handleSelectAdminMenu('analytics')}
           >
-            <Typography className="nav-icon">📊</Typography>
             Analytics
           </Box>
           <Box
@@ -415,13 +418,6 @@ const AdminDashboard = () => {
           >
             <Typography className="nav-icon">⚙️</Typography>
             Settings
-          </Box>
-          <Box
-            className={`nav-item ${activeView === 'payouts' ? 'active' : ''}`}
-            onClick={() => handleSelectAdminMenu('payouts')}
-          >
-            <Typography className="nav-icon">💰</Typography>
-            Payouts
           </Box>
         </nav>
       </Box>
