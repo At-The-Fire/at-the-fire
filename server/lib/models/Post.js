@@ -277,6 +277,29 @@ module.exports = class Post {
     await pool.query('UPDATE gallery_posts SET quantity = $2 WHERE id = $1', [postId, qty]);
   }
 
+  // Fetch only the fields needed to validate and price a purchase
+  static async getForPurchase(id) {
+    const { rows } = await pool.query(
+      `SELECT id, seller_sub, price, quantity AS available_quantity, sold, shipping_cost
+       FROM gallery_posts WHERE id = $1`,
+      [id]
+    );
+    return rows[0] || null;
+  }
+
+  // Atomically decrement quantity and mark sold if needed.
+  // Returns the updated row id, or null if the update was blocked (race condition / oversell).
+  static async decrementQuantity(postId, newQuantity, isSold, minQuantity, client) {
+    const { rows } = await client.query(
+      `UPDATE gallery_posts
+       SET quantity = $2, sold = $3
+       WHERE id = $1 AND sold = false AND quantity >= $4
+       RETURNING id`,
+      [postId, newQuantity, isSold, minQuantity]
+    );
+    return rows[0] || null;
+  }
+
   static async getAllPosts() {
     const { rows } = await pool.query(
       `
