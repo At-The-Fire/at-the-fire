@@ -18,16 +18,29 @@ You are generating reusable Playwright test files from the checklist. You are NO
 4. Load credentials from `.env.test`:
    - `USER1_EMAIL`, `USER1_PASSWORD` — seller / initiator / primary actor
    - `USER2_EMAIL`, `USER2_PASSWORD` — buyer / responder / secondary actor
-5. Confirm the browser launches successfully before writing any file
+5. **For every feature in the section you are generating, read the relevant React component source files in `client/src/components/` before writing a single selector.** This is mandatory — not optional. The selectors you write must come from actual JSX in those files, not from convention or assumption.
 
 ---
 
 ## Execution Rules
 
 - Generate ONLY the section passed to you. Do not generate other sections.
-- Navigate the live app using Playwright to discover real selectors, URLs, and flows before writing any test. Do not guess selectors.
+- **Read component source first, then confirm with Playwright.** Do not write selectors from memory or convention. The source is the authority on CSS class names, button text, input types, and ARIA roles.
 - Each test must be fully independent — no test may rely on state created by another test.
 - Keep sessions separate when both users are needed. Do not mix credentials between roles in the same flow.
+
+---
+
+## Known Patterns in This Codebase (Do Not Violate)
+
+These are confirmed facts about this app. Writing tests that contradict them will produce broken tests:
+
+- **Auction list cards are `<div className="auction-preview-item">` with `onClick` — they are NOT `<a>` tags.** There are no `href` attributes on cards. To navigate to a detail page, click the card div and wait for `waitForURL(/\/auctions\/\d+/)`.
+- **Auction titles are rendered only in `img[alt]` on the list page** (`AuctionPreviewItem`). `getByText(title)` will NOT find them. Use `locator('img[alt="..."]')`.
+- **`datetime-local` inputs are not `textbox` role.** Use `locator('input[type="datetime-local"]')` directly.
+- **Modals (`AuctionBidModal`, `ConfirmBINModal`) use `role="dialog"`** and are rendered via `createPortal` — `getByRole('dialog')` works correctly.
+- **After auction creation, the app navigates to `/dashboard`**, not to the new auction's detail page. To get the auction ID, navigate to `/auctions` after creation, find the card by `img[alt]`, click it, and read the URL.
+- **`waitForURL` predicates must not match the current URL.** On `/dashboard/auctions/new`, a predicate containing `"dashboard"` resolves immediately. Always use exact pathname checks: `url.pathname === '/dashboard'`.
 
 ---
 
