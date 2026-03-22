@@ -25,46 +25,20 @@ const cwd = process.cwd();
 loadEnvFileIfPresent(path.resolve(cwd, '.env.test'));
 loadEnvFileIfPresent(path.resolve(cwd, 'server/.env.test'));
 
-function getRequiredEnv(key) {
-  const value = process.env[key];
-  if (!value) {
-    throw new Error(
-      `Missing required environment variable ${key}. ` +
-        `Set it in process env or in .env.test / server/.env.test before running Playwright.`
-    );
-  }
-  return value;
-}
-
-async function signIn(page, emailKey, passwordKey) {
-  await page.goto('/auth/sign-in');
-  await page.fill('#email-input', getRequiredEnv(emailKey));
-  await page.fill('#password-input', getRequiredEnv(passwordKey));
-  await page.click('button[type="submit"]');
-
-  try {
-    await page.waitForURL('**/dashboard', { timeout: 15_000 });
-  } catch {
-    throw new Error(
-      `Sign-in did not reach /dashboard for ${emailKey}. ` +
-        `Verify credentials and ensure both client (3000) and server (7890) are running.`
-    );
-  }
-}
+const user1StatePath = path.resolve(cwd, 'tests/.auth/user1.json');
+const user2StatePath = path.resolve(cwd, 'tests/.auth/user2.json');
 
 export const test = base.extend({
   user1Page: async ({ browser }, use) => {
-    const context = await browser.newContext();
+    const context = await browser.newContext({ storageState: user1StatePath });
     const page = await context.newPage();
-    await signIn(page, 'USER1_EMAIL', 'USER1_PASSWORD');
     await use(page);
     await context.close();
   },
 
   user2Page: async ({ browser }, use) => {
-    const context = await browser.newContext();
+    const context = await browser.newContext({ storageState: user2StatePath });
     const page = await context.newPage();
-    await signIn(page, 'USER2_EMAIL', 'USER2_PASSWORD');
     await use(page);
     await context.close();
   },
