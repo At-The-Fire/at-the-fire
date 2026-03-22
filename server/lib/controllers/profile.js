@@ -57,9 +57,10 @@ const s3UploadHelper = async (file, folder) => {
 
     await s3Client.send(command);
 
-    const secureUrl = process.env.CLOUDFRONT_DOMAIN
-      ? `https://${process.env.CLOUDFRONT_DOMAIN}/${key}`
-      : `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+    const secureUrl =
+      process.env.APP_ENV !== 'development' && process.env.CLOUDFRONT_DOMAIN
+        ? `https://${process.env.CLOUDFRONT_DOMAIN}/${key}`
+        : `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
     return {
       publicId: key,
       secureUrl,
