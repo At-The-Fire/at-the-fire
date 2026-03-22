@@ -88,6 +88,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
     if (auctionFilter === 'closed') return !a.isActive;
     return true;
   });
+  const closedSellerAuctions = sellerAuctions.filter((a) => !a.isActive);
 
   // pagination
   const postsFilteredByCategory = posts.filter((post) => !selectedCategory || post.category === selectedCategory);
@@ -728,7 +729,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
                               variant="body2"
                               sx={{ fontWeight: 700, textAlign: 'right', marginRight: '.5rem' }}
                             >
-                              {sellerAuctions.filter((a) => !a.isActive).length}
+                              {closedSellerAuctions.length}
                             </Typography>
                           </Box>
 
@@ -764,37 +765,69 @@ export default function Dashboard({ products, setProducts, customerId }) {
                 className="list-container"
                 style={{
                   display: 'flex',
-                  flexDirection: 'column',
-                  padding: isMobile ? '0 8px' : undefined,
+                  flexDirection: isMobile ? 'column' : 'row',
+                  gap: '12px',
+                  alignItems: 'stretch',
+                  padding: isMobile ? '0 8px 8px 8px' : '8px',
                   maxWidth: '100%',
-                  marginTop: '1rem',
+                  marginTop: isMobile ? '1rem' : 0,
                   overflowX: 'hidden',
-                  overflowY: 'auto',
-                  maxHeight: 'calc(100vh - 220px)',
+                  overflowY: 'hidden',
+                  minHeight: 0,
                 }}
               >
                 {salesLoading ? (
                   <Typography>Loading sales...</Typography>
                 ) : (
                   <>
-                    {/* Gallery Post Sales */}
-                    <Typography variant="h6" sx={{ margin: '0 0 4px 10px', fontWeight: 700 }}>
-                      Gallery Post Sales ({sellerPurchases.length})
-                    </Typography>
-                    {sellerPurchases.length === 0 ? (
-                      <Typography sx={{ color: 'text.secondary', mb: 3 }}>No gallery sales yet.</Typography>
-                    ) : (
-                      sellerPurchases.map((sale) => (
+                    <Box
+                      sx={{
+                        flex: 1,
+                        minWidth: 0,
+                        border: '1px solid',
+                        borderColor: (theme) => theme.palette.primary.dark,
+                        borderRadius: 1,
+                        overflow: 'hidden',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        minHeight: 0,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          px: 1.5,
+                          py: 1,
+                          borderBottom: '1px solid',
+                          borderColor: 'divider',
+                          backgroundColor: 'rgba(255,255,255,0.03)',
+                        }}
+                      >
+                        <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                          Gallery Post Sales ({sellerPurchases.length})
+                        </Typography>
+                      </Box>
+
+                      <Box
+                        sx={{
+                          p: 1,
+                          overflowY: 'auto',
+                          overflowX: 'hidden',
+                          maxHeight: { xs: '44vh', md: 'calc(100vh - 275px)' },
+                        }}
+                      >
+                        {sellerPurchases.length === 0 ? (
+                          <Typography sx={{ color: 'text.secondary', px: 0.5 }}>No gallery sales yet.</Typography>
+                        ) : (
+                          sellerPurchases.map((sale) => (
                         <Box
                           key={sale.id}
                           sx={{
                             width: '100%',
+                            minWidth: 0,
                             display: 'grid',
                             gridTemplateColumns: {
-                              xs: '60px 1fr auto',
-                              sm: '80px 1fr auto',
-                              md: '80px minmax(0, 1fr) 160px 200px auto',
-                              lg: '80px minmax(0, 1fr) 200px 260px auto',
+                              xs: '60px minmax(0, 1fr) auto',
+                              sm: '80px minmax(0, 1fr) auto',
                             },
                             alignItems: 'center',
                             border: '1px solid',
@@ -821,7 +854,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
                               }}
                             />
                           )}
-                          <Box sx={{ px: 1.5, overflow: 'hidden' }}>
+                          <Box sx={{ px: 1.5, overflow: 'hidden', minWidth: 0 }}>
                             <Typography
                               fontWeight={700}
                               sx={{
@@ -836,7 +869,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
                             </Typography>
 
                             {/* Mobile / small-screen details */}
-                            <Box sx={{ display: { xs: 'block', md: 'none' } }}>
+                            <Box sx={{ display: 'block' }}>
                               <Typography
                                 variant="body2"
                                 sx={{ color: 'text.secondary', fontSize: '.75rem', textAlign: 'left' }}
@@ -872,65 +905,6 @@ export default function Dashboard({ products, setProducts, customerId }) {
                             </Box>
                           </Box>
 
-                          {/* Desktop columns */}
-                          <Box sx={{ display: { xs: 'none', md: 'block' }, px: 1.5 }}>
-                            <Typography
-                              variant="body2"
-                              sx={{ color: 'text.secondary', fontSize: '.8rem', textAlign: 'left' }}
-                            >
-                              ${Number(sale.amountPaid).toFixed(2)}
-                            </Typography>
-                            <Typography
-                              variant="body2"
-                              sx={{ color: 'text.secondary', fontSize: '.8rem', textAlign: 'left' }}
-                            >
-                              qty {sale.quantity}
-                            </Typography>
-                            <Typography
-                              variant="body2"
-                              sx={{ color: 'text.secondary', fontSize: '.8rem', textAlign: 'left' }}
-                            >
-                              {new Date(sale.createdAt).toLocaleDateString()}
-                            </Typography>
-                          </Box>
-
-                          <Box sx={{ display: { xs: 'none', md: 'block' }, px: 1.5, overflow: 'hidden' }}>
-                            {sale.trackingNumber ? (
-                              (() => {
-                                const tr = getTrackingUrl(sale.trackingNumber);
-                                return (
-                                  <Typography
-                                    variant="body2"
-                                    sx={{
-                                      fontSize: '.8rem',
-                                      textAlign: 'left',
-                                      overflow: 'hidden',
-                                      textOverflow: 'ellipsis',
-                                      whiteSpace: 'nowrap',
-                                    }}
-                                  >
-                                    📦{tr.carrier ? ` ${tr.carrier}: ` : ' '}
-                                    <a
-                                      href={tr.url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      style={{ color: 'inherit' }}
-                                    >
-                                      {sale.trackingNumber}
-                                    </a>
-                                  </Typography>
-                                );
-                              })()
-                            ) : (
-                              <Typography
-                                variant="body2"
-                                sx={{ fontSize: '.8rem', color: 'text.secondary', textAlign: 'left' }}
-                              >
-                                No tracking yet
-                              </Typography>
-                            )}
-                          </Box>
-
                           <Box sx={{ pr: 1.5 }}>
                             <Button
                               size="small"
@@ -941,29 +915,60 @@ export default function Dashboard({ products, setProducts, customerId }) {
                             </Button>
                           </Box>
                         </Box>
-                      ))
-                    )}
+                          ))
+                        )}
+                      </Box>
+                    </Box>
 
                     {/* Closed Auction Results */}
-                    <Typography variant="h6" sx={{ margin: '0 0 0 10px', fontWeight: 700 }}>
-                      Closed Auctions ({sellerAuctions.filter((a) => !a.isActive).length})
-                    </Typography>
-                    {sellerAuctions.filter((a) => !a.isActive).length === 0 ? (
-                      <Typography sx={{ color: 'text.secondary' }}>No closed auctions yet.</Typography>
-                    ) : (
-                      sellerAuctions
-                        .filter((a) => !a.isActive)
-                        .map((auction) => (
+                    <Box
+                      sx={{
+                        flex: 1,
+                        minWidth: 0,
+                        border: '1px solid',
+                        borderColor: (theme) => theme.palette.primary.dark,
+                        borderRadius: 1,
+                        overflow: 'hidden',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        minHeight: 0,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          px: 1.5,
+                          py: 1,
+                          borderBottom: '1px solid',
+                          borderColor: 'divider',
+                          backgroundColor: 'rgba(255,255,255,0.03)',
+                        }}
+                      >
+                        <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                          Closed Auctions ({closedSellerAuctions.length})
+                        </Typography>
+                      </Box>
+
+                      <Box
+                        sx={{
+                          p: 1,
+                          overflowY: 'auto',
+                          overflowX: 'hidden',
+                          maxHeight: { xs: '44vh', md: 'calc(100vh - 275px)' },
+                        }}
+                      >
+                        {closedSellerAuctions.length === 0 ? (
+                          <Typography sx={{ color: 'text.secondary', px: 0.5 }}>No closed auctions yet.</Typography>
+                        ) : (
+                          closedSellerAuctions.map((auction) => (
                           <Box
                             key={auction.id}
                             sx={{
                               width: '100%',
+                              minWidth: 0,
                               display: 'grid',
                               gridTemplateColumns: {
-                                xs: '60px 1fr auto',
-                                sm: '80px 1fr auto',
-                                md: '80px minmax(0, 1fr) 160px 200px auto',
-                                lg: '80px minmax(0, 1fr) 200px 260px auto',
+                                xs: '60px minmax(0, 1fr) auto',
+                                sm: '80px minmax(0, 1fr) auto',
                               },
                               alignItems: 'center',
                               border: '1px solid',
@@ -990,7 +995,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
                                 }}
                               />
                             )}
-                            <Box sx={{ px: 1.5, overflow: 'hidden' }}>
+                            <Box sx={{ px: 1.5, overflow: 'hidden', minWidth: 0 }}>
                               <Typography
                                 fontWeight={700}
                                 sx={{
@@ -1005,7 +1010,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
                               </Typography>
 
                               {/* Mobile / small-screen details */}
-                              <Box sx={{ display: { xs: 'block', md: 'none' } }}>
+                              <Box sx={{ display: 'block' }}>
                                 <Typography
                                   variant="body2"
                                   sx={{ color: 'text.secondary', fontSize: '.75rem', textAlign: 'left' }}
@@ -1043,59 +1048,6 @@ export default function Dashboard({ products, setProducts, customerId }) {
                               </Box>
                             </Box>
 
-                            {/* Desktop columns */}
-                            <Box sx={{ display: { xs: 'none', md: 'block' }, px: 1.5 }}>
-                              <Typography
-                                variant="body2"
-                                sx={{ color: 'text.secondary', fontSize: '.8rem', textAlign: 'left' }}
-                              >
-                                Final bid
-                              </Typography>
-                              <Typography
-                                variant="body2"
-                                sx={{ color: 'text.secondary', fontSize: '.8rem', textAlign: 'left' }}
-                              >
-                                ${Number(auction.finalBid || auction.currentBid || auction.startPrice).toLocaleString()}
-                              </Typography>
-                            </Box>
-
-                            <Box sx={{ display: { xs: 'none', md: 'block' }, px: 1.5, overflow: 'hidden' }}>
-                              {auction.trackingNumber ? (
-                                (() => {
-                                  const tr = getTrackingUrl(auction.trackingNumber);
-                                  return (
-                                    <Typography
-                                      variant="body2"
-                                      sx={{
-                                        fontSize: '.8rem',
-                                        textAlign: 'left',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap',
-                                      }}
-                                    >
-                                      📦{tr.carrier ? ` ${tr.carrier}: ` : ' '}
-                                      <a
-                                        href={tr.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        style={{ color: 'inherit' }}
-                                      >
-                                        {auction.trackingNumber}
-                                      </a>
-                                    </Typography>
-                                  );
-                                })()
-                              ) : (
-                                <Typography
-                                  variant="body2"
-                                  sx={{ fontSize: '.8rem', color: 'text.secondary', textAlign: 'left' }}
-                                >
-                                  No tracking yet
-                                </Typography>
-                              )}
-                            </Box>
-
                             <Box sx={{ pr: 1.5 }}>
                               <Button
                                 size="small"
@@ -1107,8 +1059,10 @@ export default function Dashboard({ products, setProducts, customerId }) {
                               </Button>
                             </Box>
                           </Box>
-                        ))
-                    )}
+                          ))
+                        )}
+                      </Box>
+                    </Box>
                   </>
                 )}
               </div>
@@ -1171,7 +1125,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
                             Closed Auctions:
                           </Typography>
                           <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'right' }}>
-                            {sellerAuctions.filter((a) => !a.isActive).length}
+                            {closedSellerAuctions.length}
                           </Typography>
                         </Box>
 
