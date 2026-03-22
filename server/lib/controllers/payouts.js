@@ -1,10 +1,11 @@
 const { Router } = require('express');
+const authorizeSubscription = require('../middleware/authorizeSubscription');
 const adminIdCheck = require('../middleware/adminIdCheck');
 const Payout = require('../models/Payout');
 
 module.exports = Router()
   // GET /api/v1/payouts/summary — admin: all sellers with pending balances
-  .get('/summary', [adminIdCheck], async (req, res, next) => {
+  .get('/summary', [authorizeSubscription, adminIdCheck], async (req, res, next) => {
     try {
       const summaries = await Payout.getSellerSummaries();
       res.json(summaries);
@@ -14,7 +15,7 @@ module.exports = Router()
   })
 
   // GET /api/v1/payouts — admin: full payout history
-  .get('/', [adminIdCheck], async (req, res, next) => {
+  .get('/', [authorizeSubscription, adminIdCheck], async (req, res, next) => {
     try {
       const history = await Payout.getPayoutHistory();
       res.json(history);
@@ -24,7 +25,7 @@ module.exports = Router()
   })
 
   // POST /api/v1/payouts — admin: record a payout to a seller
-  .post('/', [adminIdCheck], async (req, res, next) => {
+  .post('/', [authorizeSubscription, adminIdCheck], async (req, res, next) => {
     try {
       const { sellerSub, amount, periodStart, periodEnd, notes } = req.body;
 
