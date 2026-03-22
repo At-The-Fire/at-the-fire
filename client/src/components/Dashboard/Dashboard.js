@@ -35,6 +35,7 @@ import { useAuthStore } from '../../stores/useAuthStore.js';
 import { getSellerAuctions, updateAuctionTracking } from '../../services/fetch-auctions.js';
 import { useAuctionEventsStore } from '../../stores/useAuctionEventsStore.js';
 import { getSellerPurchases, updatePurchaseTracking } from '../../services/fetch-purchases.js';
+import { getMyEarnings } from '../../services/fetch-payouts.js';
 import TrackingModal from '../shared/TrackingModal.js';
 import { getTrackingUrl } from '../../utils/tracking.js';
 const logo = require('../../assets/logo-icon-6.png');
@@ -70,6 +71,10 @@ export default function Dashboard({ products, setProducts, customerId }) {
   const [salesLoading, setSalesLoading] = useState(false);
   const [trackingModal, setTrackingModal] = useState({ open: false, type: null, id: null });
   const [trackingLoading, setTrackingLoading] = useState(false);
+
+  // Earnings state
+  const [earnings, setEarnings] = useState(null);
+  const [earningsLoading, setEarningsLoading] = useState(false);
 
   const dashboardToggleButtonGroupSx = {
     '& .MuiToggleButton-root': {
@@ -293,6 +298,15 @@ export default function Dashboard({ products, setProducts, customerId }) {
   };
 
   useEffect(() => {
+    if (dashboardView !== 'earnings') return;
+    setEarningsLoading(true);
+    getMyEarnings()
+      .then((data) => setEarnings(data))
+      .catch(() => toast.error('Failed to load earnings'))
+      .finally(() => setEarningsLoading(false));
+  }, [dashboardView]);
+
+  useEffect(() => {
     if (dashboardView !== 'auctions' || !user) return;
     setAuctionsLoading(true);
     getSellerAuctions()
@@ -453,6 +467,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
                 Sales
               </Badge>
             </ToggleButton>
+            <ToggleButton value="earnings">Earnings</ToggleButton>
           </ToggleButtonGroup>
         </Box>
 
@@ -754,6 +769,8 @@ export default function Dashboard({ products, setProducts, customerId }) {
                   maxWidth: '100%',
                   marginTop: '1rem',
                   overflowX: 'hidden',
+                  overflowY: 'auto',
+                  maxHeight: 'calc(100vh - 220px)',
                 }}
               >
                 {salesLoading ? (
@@ -1180,6 +1197,98 @@ export default function Dashboard({ products, setProducts, customerId }) {
               loading={trackingLoading}
             />
           </>
+        )}
+
+        {/* Earnings view */}
+        {dashboardView === 'earnings' && (
+          <Box
+            sx={{
+              borderWidth: '1px',
+              borderStyle: 'solid',
+              borderColor: (theme) => theme.palette.primary.dark,
+              boxSizing: 'border-box',
+              width: '100%',
+              maxWidth: '100%',
+              padding: 2,
+              transform: 'translate(0px, -5%)',
+            }}
+          >
+            {earningsLoading && <Typography>Loading earnings...</Typography>}
+            {!earningsLoading && !earnings && (
+              <Typography sx={{ color: 'text.secondary' }}>No earnings data yet.</Typography>
+            )}
+            {!earningsLoading && earnings && (
+              <>
+                {/* Summary cards */}
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '1fr 1fr', sm: '1fr 1fr' },
+                    gap: 2,
+                    mb: 3,
+                    maxWidth: { sm: '480px' },
+                  }}
+                >
+                  <Box sx={{ p: 2, border: '1px solid', borderColor: 'warning.main', borderRadius: 1 }}>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', mb: 0.5 }}>
+                      Pending Payout
+                    </Typography>
+                    <Typography variant="h6" sx={{ color: 'warning.main', fontWeight: 700 }}>
+                      ${Number(earnings.pendingBalance || 0).toFixed(2)}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ p: 2, border: '1px solid', borderColor: 'success.main', borderRadius: 1 }}>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', mb: 0.5 }}>
+                      Total Paid Out
+                    </Typography>
+                    <Typography variant="h6" sx={{ color: 'success.main', fontWeight: 700 }}>
+                      ${Number(earnings.totalPaidOut || 0).toFixed(2)}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                {/* Payout history */}
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
+                  Payout History
+                </Typography>
+                {earnings.payouts.length === 0 && (
+                  <Typography sx={{ color: 'text.secondary' }}>No payouts recorded yet.</Typography>
+                )}
+                {earnings.payouts.length > 0 && (
+                  <Box sx={{ overflowY: 'auto', maxHeight: 'calc(100vh - 420px)' }}>
+                    {earnings.payouts.map((p) => (
+                      <Box
+                        key={p.id}
+                        sx={{
+                          display: 'grid',
+                          gridTemplateColumns: { xs: '1fr 1fr', sm: '1fr 1fr 2fr' },
+                          gap: 1,
+                          p: 1.5,
+                          mb: 1,
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          borderRadius: 1,
+                          backgroundColor: 'rgba(255,255,255,0.05)',
+                        }}
+                      >
+                        <Typography variant="body2">{new Date(p.created_at).toLocaleDateString()}</Typography>
+                        <Typography variant="body2" sx={{ color: 'success.main', fontWeight: 700 }}>
+                          ${Number(p.amount).toFixed(2)}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                          {p.notes || '—'}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                )}
+
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 2 }}>
+                  Platform fee of 10% is deducted from item price (not shipping). Payouts are processed manually.
+                </Typography>
+              </>
+            )}
+          </Box>
         )}
 
         {/* Posts view — only render when dashboardView === 'posts' */}
