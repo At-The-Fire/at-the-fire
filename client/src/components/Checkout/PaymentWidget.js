@@ -3,7 +3,7 @@ import { Box, Button, TextField, Typography } from '@mui/material';
 import { createPaymentIntent } from '../../services/fetch-purchases.js';
 
 // Phase 3: replace internals with payment processor SDK
-export default function PaymentWidget({ amount, items, onSuccess, onError }) {
+export default function PaymentWidget({ amount, items, onSuccess, onError, disabled = false }) {
   const [submitting, setSubmitting] = useState(false);
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
@@ -163,11 +163,16 @@ export default function PaymentWidget({ amount, items, onSuccess, onError }) {
         </Box>
       </Box>
 
+      {disabled && (
+        <Typography variant="caption" sx={{ display: 'block', mt: 1.5, color: 'text.secondary' }}>
+          Complete your shipping address above to place your order.
+        </Typography>
+      )}
       <Button
         variant="contained"
-        sx={{ mt: 2 }}
+        sx={{ mt: 1 }}
         onClick={handlePlaceOrder}
-        disabled={submitting || !items?.length || amount <= 0}
+        disabled={submitting || !items?.length || amount <= 0 || disabled}
       >
         {submitting ? 'Placing order…' : 'Place order'}
       </Button>
