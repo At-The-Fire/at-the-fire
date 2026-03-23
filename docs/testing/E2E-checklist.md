@@ -148,11 +148,16 @@
 - [ ] Buy It Now
   - [ ] Purchase at buy-it-now price
   - [ ] Verify auction closes immediately
-  - [ ] Verify purchase appears in buyer's purchases
   - [ ] Verify a congratulations message appears in the messaging system from the seller
   - [ ] Buyer receives "You won!" success toast in real-time (on-site, no page refresh needed)
   - [ ] _Messages_ badge increments immediately in the avatar menu — does not require navigating away and back
   - [ ] Avatar badge reflects updated combined total (messages + won + outbid)
+  - [ ] "Pay Now" button is visible on the won auction card (red button, not just a "Payment Needed" label)
+  - [ ] Click "Pay Now" — verify it navigates to the checkout page with correct item title and final bid amount
+  - [ ] Shipping address form is present and required fields are enforced (same as gallery checkout)
+  - [ ] Complete checkout with valid address — verify redirect to /my-purchases
+  - [ ] Won auction card in /my-purchases shows "Paid" status after payment
+  - [ ] Seller (USER1) navigates to Dashboard → Sales tab — verify winner's shipping address is visible on the closed auction row
 - [ ] Outbid notification (buyer)
   - [ ] Warning toast appears if on-site when outbid
   - [ ] _Purchases_ menu shows orange "N outbid" count on next login if offline when outbid
@@ -163,6 +168,8 @@
   - [ ] Avatar badge shows combined total (messages + won + outbid)
   - [ ] Badge clears on navigating to _My Purchases_
   - [ ] Verify a congratulations message appears in the messaging system from the seller
+  - [ ] "Pay Now" button is visible on the won auction card — navigate to checkout, complete payment with address
+  - [ ] After payment, won auction card shows "Paid" status
 - [ ] Auction end — seller (BIN notification breadcrumb trail)
   - > **Claude Code note:** All five indicators below are driven by the same `pendingShipmentsCount` store value. Test them together in a single BIN flow: trigger BIN as USER2, then immediately inspect all five as USER1 without navigating away. They should all light up simultaneously. Then enter a tracking number and verify they all clear.
   - [ ] "Your auction sold!" success toast appears in real-time (on-site) — toast text directs seller to "Dashboard → Sales to enter tracking"
@@ -201,10 +208,25 @@
   - [ ] Verify order summary shows correct item, quantity, and total
   - [ ] Verify shipping cost appears as a line item in order summary (when > $0)
   - [ ] Verify total = item price × quantity + shipping
-  - [ ] Complete checkout (placeholder processor — any card details will succeed)
+  - [ ] Shipping address form is visible below the order summary
+    - [ ] Full Name, Address Line 1, City, State, ZIP fields are present and required
+    - [ ] Address Line 2 and Country fields are present and optional
+    - [ ] Place Order button is disabled while any required address field is empty
+    - [ ] Helper text "Complete your shipping address above to place your order" is visible while disabled
+  - [ ] Attempt to submit with a required address field empty
+    - [ ] `toast.warn` appears identifying the missing field (e.g. "Full name is required", "City is required")
+    - [ ] Order is NOT placed — user remains on checkout page
+  - [ ] Fill in all required address fields — verify Place Order button becomes enabled
+  - [ ] Complete checkout with valid address (placeholder processor — any card details will succeed)
   - [ ] Verify redirect to /my-purchases with new purchase visible
   - [ ] Verify inventory decremented after purchase
   - [ ] Verify purchase record created
+- [ ] Seller sees buyer's shipping address **[two-user: USER2 buys from USER1]**
+  - [ ] Sign in as USER2, complete a Buy Now purchase using a recognizable address (e.g. "123 Test St, Portland, OR 97201")
+  - [ ] Sign in as USER1, navigate to Dashboard → Sales tab
+  - [ ] Locate the sale row for the item USER2 just purchased
+  - [ ] Verify the buyer's address is displayed on the row: full name, street, city, state, ZIP
+  - [ ] Verify the address shown matches what USER2 entered at checkout (correct name, correct city/state/ZIP)
 - [ ] Navigate to /checkout directly (no item state)
   - [ ] Verify "Nothing to purchase" message is shown with Browse Gallery button
 - [ ] Failed checkout
