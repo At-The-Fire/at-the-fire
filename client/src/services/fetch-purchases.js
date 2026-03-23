@@ -89,7 +89,7 @@ export async function updatePurchaseTracking(purchaseId, trackingNumber) {
   }
 }
 
-export async function confirmPurchase(intentId, items, payment = null) {
+export async function confirmPurchase(intentId, items, payment = null, shippingAddress = null) {
   try {
     const normalizedItems = (items || []).map((i) => ({
       postId: i.postId,
@@ -102,7 +102,7 @@ export async function confirmPurchase(intentId, items, payment = null) {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ intentId, items: normalizedItems, payment }),
+      body: JSON.stringify({ intentId, items: normalizedItems, payment, shippingAddress }),
       credentials: 'include',
     });
 
@@ -115,6 +115,42 @@ export async function confirmPurchase(intentId, items, payment = null) {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Error confirming purchase:', error);
+    throw error;
+  }
+}
+
+export async function createAuctionPaymentIntent(auctionId) {
+  try {
+    const resp = await fetch(`${BASE_URL}/api/v1/purchases/auction-intent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ auctionId }),
+      credentials: 'include',
+    });
+    const data = await resp.json();
+    if (resp.ok) return data;
+    throw new Error(data.error || data.message || 'Failed to create auction payment intent');
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Error creating auction payment intent:', error);
+    throw error;
+  }
+}
+
+export async function confirmAuctionPurchase(intentId, auctionId, payment = null, shippingAddress = null) {
+  try {
+    const resp = await fetch(`${BASE_URL}/api/v1/purchases/auction-confirm`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ intentId, auctionId, payment, shippingAddress }),
+      credentials: 'include',
+    });
+    const data = await resp.json();
+    if (resp.ok) return data;
+    throw new Error(data.error || data.message || 'Failed to confirm auction purchase');
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Error confirming auction purchase:', error);
     throw error;
   }
 }
