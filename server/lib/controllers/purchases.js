@@ -40,12 +40,17 @@ module.exports = Router()
     let capturedTransactionId = null;
     let transactionStarted = false;
     try {
-      const { intentId, items } = req.body;
+      const { intentId, items, shippingAddress } = req.body;
       const payment = req.body?.payment;
       const buyerSub = req.userAWSSub;
 
       if (!intentId || !items || !Array.isArray(items)) {
         return res.status(400).json({ error: 'intentId and items are required' });
+      }
+
+      if (!shippingAddress || !shippingAddress.fullName || !shippingAddress.line1 ||
+          !shippingAddress.city || !shippingAddress.state || !shippingAddress.zip) {
+        return res.status(400).json({ error: 'Shipping address is required (fullName, line1, city, state, zip)' });
       }
 
       const normalizedItems = items.map((item) => ({
@@ -127,6 +132,7 @@ module.exports = Router()
           platformFee: item.platformFee,
           sellerNet: item.sellerNet,
           processorTransactionId: capturedTransactionId,
+          shippingAddress,
         }, client);
 
         purchaseIds.push(purchase.id);
@@ -215,12 +221,17 @@ module.exports = Router()
     let capturedTransactionId = null;
     let transactionStarted = false;
     try {
-      const { intentId, auctionId } = req.body;
+      const { intentId, auctionId, shippingAddress } = req.body;
       const payment = req.body?.payment;
       const buyerSub = req.userAWSSub;
 
       if (!intentId || !auctionId) {
         return res.status(400).json({ error: 'intentId and auctionId are required' });
+      }
+
+      if (!shippingAddress || !shippingAddress.fullName || !shippingAddress.line1 ||
+          !shippingAddress.city || !shippingAddress.state || !shippingAddress.zip) {
+        return res.status(400).json({ error: 'Shipping address is required (fullName, line1, city, state, zip)' });
       }
 
       const auctionData = await Auction.getResultForPayment(auctionId);
@@ -262,6 +273,7 @@ module.exports = Router()
         platformFee,
         sellerNet,
         processorTransactionId: capturedTransactionId,
+        shippingAddress,
       }, client);
 
       await client.query('COMMIT');
