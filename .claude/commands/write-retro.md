@@ -8,6 +8,7 @@ Write my development retrospective and append it to my Google Doc. Covers today 
 - Do not invent work.
 - Output MUST match the template exactly — including bold formatting.
 - All dates in America/Los_Angeles timezone.
+- **NO emoji, icons, decorative characters, or special Unicode symbols of any kind.** Plain ASCII text only in all fields. The em dash (—) and straight quotes are fine. Nothing else decorative. This means no arrows, bullets, checkmarks, diamonds, or any other symbols — ever.
 
 ## Retro Template
 
@@ -74,7 +75,7 @@ curl -s -X POST "https://script.google.com/macros/s/AKfycbxYExf4CdPqrzCpxu1v5cpe
 
 Requirements:
 
-- `date`: single date (MM/DD/YY) or range (MM/DD/YY – MM/DD/YY) depending on commits
+- `date`: single date (MM/DD/YY) or range (MM/DD/YY - MM/DD/YY) depending on commits. Use a plain hyphen-minus for the range separator in the JSON — do NOT use a Unicode em dash or any escape sequence like \u2013.
 - `branch`: what actually happened — e.g. "dev branch", "feature/foo merged", "dev branch — active development period (no merges to main)". Only use action words (created/merged/deleted) if that event actually occurred.
 - `notes`: narrative summary of the period, not a list. Mention if it's a catch-up entry.
 - `client`: array of front end contribution strings (omit bullet dashes, the script adds them)
