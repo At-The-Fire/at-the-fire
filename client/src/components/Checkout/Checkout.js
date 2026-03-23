@@ -1,7 +1,7 @@
 import { Box, Button, Divider, TextField, Typography } from '@mui/material';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
-import { confirmPurchase } from '../../services/fetch-purchases.js';
+import { confirmPurchase, confirmAuctionPurchase, createAuctionPaymentIntent } from '../../services/fetch-purchases.js';
 import PaymentWidget from './PaymentWidget.js';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '../../context/QueryContext.js';
@@ -67,7 +67,11 @@ export default function Checkout() {
         zip: address.zip.trim(),
         country: address.country.trim() || 'US',
       };
-      await confirmPurchase(intentId, [item], payment, shippingAddress);
+      if (item.itemType === 'auction') {
+        await confirmAuctionPurchase(intentId, item.auctionId, payment, shippingAddress);
+      } else {
+        await confirmPurchase(intentId, [item], payment, shippingAddress);
+      }
       setNewPostCreated((prev) => !prev);
       toast.success('Order placed successfully!', {
         theme: 'colored',
@@ -213,6 +217,7 @@ export default function Checkout() {
         onSuccess={handleSuccess}
         onError={handleError}
         disabled={!addressFilled}
+        createIntent={item.itemType === 'auction' ? () => createAuctionPaymentIntent(item.auctionId) : undefined}
       />
     </Box>
   );
