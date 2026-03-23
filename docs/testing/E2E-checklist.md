@@ -170,6 +170,11 @@
   - [ ] Verify a congratulations message appears in the messaging system from the seller
   - [ ] "Pay Now" button is visible on the won auction card — navigate to checkout, complete payment with address
   - [ ] After payment, won auction card shows "Paid" status
+- [ ] Seller sees buyer's shipping address after timed auction win **[two-user: manual only]**
+  > **Claude Code: SKIP — timed auction expiry cannot be reliably triggered in Playwright. Test manually: USER2 wins a naturally-expired auction, pays, then verify USER1 sees the shipping address in Dashboard → Sales tab.**
+  - [ ] USER2 completes checkout with a recognizable address (e.g. "456 Timer St, Seattle, WA 98101") after a naturally-expired auction
+  - [ ] USER1 navigates to Dashboard → Sales tab
+  - [ ] Verify winner's shipping address is visible on the closed auction row (matches what USER2 entered)
 - [ ] Auction end — seller (BIN notification breadcrumb trail)
   - > **Claude Code note:** All five indicators below are driven by the same `pendingShipmentsCount` store value. Test them together in a single BIN flow: trigger BIN as USER2, then immediately inspect all five as USER1 without navigating away. They should all light up simultaneously. Then enter a tracking number and verify they all clear.
   - [ ] "Your auction sold!" success toast appears in real-time (on-site) — toast text directs seller to "Dashboard → Sales to enter tracking"
