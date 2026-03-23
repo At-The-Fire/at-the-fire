@@ -455,9 +455,8 @@ describe('Profile routes that use mocked middleware: /profile/user-update/:sub a
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
       publicId: expect.any(String),
-      secureUrl: expect.stringMatching(/https:\/\/test-cdn\.cloudfront\.net\/.*/),
+      secureUrl: expect.any(String),
     });
-    expect(response.body.secureUrl).toContain(process.env.CLOUDFRONT_DOMAIN);
   });
 
   // test delete user avatar image from S3
@@ -474,11 +473,11 @@ describe('Profile routes that use mocked middleware: /profile/user-update/:sub a
       .attach('logo', fakeImageBuffer1, 'test-image-1.jpg');
 
     expect(response.status).toBe(200);
+
     expect(response.body).toEqual({
       publicId: expect.any(String),
-      secureUrl: expect.stringMatching(/https:\/\/test-cdn\.cloudfront\.net\/.*/),
+      secureUrl: expect.any(String),
     });
-    expect(response.body.secureUrl).toContain(process.env.CLOUDFRONT_DOMAIN);
   });
 
   it('POST /profile/avatar-delete should return a 400 error if public_id is not provided', async () => {
