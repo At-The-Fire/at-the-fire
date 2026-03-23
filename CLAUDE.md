@@ -75,6 +75,14 @@ Client tests are **not** in CI — only server tests run automatically.
 
 **Always save project files inside this repository.** Plans, documentation, notes, and any other files created during work on this project belong inside this repo (e.g. `docs/`). Never write project-related files to `~/.claude/plans/`, `~/.claude/projects/`, or any path outside this repository.
 
+## Payment Architecture — Critical
+
+**Stripe is used exclusively for subscription billing. It is never used for product sales or auctions.**
+
+The platform sells glass pipes, which are a high-risk product category prohibited by Stripe's terms of service for transactional payments. All sales and auction payments use a separate high-risk merchant processor. SoarPay is the planned processor (`server/lib/services/payments/soarPayAdapter.js`). The payment service abstraction (`server/lib/services/paymentService.js`) is the only file that changes when the real merchant account is approved — swap `PAYMENTS_ADAPTER=soarpay` and implement the adapter.
+
+Do not suggest Stripe, Stripe Connect, or any Stripe product for anything related to marketplace sales, auctions, checkout, or seller payouts. Stripe = subscriptions only, full stop.
+
 ## Key Architectural Decisions
 
 - **No shared code** between client and server — they communicate only via HTTP (`/api/v1/`) and WebSocket.
