@@ -10,13 +10,16 @@ import {
   Badge,
   Box,
   Button,
+  IconButton,
   List,
   ListItem,
   ToggleButton,
   ToggleButtonGroup,
+  Tooltip,
   Typography,
   useMediaQuery,
 } from '@mui/material';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { fetchStripeCustomerPortal } from '../../services/stripe.js';
 import useLoadingState from '../../context/LoadingContext.js';
 import Inventory from '../Inventory/Inventory.js';
@@ -71,6 +74,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
   const [salesLoading, setSalesLoading] = useState(false);
   const [trackingModal, setTrackingModal] = useState({ open: false, type: null, id: null });
   const [trackingLoading, setTrackingLoading] = useState(false);
+  const [copiedId, setCopiedId] = useState(null);
 
   // Earnings state
   const [earnings, setEarnings] = useState(null);
@@ -903,15 +907,32 @@ export default function Dashboard({ products, setProducts, customerId }) {
                                     </Typography>
                                   )}
                                   {sale.shippingAddress && (
-                                    <Typography
-                                      variant="body2"
-                                      sx={{ fontSize: '.7rem', color: 'text.secondary', textAlign: 'left', mt: 0.25 }}
-                                    >
-                                      {sale.shippingAddress.fullName}, {sale.shippingAddress.line1}
-                                      {sale.shippingAddress.line2 ? `, ${sale.shippingAddress.line2}` : ''},{' '}
-                                      {sale.shippingAddress.city}, {sale.shippingAddress.state}{' '}
-                                      {sale.shippingAddress.zip}
-                                    </Typography>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
+                                      <Typography
+                                        variant="body2"
+                                        sx={{ fontSize: '.7rem', color: 'text.secondary', textAlign: 'left' }}
+                                      >
+                                        {sale.shippingAddress.fullName}, {sale.shippingAddress.line1}
+                                        {sale.shippingAddress.line2 ? `, ${sale.shippingAddress.line2}` : ''},{' '}
+                                        {sale.shippingAddress.city}, {sale.shippingAddress.state}{' '}
+                                        {sale.shippingAddress.zip}
+                                      </Typography>
+                                      <Tooltip title={copiedId === `sale-${sale.id}` ? 'Copied!' : 'Copy address'}>
+                                        <IconButton
+                                          size="small"
+                                          onClick={() => {
+                                            const a = sale.shippingAddress;
+                                            const text = [a.fullName, a.line1, a.line2, `${a.city}, ${a.state} ${a.zip}`].filter(Boolean).join('\n');
+                                            navigator.clipboard.writeText(text);
+                                            setCopiedId(`sale-${sale.id}`);
+                                            setTimeout(() => setCopiedId(null), 2000);
+                                          }}
+                                          sx={{ p: 0.25 }}
+                                        >
+                                          <ContentCopyIcon sx={{ fontSize: '0.85rem' }} />
+                                        </IconButton>
+                                      </Tooltip>
+                                    </Box>
                                   )}
                                 </Box>
                               </Box>
@@ -1057,17 +1078,34 @@ export default function Dashboard({ products, setProducts, customerId }) {
                                     </Typography>
                                   )}
                                   {auction.winnerShippingAddress && (
-                                    <Typography
-                                      variant="body2"
-                                      sx={{ fontSize: '.7rem', color: 'text.secondary', textAlign: 'left', mt: 0.25 }}
-                                    >
-                                      {auction.winnerShippingAddress.fullName}, {auction.winnerShippingAddress.line1}
-                                      {auction.winnerShippingAddress.line2
-                                        ? `, ${auction.winnerShippingAddress.line2}`
-                                        : ''}
-                                      , {auction.winnerShippingAddress.city}, {auction.winnerShippingAddress.state}{' '}
-                                      {auction.winnerShippingAddress.zip}
-                                    </Typography>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.25 }}>
+                                      <Typography
+                                        variant="body2"
+                                        sx={{ fontSize: '.7rem', color: 'text.secondary', textAlign: 'left' }}
+                                      >
+                                        {auction.winnerShippingAddress.fullName}, {auction.winnerShippingAddress.line1}
+                                        {auction.winnerShippingAddress.line2
+                                          ? `, ${auction.winnerShippingAddress.line2}`
+                                          : ''}
+                                        , {auction.winnerShippingAddress.city}, {auction.winnerShippingAddress.state}{' '}
+                                        {auction.winnerShippingAddress.zip}
+                                      </Typography>
+                                      <Tooltip title={copiedId === `auction-${auction.id}` ? 'Copied!' : 'Copy address'}>
+                                        <IconButton
+                                          size="small"
+                                          onClick={() => {
+                                            const a = auction.winnerShippingAddress;
+                                            const text = [a.fullName, a.line1, a.line2, `${a.city}, ${a.state} ${a.zip}`].filter(Boolean).join('\n');
+                                            navigator.clipboard.writeText(text);
+                                            setCopiedId(`auction-${auction.id}`);
+                                            setTimeout(() => setCopiedId(null), 2000);
+                                          }}
+                                          sx={{ p: 0.25 }}
+                                        >
+                                          <ContentCopyIcon sx={{ fontSize: '0.85rem' }} />
+                                        </IconButton>
+                                      </Tooltip>
+                                    </Box>
                                   )}
                                 </Box>
                               </Box>
