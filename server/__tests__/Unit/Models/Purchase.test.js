@@ -1,7 +1,12 @@
 jest.mock('../../../lib/utils/pool');
+jest.mock('../../../lib/services/encryption', () => ({
+  encrypt: jest.fn((text) => `encrypted:${text}`),
+  decrypt: jest.fn((text) => (text ? text.replace(/^encrypted:/, '') : null)),
+}));
 
 const Purchase = require('../../../lib/models/Purchase.js');
 const pool = require('../../../lib/utils/pool.js');
+const { encrypt, decrypt } = require('../../../lib/services/encryption');
 
 describe('Purchase Model', () => {
   beforeEach(() => {
@@ -39,13 +44,35 @@ describe('Purchase Model', () => {
     expect(purchase.platformFee).toBe('2.10');
     expect(purchase.sellerNet).toBe('47.88');
     expect(purchase.createdAt).toBe('2024-01-01T00:00:00Z');
+    expect(purchase.shippingAddress).toBeNull();
+  });
+
+  it('decrypts shipping_address from a row', () => {
+    const addr = { fullName: 'Jane Smith', line1: '123 Main St', city: 'Portland', state: 'OR', zip: '97201', country: 'US' };
+    const row = {
+      id: 2,
+      buyer_sub: 'sub_123',
+      seller_sub: 'seller_sub_123',
+      item_type: 'gallery_post',
+      item_id: 10,
+      quantity: 1,
+      amount_paid: '50.00',
+      status: 'completed',
+      created_at: '2024-01-01T00:00:00Z',
+      shipping_address: `encrypted:${JSON.stringify(addr)}`,
+    };
+
+    const purchase = new Purchase(row);
+    expect(decrypt).toHaveBeenCalledWith(`encrypted:${JSON.stringify(addr)}`);
+    expect(purchase.shippingAddress).toEqual(addr);
   });
 
   describe('insertCompleted', () => {
-    it('inserts a completed purchase using the provided transaction client', async () => {
+    it('inserts a completed purchase with shipping address', async () => {
       const mockClient = {
         query: jest.fn().mockResolvedValueOnce({ rows: [{ id: 42 }] }),
       };
+      const addr = { fullName: 'Jane Smith', line1: '123 Main St', city: 'Portland', state: 'OR', zip: '97201', country: 'US' };
 
       const result = await Purchase.insertCompleted(
         {
@@ -59,14 +86,46 @@ describe('Purchase Model', () => {
           platformFee: 6,
           sellerNet: 194,
           processorTransactionId: 'pi_abc123',
+          shippingAddress: addr,
         },
         mockClient,
       );
 
       expect(result).toEqual({ id: 42 });
+      expect(encrypt).toHaveBeenCalledWith(JSON.stringify(addr));
       expect(mockClient.query).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO purchases'),
-        ['sub_123', 'seller_sub_123', 'auction', 77, 1, 200, 15, 6, 194, 'pi_abc123'],
+        ['sub_123', 'seller_sub_123', 'auction', 77, 1, 200, 15, 6, 194, 'pi_abc123', `encrypted:${JSON.stringify(addr)}`],
+      );
+    });
+
+    it('inserts a completed purchase with null shipping address', async () => {
+      const mockClient = {
+        query: jest.fn().mockResolvedValueOnce({ rows: [{ id: 43 }] }),
+      };
+
+      const result = await Purchase.insertCompleted(
+        {
+          buyerSub: 'sub_123',
+          sellerSub: 'seller_sub_123',
+          itemType: 'gallery_post',
+          itemId: 10,
+          quantity: 1,
+          amountPaid: 50,
+          shippingCost: 0,
+          platformFee: 5,
+          sellerNet: 45,
+          processorTransactionId: 'pi_xyz',
+          shippingAddress: null,
+        },
+        mockClient,
+      );
+
+      expect(result).toEqual({ id: 43 });
+      expect(encrypt).not.toHaveBeenCalled();
+      expect(mockClient.query).toHaveBeenCalledWith(
+        expect.stringContaining('INSERT INTO purchases'),
+        ['sub_123', 'seller_sub_123', 'gallery_post', 10, 1, 50, 0, 5, 45, 'pi_xyz', null],
       );
     });
   });

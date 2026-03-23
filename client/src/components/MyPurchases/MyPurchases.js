@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
   Box,
+  Button,
   Chip,
   CircularProgress,
   Divider,
@@ -106,6 +108,7 @@ function TrackingDisplay({ trackingNumber }) {
 }
 
 export default function MyPurchases() {
+  const navigate = useNavigate();
   const { user: sub } = useAuthStore();
   const markAllRead = useAuctionNotificationStore((s) => s.markAllRead);
   const [purchases, setPurchases] = useState([]);
@@ -362,12 +365,31 @@ export default function MyPurchases() {
                 <TableCell align="right">{formatCurrency(w.finalBid)}</TableCell>
                 <TableCell>{formatDate(w.closedAt)}</TableCell>
                 <TableCell>
-                  <Chip
-                    label={w.isPaid ? 'Paid' : 'Unpaid'}
-                    size="small"
-                    color={w.isPaid ? 'success' : 'warning'}
-                    variant="outlined"
-                  />
+                  {w.isPaid ? (
+                    <Chip label="Paid" size="small" color="success" variant="outlined" />
+                  ) : (
+                    <Button
+                      variant="contained"
+                      color="error"
+                      size="small"
+                      onClick={() =>
+                        navigate('/checkout', {
+                          state: {
+                            item: {
+                              itemType: 'auction',
+                              auctionId: w.auctionId,
+                              title: w.title || `Auction #${w.auctionId}`,
+                              price: w.finalBid,
+                              quantity: 1,
+                              shippingCost: w.shippingCost ?? 0,
+                            },
+                          },
+                        })
+                      }
+                    >
+                      Pay Now
+                    </Button>
+                  )}
                 </TableCell>
                 <TableCell>
                   <TrackingDisplay trackingNumber={w.trackingNumber} />

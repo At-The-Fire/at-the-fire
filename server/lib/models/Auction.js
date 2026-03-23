@@ -1,4 +1,5 @@
 const pool = require('../utils/pool');
+const { decrypt } = require('../services/encryption');
 
 module.exports = class Auction {
   id;
@@ -109,15 +110,21 @@ module.exports = class Auction {
     const { rows } = await pool.query(
       `
       SELECT a.*, ar.winner_sub, ar.final_bid, ar.closed_at, ar.closed_reason,
-             ar.is_paid, ar.tracking_number
+             ar.is_paid, ar.tracking_number, p.shipping_address
       FROM auctions a
       LEFT JOIN auction_results ar ON ar.auction_id = a.id
+      LEFT JOIN purchases p ON p.item_type = 'auction' AND p.item_id = a.id
       WHERE a.seller_sub = $1
       ORDER BY a.end_time DESC
       `,
       [sellerSub],
     );
-    return rows.map((row) => new Auction(row));
+    return rows.map((row) => {
+      const auction = new Auction(row);
+      const raw = row.shipping_address ? decrypt(row.shipping_address) : null;
+      auction.winnerShippingAddress = raw ? JSON.parse(raw) : null;
+      return auction;
+    });
   }
 
   static async getById(id) {
@@ -304,7 +311,7 @@ module.exports = class Auction {
   static async getUserAuctionWins(sub) {
     const { rows } = await pool.query(
       `
-SELECT ar.*, a.title, a.image_urls, a.buy_now_price
+SELECT ar.*, a.title, a.image_urls, a.buy_now_price, a.shipping_cost
 FROM auction_results ar
 JOIN auctions a ON ar.auction_id = a.id
 WHERE ar.winner_sub = $1
@@ -325,6 +332,7 @@ ORDER BY ar.closed_at DESC
       title: r.title,
       imageUrls: r.image_urls,
       buyNowPrice: r.buy_now_price,
+      shippingCost: Number(r.shipping_cost ?? 0),
       trackingNumber: r.tracking_number,
     }));
   }

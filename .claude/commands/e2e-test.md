@@ -126,6 +126,20 @@ A prioritized list of issues to address, grouped by severity:
 - 🟠 High (significant user impact)
 - 🟡 Medium (degraded experience)
 - 🟢 Low (minor or cosmetic)
+
+---
+
+## Manual Test Checklist
+
+Items skipped during this run that are testable by hand. Use this as your follow-up checklist after the automated session.
+
+Populate this table from the SKIPPED items above. Include only items that a human *can* test (real email, real Stripe, timed auction expiry, two-user flows requiring real wait times, etc.). Exclude permanently out-of-scope items (native mobile, etc.).
+
+| # | Section | Test | Prerequisites |
+|---|---------|------|---------------|
+| 1 | [Section] | - [ ] [Test description] | [e.g. "Needs real email inbox", "Requires auction to expire naturally"] |
+
+> If there are no manually-testable skipped items, write: *No manual follow-up required for this run.*
 ```
 
 ---

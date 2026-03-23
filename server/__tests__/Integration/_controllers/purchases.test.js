@@ -19,6 +19,15 @@ jest.mock('../../../lib/middleware/authenticateAWS.js', () => (req, res, next) =
   next();
 });
 
+const validAddress = {
+  fullName: 'Test Buyer',
+  line1: '123 Test St',
+  city: 'Portland',
+  state: 'OR',
+  zip: '97201',
+  country: 'US',
+};
+
 describe('Purchases routes', () => {
   let testPostId;
   let testAuctionId;
@@ -148,7 +157,7 @@ describe('Purchases routes', () => {
 
       const response = await request(app)
         .post('/api/v1/purchases/confirm')
-        .send({ intentId, items: [{ postId: testPostId, quantity: 2 }] });
+        .send({ intentId, items: [{ postId: testPostId, quantity: 2 }], shippingAddress: validAddress });
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('purchaseIds');
@@ -177,7 +186,7 @@ describe('Purchases routes', () => {
 
       await request(app)
         .post('/api/v1/purchases/confirm')
-        .send({ intentId, items: [{ postId: testPostId, quantity: 3 }] });
+        .send({ intentId, items: [{ postId: testPostId, quantity: 3 }], shippingAddress: validAddress });
 
       const { rows } = await pool.query('SELECT quantity FROM gallery_posts WHERE id = $1', [
         testPostId,
@@ -193,7 +202,7 @@ describe('Purchases routes', () => {
 
       await request(app)
         .post('/api/v1/purchases/confirm')
-        .send({ intentId, items: [{ postId: testPostId, quantity: 5 }] });
+        .send({ intentId, items: [{ postId: testPostId, quantity: 5 }], shippingAddress: validAddress });
 
       const { rows } = await pool.query('SELECT quantity, sold FROM gallery_posts WHERE id = $1', [
         testPostId,
@@ -240,6 +249,7 @@ describe('Purchases routes', () => {
             { postId: testPostId, quantity: 1 },
             { postId: secondPostId, quantity: 2 },
           ],
+          shippingAddress: validAddress,
         });
 
       expect(response.status).toBe(200);
@@ -274,10 +284,47 @@ describe('Purchases routes', () => {
       expect(response.body.error).toBe('intentId and items are required');
     });
 
+    it('returns 400 when shippingAddress is missing', async () => {
+      const intentId = await createIntent({ totalAmount: 2500, items: [{ postId: testPostId, quantity: 1 }] });
+
+      const response = await request(app)
+        .post('/api/v1/purchases/confirm')
+        .send({ intentId, items: [{ postId: testPostId, quantity: 1 }] });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toMatch(/Shipping address is required/);
+    });
+
+    it('returns 400 when shippingAddress is missing required fields', async () => {
+      const intentId = await createIntent({ totalAmount: 2500, items: [{ postId: testPostId, quantity: 1 }] });
+
+      const response = await request(app)
+        .post('/api/v1/purchases/confirm')
+        .send({ intentId, items: [{ postId: testPostId, quantity: 1 }], shippingAddress: { fullName: 'Test' } });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toMatch(/Shipping address is required/);
+    });
+
+    it('stores an encrypted shipping_address on the purchases row', async () => {
+      const intentId = await createIntent({ totalAmount: 2500, items: [{ postId: testPostId, quantity: 1 }] });
+
+      const response = await request(app)
+        .post('/api/v1/purchases/confirm')
+        .send({ intentId, items: [{ postId: testPostId, quantity: 1 }], shippingAddress: validAddress });
+
+      expect(response.status).toBe(200);
+      const { rows } = await pool.query('SELECT shipping_address FROM purchases WHERE id = $1', [response.body.purchaseIds[0]]);
+      expect(rows[0].shipping_address).not.toBeNull();
+      expect(typeof rows[0].shipping_address).toBe('string');
+      // Should be encrypted (not plain JSON)
+      expect(rows[0].shipping_address).not.toContain('Portland');
+    });
+
     it('returns 404 when post does not exist', async () => {
       const response = await request(app)
         .post('/api/v1/purchases/confirm')
-        .send({ intentId: 'pi_test123', items: [{ postId: 99999, quantity: 1 }] });
+        .send({ intentId: 'pi_test123', items: [{ postId: 99999, quantity: 1 }], shippingAddress: validAddress });
 
       expect(response.status).toBe(404);
       expect(response.body.error).toBe('Post 99999 not found');
@@ -398,7 +445,7 @@ describe('Purchases routes', () => {
 
       const response = await request(app)
         .post('/api/v1/purchases/auction-confirm')
-        .send({ intentId, auctionId: testAuctionId });
+        .send({ intentId, auctionId: testAuctionId, shippingAddress: validAddress });
 
       expect(response.status).toBe(200);
 
@@ -451,7 +498,7 @@ describe('Purchases routes', () => {
 
       const response = await request(app)
         .post('/api/v1/purchases/auction-confirm')
-        .send({ intentId, auctionId: testAuctionId });
+        .send({ intentId, auctionId: testAuctionId, shippingAddress: validAddress });
 
       expect(response.status).toBe(403);
       expect(response.body.error).toBe('Forbidden');
@@ -464,10 +511,41 @@ describe('Purchases routes', () => {
 
       const response = await request(app)
         .post('/api/v1/purchases/auction-confirm')
-        .send({ intentId: 'mock_pi_any', auctionId: testAuctionId });
+        .send({ intentId: 'mock_pi_any', auctionId: testAuctionId, shippingAddress: validAddress });
 
       expect(response.status).toBe(409);
       expect(response.body.error).toBe('Already paid');
+    });
+
+    it('returns 400 when shippingAddress is missing', async () => {
+      const intentResponse = await request(app)
+        .post('/api/v1/purchases/auction-intent')
+        .send({ auctionId: testAuctionId });
+      const intentId = intentResponse.body.intentId;
+
+      const response = await request(app)
+        .post('/api/v1/purchases/auction-confirm')
+        .send({ intentId, auctionId: testAuctionId });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toMatch(/Shipping address is required/);
+    });
+
+    it('stores an encrypted shipping_address on the auction purchases row', async () => {
+      const intentResponse = await request(app)
+        .post('/api/v1/purchases/auction-intent')
+        .send({ auctionId: testAuctionId });
+      const intentId = intentResponse.body.intentId;
+
+      const response = await request(app)
+        .post('/api/v1/purchases/auction-confirm')
+        .send({ intentId, auctionId: testAuctionId, shippingAddress: validAddress });
+
+      expect(response.status).toBe(200);
+      const { rows } = await pool.query('SELECT shipping_address FROM purchases WHERE id = $1', [response.body.purchaseId]);
+      expect(rows[0].shipping_address).not.toBeNull();
+      expect(typeof rows[0].shipping_address).toBe('string');
+      expect(rows[0].shipping_address).not.toContain('Portland');
     });
   });
 });
