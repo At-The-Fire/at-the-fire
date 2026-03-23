@@ -3,6 +3,7 @@ import './UserAuctions.css';
 import { getUserAuctions, getAuctionDetail } from '../../services/fetch-auctions.js';
 import { useNavigate } from 'react-router-dom';
 import { useAuctionEventsStore } from '../../stores/useAuctionEventsStore.js';
+import { Button } from '@mui/material';
 
 export default function UserAuctions({ userId }) {
   const [activeBids, setActiveBids] = useState([]);
@@ -126,18 +127,29 @@ export default function UserAuctions({ userId }) {
 
       <div className="auction-mini-info">
         {!auction.isPaid && (
-          <span
-            style={{
-              color: '#ff4444',
-              padding: '2px 6px',
-              borderRadius: '4px',
-              fontSize: '1rem',
-              fontWeight: 'bold',
-              marginRight: '3rem',
+          <Button
+            variant="contained"
+            color="error"
+            size="small"
+            sx={{ mb: 1 }}
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate('/checkout', {
+                state: {
+                  item: {
+                    itemType: 'auction',
+                    auctionId: auction.auctionId,
+                    title: auction.title || `Auction #${auction.auctionId}`,
+                    price: auction.finalBid,
+                    quantity: 1,
+                    shippingCost: auction.shippingCost ?? 0,
+                  },
+                },
+              });
             }}
           >
-            Payment Needed
-          </span>
+            Pay Now
+          </Button>
         )}
 
         <h4>{auction.title || `Auction #${auction.auctionId}`}</h4>
