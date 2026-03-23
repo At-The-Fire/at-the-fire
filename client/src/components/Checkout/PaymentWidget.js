@@ -3,7 +3,7 @@ import { Box, Button, TextField, Typography } from '@mui/material';
 import { createPaymentIntent } from '../../services/fetch-purchases.js';
 
 // Phase 3: replace internals with payment processor SDK
-export default function PaymentWidget({ amount, items, onSuccess, onError, disabled = false }) {
+export default function PaymentWidget({ amount, items, onSuccess, onError, disabled = false, createIntent }) {
   const [submitting, setSubmitting] = useState(false);
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
@@ -96,7 +96,8 @@ export default function PaymentWidget({ amount, items, onSuccess, onError, disab
     if (!validate()) return;
     try {
       setSubmitting(true);
-      const { intentId } = await createPaymentIntent(items);
+      const intentFn = createIntent ?? (() => createPaymentIntent(items));
+      const { intentId } = await intentFn();
       onSuccess(intentId, buildMockPayment());
     } catch (e) {
       onError(e);
