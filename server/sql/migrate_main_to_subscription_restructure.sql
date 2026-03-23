@@ -286,6 +286,13 @@ ALTER TABLE purchases
   ADD COLUMN IF NOT EXISTS payout_id    BIGINT  REFERENCES seller_payouts(id);
 
 
+-- ============================================================
+-- 16. purchases — add shipping address (encrypted PII)
+-- ============================================================
+ALTER TABLE purchases
+  ADD COLUMN IF NOT EXISTS shipping_address TEXT;
+
+
 COMMIT;
 
 -- ============================================================
