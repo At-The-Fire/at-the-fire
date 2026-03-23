@@ -275,6 +275,32 @@ module.exports = class Auction {
     }
   }
 
+  // Fetch the data needed to validate and price an auction payment.
+  static async getResultForPayment(auctionId) {
+    const { rows } = await pool.query(
+      `SELECT a.shipping_cost, a.seller_sub, ar.final_bid, ar.winner_sub, ar.is_paid
+       FROM auction_results ar
+       JOIN auctions a ON a.id = ar.auction_id
+       WHERE ar.auction_id = $1`,
+      [auctionId]
+    );
+    return rows[0] || null;
+  }
+
+  // Atomically mark auction_results as paid and record fee amounts.
+  // Idempotency guard: WHERE is_paid = FALSE prevents double-payment.
+  // Returns the updated row, or null if blocked (already paid or not found).
+  static async setIsPaidWithFees(auctionId, buyerSub, { platformFee, sellerNet }, client) {
+    const { rows } = await client.query(
+      `UPDATE auction_results
+       SET is_paid = TRUE, platform_fee = $2, seller_net = $3
+       WHERE auction_id = $1 AND winner_sub = $4 AND is_paid = FALSE
+       RETURNING *`,
+      [auctionId, platformFee, sellerNet, buyerSub]
+    );
+    return rows[0] || null;
+  }
+
   static async getUserAuctionWins(sub) {
     const { rows } = await pool.query(
       `
@@ -301,21 +327,6 @@ ORDER BY ar.closed_at DESC
       buyNowPrice: r.buy_now_price,
       trackingNumber: r.tracking_number,
     }));
-  }
-
-  static async markPaid(auctionId, isPaid) {
-    const { rows } = await pool.query(
-      `
-    UPDATE auction_results
-    SET is_paid = $2
-    WHERE auction_id = $1
-    RETURNING *
-    `,
-      [auctionId, isPaid],
-    );
-
-    if (!rows[0]) throw new Error('Auction result not found');
-    return rows[0];
   }
 
   static async getAllForAdmin() {

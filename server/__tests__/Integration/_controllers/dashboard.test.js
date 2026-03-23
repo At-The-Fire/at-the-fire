@@ -411,7 +411,7 @@ describe('posts/ post details/ S3 routes', () => {
     expect(response.body.files).toBeDefined();
     expect(Array.isArray(response.body.files)).toBe(true);
     expect(response.body.files.length).toBe(2);
-    expect(response.body.files[0].secure_url).toContain('d5fmwpj8iaraa.cloudfront.net');
+    expect(response.body.files[0].secure_url).toContain('amazonaws.com');
   });
 
   it('POST /dashboard/images should store public_id and url in the database', async () => {

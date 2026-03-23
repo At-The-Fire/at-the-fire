@@ -251,4 +251,45 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_gallery_posts_deleted_at ON gallery_
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_auctions_end_time ON auctions(end_time);
 
 
+-- ============================================================
+-- 13. New table: seller_payouts
+--     Must be created before the ALTER TABLEs below that
+--     add payout_id FKs to auction_results and purchases.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS seller_payouts (
+  id           BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  seller_sub   VARCHAR      NOT NULL REFERENCES cognito_users(sub) ON DELETE CASCADE,
+  amount       NUMERIC      NOT NULL,
+  period_start TIMESTAMPTZ,
+  period_end   TIMESTAMPTZ,
+  notes        TEXT,
+  paid_by_sub  VARCHAR      REFERENCES cognito_users(sub),
+  created_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+
+-- ============================================================
+-- 14. auction_results — add fee tracking + payout linkage
+-- ============================================================
+ALTER TABLE auction_results
+  ADD COLUMN IF NOT EXISTS platform_fee NUMERIC DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS seller_net   NUMERIC DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS payout_id    BIGINT  REFERENCES seller_payouts(id);
+
+
+-- ============================================================
+-- 15. purchases — add fee tracking + payout linkage
+-- ============================================================
+ALTER TABLE purchases
+  ADD COLUMN IF NOT EXISTS platform_fee NUMERIC DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS seller_net   NUMERIC DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS payout_id    BIGINT  REFERENCES seller_payouts(id);
+
+
 COMMIT;
+
+-- ============================================================
+-- Post-transaction indexes (non-CONCURRENTLY; safe after COMMIT)
+-- ============================================================
+CREATE INDEX IF NOT EXISTS idx_seller_payouts_seller_sub ON seller_payouts(seller_sub);
+CREATE INDEX IF NOT EXISTS idx_purchases_payout_id ON purchases(payout_id);

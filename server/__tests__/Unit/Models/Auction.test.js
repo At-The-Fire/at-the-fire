@@ -281,6 +281,79 @@ describe('Auction Model', () => {
     });
   });
 
+  describe('getResultForPayment', () => {
+    it('returns auction payment fields when result exists', async () => {
+      const mockRow = {
+        shipping_cost: '12.00',
+        seller_sub: 'sub_seller123',
+        final_bid: '250.00',
+        winner_sub: 'sub_winner123',
+        is_paid: false,
+      };
+
+      pool.query.mockResolvedValueOnce({ rows: [mockRow] });
+
+      const result = await Auction.getResultForPayment(5);
+
+      expect(result).toEqual(mockRow);
+      expect(pool.query).toHaveBeenCalledWith(expect.any(String), [5]);
+    });
+
+    it('returns null when auction result is not found', async () => {
+      pool.query.mockResolvedValueOnce({ rows: [] });
+
+      const result = await Auction.getResultForPayment(999);
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('setIsPaidWithFees', () => {
+    it('updates unpaid winner row and returns updated result', async () => {
+      const mockClient = {
+        query: jest.fn(),
+      };
+      const mockRow = {
+        auction_id: 7,
+        winner_sub: 'sub_winner123',
+        is_paid: true,
+        platform_fee: '12.50',
+        seller_net: '237.50',
+      };
+      mockClient.query.mockResolvedValueOnce({ rows: [mockRow] });
+
+      const result = await Auction.setIsPaidWithFees(
+        7,
+        'sub_winner123',
+        { platformFee: 12.5, sellerNet: 237.5 },
+        mockClient,
+      );
+
+      expect(result).toEqual(mockRow);
+      expect(mockClient.query).toHaveBeenCalledWith(expect.any(String), [
+        7,
+        12.5,
+        237.5,
+        'sub_winner123',
+      ]);
+    });
+
+    it('returns null when update is blocked (already paid or not found)', async () => {
+      const mockClient = {
+        query: jest.fn().mockResolvedValueOnce({ rows: [] }),
+      };
+
+      const result = await Auction.setIsPaidWithFees(
+        7,
+        'sub_winner123',
+        { platformFee: 12.5, sellerNet: 237.5 },
+        mockClient,
+      );
+
+      expect(result).toBeNull();
+    });
+  });
+
   describe('getUserAuctionWins', () => {
     it('returns auction wins for a user', async () => {
       const mockRows = [
@@ -307,29 +380,6 @@ describe('Auction Model', () => {
       expect(results[0].winnerSub).toBe('sub_123');
       expect(results[0].finalBid).toBe(250);
       expect(results[0].title).toBe('Won Auction');
-    });
-  });
-
-  describe('markPaid', () => {
-    it('marks an auction result as paid', async () => {
-      const mockRow = {
-        id: 1,
-        auction_id: 5,
-        is_paid: true,
-      };
-
-      pool.query.mockResolvedValueOnce({ rows: [mockRow] });
-
-      const result = await Auction.markPaid(5, true);
-
-      expect(result.is_paid).toBe(true);
-      expect(pool.query).toHaveBeenCalledWith(expect.any(String), [5, true]);
-    });
-
-    it('throws error when result not found', async () => {
-      pool.query.mockResolvedValueOnce({ rows: [] });
-
-      await expect(Auction.markPaid(999, true)).rejects.toThrow('Auction result not found');
     });
   });
 

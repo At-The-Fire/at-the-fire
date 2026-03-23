@@ -110,9 +110,10 @@ module.exports = Router()
               await s3Client.send(command);
 
               // Use CloudFront if configured, otherwise fall back to direct S3 URL
-              const secure_url = process.env.CLOUDFRONT_DOMAIN
-                ? `https://${process.env.CLOUDFRONT_DOMAIN}/${key}`
-                : `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+              const secure_url =
+                process.env.APP_ENV !== 'development' && process.env.CLOUDFRONT_DOMAIN
+                  ? `https://${process.env.CLOUDFRONT_DOMAIN}/${key}`
+                  : `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
 
               const result = {
                 public_id: uniqueId,

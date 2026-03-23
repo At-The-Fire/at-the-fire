@@ -35,6 +35,7 @@ import { useAuthStore } from '../../stores/useAuthStore.js';
 import { getSellerAuctions, updateAuctionTracking } from '../../services/fetch-auctions.js';
 import { useAuctionEventsStore } from '../../stores/useAuctionEventsStore.js';
 import { getSellerPurchases, updatePurchaseTracking } from '../../services/fetch-purchases.js';
+import { getMyEarnings } from '../../services/fetch-payouts.js';
 import TrackingModal from '../shared/TrackingModal.js';
 import { getTrackingUrl } from '../../utils/tracking.js';
 const logo = require('../../assets/logo-icon-6.png');
@@ -71,6 +72,10 @@ export default function Dashboard({ products, setProducts, customerId }) {
   const [trackingModal, setTrackingModal] = useState({ open: false, type: null, id: null });
   const [trackingLoading, setTrackingLoading] = useState(false);
 
+  // Earnings state
+  const [earnings, setEarnings] = useState(null);
+  const [earningsLoading, setEarningsLoading] = useState(false);
+
   const dashboardToggleButtonGroupSx = {
     '& .MuiToggleButton-root': {
       textTransform: 'none',
@@ -83,6 +88,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
     if (auctionFilter === 'closed') return !a.isActive;
     return true;
   });
+  const closedSellerAuctions = sellerAuctions.filter((a) => !a.isActive);
 
   // pagination
   const postsFilteredByCategory = posts.filter((post) => !selectedCategory || post.category === selectedCategory);
@@ -293,6 +299,15 @@ export default function Dashboard({ products, setProducts, customerId }) {
   };
 
   useEffect(() => {
+    if (dashboardView !== 'earnings') return;
+    setEarningsLoading(true);
+    getMyEarnings()
+      .then((data) => setEarnings(data))
+      .catch(() => toast.error('Failed to load earnings'))
+      .finally(() => setEarningsLoading(false));
+  }, [dashboardView]);
+
+  useEffect(() => {
     if (dashboardView !== 'auctions' || !user) return;
     setAuctionsLoading(true);
     getSellerAuctions()
@@ -453,6 +468,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
                 Sales
               </Badge>
             </ToggleButton>
+            <ToggleButton value="earnings">Earnings</ToggleButton>
           </ToggleButtonGroup>
         </Box>
 
@@ -713,7 +729,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
                               variant="body2"
                               sx={{ fontWeight: 700, textAlign: 'right', marginRight: '.5rem' }}
                             >
-                              {sellerAuctions.filter((a) => !a.isActive).length}
+                              {closedSellerAuctions.length}
                             </Typography>
                           </Box>
 
@@ -749,349 +765,304 @@ export default function Dashboard({ products, setProducts, customerId }) {
                 className="list-container"
                 style={{
                   display: 'flex',
-                  flexDirection: 'column',
-                  padding: isMobile ? '0 8px' : undefined,
+                  flexDirection: isMobile ? 'column' : 'row',
+                  gap: '12px',
+                  alignItems: 'stretch',
+                  padding: isMobile ? '0 8px 8px 8px' : '8px',
                   maxWidth: '100%',
-                  marginTop: '1rem',
+                  marginTop: isMobile ? '1rem' : 0,
                   overflowX: 'hidden',
+                  overflowY: 'hidden',
+                  minHeight: 0,
                 }}
               >
                 {salesLoading ? (
                   <Typography>Loading sales...</Typography>
                 ) : (
                   <>
-                    {/* Gallery Post Sales */}
-                    <Typography variant="h6" sx={{ margin: '0 0 4px 10px', fontWeight: 700 }}>
-                      Gallery Post Sales ({sellerPurchases.length})
-                    </Typography>
-                    {sellerPurchases.length === 0 ? (
-                      <Typography sx={{ color: 'text.secondary', mb: 3 }}>No gallery sales yet.</Typography>
-                    ) : (
-                      sellerPurchases.map((sale) => (
-                        <Box
-                          key={sale.id}
-                          sx={{
-                            width: '100%',
-                            display: 'grid',
-                            gridTemplateColumns: {
-                              xs: '60px 1fr auto',
-                              sm: '80px 1fr auto',
-                              md: '80px minmax(0, 1fr) 160px 200px auto',
-                              lg: '80px minmax(0, 1fr) 200px 260px auto',
-                            },
-                            alignItems: 'center',
-                            border: '1px solid',
-                            borderColor: sale.trackingNumber ? 'divider' : 'warning.main',
-                            mb: 1,
-                            borderRadius: 1,
-                            backgroundColor: 'rgba(255,255,255,0.05)',
-                            overflow: 'hidden',
-                          }}
-                        >
-                          {sale.imageUrls?.[0] ? (
+                    <Box
+                      sx={{
+                        flex: 1,
+                        minWidth: 0,
+                        border: '1px solid',
+                        borderColor: (theme) => theme.palette.primary.dark,
+                        borderRadius: 1,
+                        overflow: 'hidden',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        minHeight: 0,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          px: 1.5,
+                          py: 1,
+                          borderBottom: '1px solid',
+                          borderColor: 'divider',
+                          backgroundColor: 'rgba(255,255,255,0.03)',
+                        }}
+                      >
+                        <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                          Gallery Post Sales ({sellerPurchases.length})
+                        </Typography>
+                      </Box>
+
+                      <Box
+                        sx={{
+                          p: 1,
+                          overflowY: 'auto',
+                          overflowX: 'hidden',
+                          maxHeight: { xs: '44vh', md: 'calc(100vh - 275px)' },
+                        }}
+                      >
+                        {sellerPurchases.length === 0 ? (
+                          <Typography sx={{ color: 'text.secondary', px: 0.5 }}>No gallery sales yet.</Typography>
+                        ) : (
+                          sellerPurchases.map((sale) => (
                             <Box
-                              component="img"
-                              src={sale.imageUrls[0]}
-                              alt={sale.title}
-                              sx={{ width: { xs: 60, sm: 80 }, height: { xs: 60, sm: 80 }, objectFit: 'cover' }}
-                            />
-                          ) : (
-                            <Box
+                              key={sale.id}
                               sx={{
-                                width: { xs: 60, sm: 80 },
-                                height: { xs: 60, sm: 80 },
+                                width: '100%',
+                                minWidth: 0,
+                                display: 'grid',
+                                gridTemplateColumns: {
+                                  xs: '60px minmax(0, 1fr) auto',
+                                  sm: '80px minmax(0, 1fr) auto',
+                                },
+                                alignItems: 'center',
+                                border: '1px solid',
+                                borderColor: sale.trackingNumber ? 'divider' : 'warning.main',
+                                mb: 1,
+                                borderRadius: 1,
                                 backgroundColor: 'rgba(255,255,255,0.05)',
-                              }}
-                            />
-                          )}
-                          <Box sx={{ px: 1.5, overflow: 'hidden' }}>
-                            <Typography
-                              fontWeight={700}
-                              sx={{
-                                fontSize: { xs: '.8rem', sm: '.9rem' },
                                 overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'left',
                               }}
                             >
-                              {sale.title || `Post #${sale.itemId}`}
-                            </Typography>
-
-                            {/* Mobile / small-screen details */}
-                            <Box sx={{ display: { xs: 'block', md: 'none' } }}>
-                              <Typography
-                                variant="body2"
-                                sx={{ color: 'text.secondary', fontSize: '.75rem', textAlign: 'left' }}
-                              >
-                                ${Number(sale.amountPaid).toFixed(2)} · qty {sale.quantity} ·{' '}
-                                {new Date(sale.createdAt).toLocaleDateString()}
-                              </Typography>
-                              {sale.trackingNumber ? (
-                                (() => {
-                                  const tr = getTrackingUrl(sale.trackingNumber);
-                                  return (
-                                    <Typography variant="body2" sx={{ fontSize: '.75rem', textAlign: 'left' }}>
-                                      📦{tr.carrier ? ` ${tr.carrier}: ` : ' '}
-                                      <a
-                                        href={tr.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        style={{ color: 'inherit' }}
-                                      >
-                                        {sale.trackingNumber}
-                                      </a>
-                                    </Typography>
-                                  );
-                                })()
+                              {sale.imageUrls?.[0] ? (
+                                <Box
+                                  component="img"
+                                  src={sale.imageUrls[0]}
+                                  alt={sale.title}
+                                  sx={{ width: { xs: 60, sm: 80 }, height: { xs: 60, sm: 80 }, objectFit: 'cover' }}
+                                />
                               ) : (
-                                <Typography
-                                  variant="body2"
-                                  sx={{ fontSize: '.75rem', color: 'text.secondary', textAlign: 'left' }}
-                                >
-                                  No tracking yet
-                                </Typography>
+                                <Box
+                                  sx={{
+                                    width: { xs: 60, sm: 80 },
+                                    height: { xs: 60, sm: 80 },
+                                    backgroundColor: 'rgba(255,255,255,0.05)',
+                                  }}
+                                />
                               )}
-                            </Box>
-                          </Box>
-
-                          {/* Desktop columns */}
-                          <Box sx={{ display: { xs: 'none', md: 'block' }, px: 1.5 }}>
-                            <Typography
-                              variant="body2"
-                              sx={{ color: 'text.secondary', fontSize: '.8rem', textAlign: 'left' }}
-                            >
-                              ${Number(sale.amountPaid).toFixed(2)}
-                            </Typography>
-                            <Typography
-                              variant="body2"
-                              sx={{ color: 'text.secondary', fontSize: '.8rem', textAlign: 'left' }}
-                            >
-                              qty {sale.quantity}
-                            </Typography>
-                            <Typography
-                              variant="body2"
-                              sx={{ color: 'text.secondary', fontSize: '.8rem', textAlign: 'left' }}
-                            >
-                              {new Date(sale.createdAt).toLocaleDateString()}
-                            </Typography>
-                          </Box>
-
-                          <Box sx={{ display: { xs: 'none', md: 'block' }, px: 1.5, overflow: 'hidden' }}>
-                            {sale.trackingNumber ? (
-                              (() => {
-                                const tr = getTrackingUrl(sale.trackingNumber);
-                                return (
-                                  <Typography
-                                    variant="body2"
-                                    sx={{
-                                      fontSize: '.8rem',
-                                      textAlign: 'left',
-                                      overflow: 'hidden',
-                                      textOverflow: 'ellipsis',
-                                      whiteSpace: 'nowrap',
-                                    }}
-                                  >
-                                    📦{tr.carrier ? ` ${tr.carrier}: ` : ' '}
-                                    <a
-                                      href={tr.url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      style={{ color: 'inherit' }}
-                                    >
-                                      {sale.trackingNumber}
-                                    </a>
-                                  </Typography>
-                                );
-                              })()
-                            ) : (
-                              <Typography
-                                variant="body2"
-                                sx={{ fontSize: '.8rem', color: 'text.secondary', textAlign: 'left' }}
-                              >
-                                No tracking yet
-                              </Typography>
-                            )}
-                          </Box>
-
-                          <Box sx={{ pr: 1.5 }}>
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              onClick={() => setTrackingModal({ open: true, type: 'purchase', id: sale.id })}
-                            >
-                              {sale.trackingNumber ? 'Update' : 'Add Tracking'}
-                            </Button>
-                          </Box>
-                        </Box>
-                      ))
-                    )}
-
-                    {/* Closed Auction Results */}
-                    <Typography variant="h6" sx={{ margin: '0 0 0 10px', fontWeight: 700 }}>
-                      Closed Auctions ({sellerAuctions.filter((a) => !a.isActive).length})
-                    </Typography>
-                    {sellerAuctions.filter((a) => !a.isActive).length === 0 ? (
-                      <Typography sx={{ color: 'text.secondary' }}>No closed auctions yet.</Typography>
-                    ) : (
-                      sellerAuctions
-                        .filter((a) => !a.isActive)
-                        .map((auction) => (
-                          <Box
-                            key={auction.id}
-                            sx={{
-                              width: '100%',
-                              display: 'grid',
-                              gridTemplateColumns: {
-                                xs: '60px 1fr auto',
-                                sm: '80px 1fr auto',
-                                md: '80px minmax(0, 1fr) 160px 200px auto',
-                                lg: '80px minmax(0, 1fr) 200px 260px auto',
-                              },
-                              alignItems: 'center',
-                              border: '1px solid',
-                              borderColor: auction.winnerSub && !auction.trackingNumber ? 'warning.main' : 'divider',
-                              mb: 1,
-                              borderRadius: 1,
-                              backgroundColor: 'rgba(255,255,255,0.05)',
-                              overflow: 'hidden',
-                            }}
-                          >
-                            {auction.imageUrls?.[0] ? (
-                              <Box
-                                component="img"
-                                src={auction.imageUrls[0]}
-                                alt={auction.title}
-                                sx={{ width: { xs: 60, sm: 80 }, height: { xs: 60, sm: 80 }, objectFit: 'cover' }}
-                              />
-                            ) : (
-                              <Box
-                                sx={{
-                                  width: { xs: 60, sm: 80 },
-                                  height: { xs: 60, sm: 80 },
-                                  backgroundColor: 'rgba(255,255,255,0.05)',
-                                }}
-                              />
-                            )}
-                            <Box sx={{ px: 1.5, overflow: 'hidden' }}>
-                              <Typography
-                                fontWeight={700}
-                                sx={{
-                                  fontSize: { xs: '.8rem', sm: '.9rem' },
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap',
-                                  textAlign: 'left',
-                                }}
-                              >
-                                {auction.title}
-                              </Typography>
-
-                              {/* Mobile / small-screen details */}
-                              <Box sx={{ display: { xs: 'block', md: 'none' } }}>
+                              <Box sx={{ px: 1.5, overflow: 'hidden', minWidth: 0 }}>
                                 <Typography
-                                  variant="body2"
-                                  sx={{ color: 'text.secondary', fontSize: '.75rem', textAlign: 'left' }}
+                                  fontWeight={700}
+                                  sx={{
+                                    fontSize: { xs: '.8rem', sm: '.9rem' },
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    textAlign: 'left',
+                                  }}
                                 >
-                                  Final bid: $
-                                  {Number(
-                                    auction.finalBid || auction.currentBid || auction.startPrice
-                                  ).toLocaleString()}
+                                  {sale.title || `Post #${sale.itemId}`}
                                 </Typography>
-                                {auction.trackingNumber ? (
-                                  (() => {
-                                    const tr = getTrackingUrl(auction.trackingNumber);
-                                    return (
-                                      <Typography variant="body2" sx={{ fontSize: '.75rem', textAlign: 'left' }}>
-                                        📦{tr.carrier ? ` ${tr.carrier}: ` : ' '}
-                                        <a
-                                          href={tr.url}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          style={{ color: 'inherit' }}
-                                        >
-                                          {auction.trackingNumber}
-                                        </a>
-                                      </Typography>
-                                    );
-                                  })()
-                                ) : (
+
+                                {/* Mobile / small-screen details */}
+                                <Box sx={{ display: 'block' }}>
                                   <Typography
                                     variant="body2"
-                                    sx={{ fontSize: '.75rem', color: 'text.secondary', textAlign: 'left' }}
+                                    sx={{ color: 'text.secondary', fontSize: '.75rem', textAlign: 'left' }}
                                   >
-                                    No tracking yet
+                                    ${Number(sale.amountPaid).toFixed(2)} · qty {sale.quantity} ·{' '}
+                                    {new Date(sale.createdAt).toLocaleDateString()}
                                   </Typography>
-                                )}
-                              </Box>
-                            </Box>
-
-                            {/* Desktop columns */}
-                            <Box sx={{ display: { xs: 'none', md: 'block' }, px: 1.5 }}>
-                              <Typography
-                                variant="body2"
-                                sx={{ color: 'text.secondary', fontSize: '.8rem', textAlign: 'left' }}
-                              >
-                                Final bid
-                              </Typography>
-                              <Typography
-                                variant="body2"
-                                sx={{ color: 'text.secondary', fontSize: '.8rem', textAlign: 'left' }}
-                              >
-                                ${Number(auction.finalBid || auction.currentBid || auction.startPrice).toLocaleString()}
-                              </Typography>
-                            </Box>
-
-                            <Box sx={{ display: { xs: 'none', md: 'block' }, px: 1.5, overflow: 'hidden' }}>
-                              {auction.trackingNumber ? (
-                                (() => {
-                                  const tr = getTrackingUrl(auction.trackingNumber);
-                                  return (
+                                  {sale.trackingNumber ? (
+                                    (() => {
+                                      const tr = getTrackingUrl(sale.trackingNumber);
+                                      return (
+                                        <Typography variant="body2" sx={{ fontSize: '.75rem', textAlign: 'left' }}>
+                                          📦{tr.carrier ? ` ${tr.carrier}: ` : ' '}
+                                          <a
+                                            href={tr.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{ color: 'inherit' }}
+                                          >
+                                            {sale.trackingNumber}
+                                          </a>
+                                        </Typography>
+                                      );
+                                    })()
+                                  ) : (
                                     <Typography
                                       variant="body2"
-                                      sx={{
-                                        fontSize: '.8rem',
-                                        textAlign: 'left',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap',
-                                      }}
+                                      sx={{ fontSize: '.75rem', color: 'text.secondary', textAlign: 'left' }}
                                     >
-                                      📦{tr.carrier ? ` ${tr.carrier}: ` : ' '}
-                                      <a
-                                        href={tr.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        style={{ color: 'inherit' }}
-                                      >
-                                        {auction.trackingNumber}
-                                      </a>
+                                      No tracking yet
                                     </Typography>
-                                  );
-                                })()
-                              ) : (
-                                <Typography
-                                  variant="body2"
-                                  sx={{ fontSize: '.8rem', color: 'text.secondary', textAlign: 'left' }}
-                                >
-                                  No tracking yet
-                                </Typography>
-                              )}
-                            </Box>
+                                  )}
+                                </Box>
+                              </Box>
 
-                            <Box sx={{ pr: 1.5 }}>
-                              <Button
-                                size="small"
-                                variant="outlined"
-                                disabled={!auction.winnerSub}
-                                onClick={() => setTrackingModal({ open: true, type: 'auction', id: auction.id })}
-                              >
-                                {auction.trackingNumber ? 'Update' : 'Add Tracking'}
-                              </Button>
+                              <Box sx={{ pr: 1.5 }}>
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  onClick={() => setTrackingModal({ open: true, type: 'purchase', id: sale.id })}
+                                >
+                                  {sale.trackingNumber ? 'Update' : 'Add Tracking'}
+                                </Button>
+                              </Box>
                             </Box>
-                          </Box>
-                        ))
-                    )}
+                          ))
+                        )}
+                      </Box>
+                    </Box>
+
+                    {/* Closed Auction Results */}
+                    <Box
+                      sx={{
+                        flex: 1,
+                        minWidth: 0,
+                        border: '1px solid',
+                        borderColor: (theme) => theme.palette.primary.dark,
+                        borderRadius: 1,
+                        overflow: 'hidden',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        minHeight: 0,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          px: 1.5,
+                          py: 1,
+                          borderBottom: '1px solid',
+                          borderColor: 'divider',
+                          backgroundColor: 'rgba(255,255,255,0.03)',
+                        }}
+                      >
+                        <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                          Closed Auctions ({closedSellerAuctions.length})
+                        </Typography>
+                      </Box>
+
+                      <Box
+                        sx={{
+                          p: 1,
+                          overflowY: 'auto',
+                          overflowX: 'hidden',
+                          maxHeight: { xs: '44vh', md: 'calc(100vh - 275px)' },
+                        }}
+                      >
+                        {closedSellerAuctions.length === 0 ? (
+                          <Typography sx={{ color: 'text.secondary', px: 0.5 }}>No closed auctions yet.</Typography>
+                        ) : (
+                          closedSellerAuctions.map((auction) => (
+                            <Box
+                              key={auction.id}
+                              sx={{
+                                width: '100%',
+                                minWidth: 0,
+                                display: 'grid',
+                                gridTemplateColumns: {
+                                  xs: '60px minmax(0, 1fr) auto',
+                                  sm: '80px minmax(0, 1fr) auto',
+                                },
+                                alignItems: 'center',
+                                border: '1px solid',
+                                borderColor: auction.winnerSub && !auction.trackingNumber ? 'warning.main' : 'divider',
+                                mb: 1,
+                                borderRadius: 1,
+                                backgroundColor: 'rgba(255,255,255,0.05)',
+                                overflow: 'hidden',
+                              }}
+                            >
+                              {auction.imageUrls?.[0] ? (
+                                <Box
+                                  component="img"
+                                  src={auction.imageUrls[0]}
+                                  alt={auction.title}
+                                  sx={{ width: { xs: 60, sm: 80 }, height: { xs: 60, sm: 80 }, objectFit: 'cover' }}
+                                />
+                              ) : (
+                                <Box
+                                  sx={{
+                                    width: { xs: 60, sm: 80 },
+                                    height: { xs: 60, sm: 80 },
+                                    backgroundColor: 'rgba(255,255,255,0.05)',
+                                  }}
+                                />
+                              )}
+                              <Box sx={{ px: 1.5, overflow: 'hidden', minWidth: 0 }}>
+                                <Typography
+                                  fontWeight={700}
+                                  sx={{
+                                    fontSize: { xs: '.8rem', sm: '.9rem' },
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    textAlign: 'left',
+                                  }}
+                                >
+                                  {auction.title}
+                                </Typography>
+
+                                {/* Mobile / small-screen details */}
+                                <Box sx={{ display: 'block' }}>
+                                  <Typography
+                                    variant="body2"
+                                    sx={{ color: 'text.secondary', fontSize: '.75rem', textAlign: 'left' }}
+                                  >
+                                    Final bid: $
+                                    {Number(
+                                      auction.finalBid || auction.currentBid || auction.startPrice
+                                    ).toLocaleString()}
+                                  </Typography>
+                                  {auction.trackingNumber ? (
+                                    (() => {
+                                      const tr = getTrackingUrl(auction.trackingNumber);
+                                      return (
+                                        <Typography variant="body2" sx={{ fontSize: '.75rem', textAlign: 'left' }}>
+                                          📦{tr.carrier ? ` ${tr.carrier}: ` : ' '}
+                                          <a
+                                            href={tr.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{ color: 'inherit' }}
+                                          >
+                                            {auction.trackingNumber}
+                                          </a>
+                                        </Typography>
+                                      );
+                                    })()
+                                  ) : (
+                                    <Typography
+                                      variant="body2"
+                                      sx={{ fontSize: '.75rem', color: 'text.secondary', textAlign: 'left' }}
+                                    >
+                                      No tracking yet
+                                    </Typography>
+                                  )}
+                                </Box>
+                              </Box>
+
+                              <Box sx={{ pr: 1.5 }}>
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  disabled={!auction.winnerSub}
+                                  onClick={() => setTrackingModal({ open: true, type: 'auction', id: auction.id })}
+                                >
+                                  {auction.trackingNumber ? 'Update' : 'Add Tracking'}
+                                </Button>
+                              </Box>
+                            </Box>
+                          ))
+                        )}
+                      </Box>
+                    </Box>
                   </>
                 )}
               </div>
@@ -1154,7 +1125,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
                             Closed Auctions:
                           </Typography>
                           <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'right' }}>
-                            {sellerAuctions.filter((a) => !a.isActive).length}
+                            {closedSellerAuctions.length}
                           </Typography>
                         </Box>
 
@@ -1180,6 +1151,98 @@ export default function Dashboard({ products, setProducts, customerId }) {
               loading={trackingLoading}
             />
           </>
+        )}
+
+        {/* Earnings view */}
+        {dashboardView === 'earnings' && (
+          <Box
+            sx={{
+              borderWidth: '1px',
+              borderStyle: 'solid',
+              borderColor: (theme) => theme.palette.primary.dark,
+              boxSizing: 'border-box',
+              width: '100%',
+              maxWidth: '100%',
+              padding: 2,
+              transform: 'translate(0px, -5%)',
+            }}
+          >
+            {earningsLoading && <Typography>Loading earnings...</Typography>}
+            {!earningsLoading && !earnings && (
+              <Typography sx={{ color: 'text.secondary' }}>No earnings data yet.</Typography>
+            )}
+            {!earningsLoading && earnings && (
+              <>
+                {/* Summary cards */}
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '1fr 1fr', sm: '1fr 1fr' },
+                    gap: 2,
+                    mb: 3,
+                    maxWidth: { sm: '480px' },
+                  }}
+                >
+                  <Box sx={{ p: 2, border: '1px solid', borderColor: 'warning.main', borderRadius: 1 }}>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', mb: 0.5 }}>
+                      Pending Payout
+                    </Typography>
+                    <Typography variant="h6" sx={{ color: 'warning.main', fontWeight: 700 }}>
+                      ${Number(earnings.pendingBalance || 0).toFixed(2)}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ p: 2, border: '1px solid', borderColor: 'success.main', borderRadius: 1 }}>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', mb: 0.5 }}>
+                      Total Paid Out
+                    </Typography>
+                    <Typography variant="h6" sx={{ color: 'success.main', fontWeight: 700 }}>
+                      ${Number(earnings.totalPaidOut || 0).toFixed(2)}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                {/* Payout history */}
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
+                  Payout History
+                </Typography>
+                {earnings.payouts.length === 0 && (
+                  <Typography sx={{ color: 'text.secondary' }}>No payouts recorded yet.</Typography>
+                )}
+                {earnings.payouts.length > 0 && (
+                  <Box sx={{ overflowY: 'auto', maxHeight: 'calc(100vh - 420px)' }}>
+                    {earnings.payouts.map((p) => (
+                      <Box
+                        key={p.id}
+                        sx={{
+                          display: 'grid',
+                          gridTemplateColumns: { xs: '1fr 1fr', sm: '1fr 1fr 2fr' },
+                          gap: 1,
+                          p: 1.5,
+                          mb: 1,
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          borderRadius: 1,
+                          backgroundColor: 'rgba(255,255,255,0.05)',
+                        }}
+                      >
+                        <Typography variant="body2">{new Date(p.created_at).toLocaleDateString()}</Typography>
+                        <Typography variant="body2" sx={{ color: 'success.main', fontWeight: 700 }}>
+                          ${Number(p.amount).toFixed(2)}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                          {p.notes || '—'}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                )}
+
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 2 }}>
+                  Platform fee of 10% is deducted from item price (not shipping). Payouts are processed manually.
+                </Typography>
+              </>
+            )}
+          </Box>
         )}
 
         {/* Posts view — only render when dashboardView === 'posts' */}

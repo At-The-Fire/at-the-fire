@@ -28,6 +28,7 @@ DROP TABLE IF EXISTS bids CASCADE;
 DROP TABLE IF EXISTS auction_results CASCADE;
 DROP TABLE IF EXISTS auction_notifications CASCADE;
 DROP TABLE IF EXISTS purchases CASCADE;
+DROP TABLE IF EXISTS seller_payouts CASCADE;
 
 CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
 
@@ -306,6 +307,18 @@ CREATE TABLE bids (
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Seller payouts: admin-recorded disbursements to sellers
+CREATE TABLE seller_payouts (
+  id           BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  seller_sub   VARCHAR      NOT NULL REFERENCES cognito_users(sub) ON DELETE CASCADE,
+  amount       NUMERIC      NOT NULL,
+  period_start TIMESTAMPTZ,
+  period_end   TIMESTAMPTZ,
+  notes        TEXT,
+  paid_by_sub  VARCHAR      REFERENCES cognito_users(sub),
+  created_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
 -- Auction results: winner, payment, shipping lifecycle
 CREATE TABLE auction_results (
   id              SERIAL PRIMARY KEY,
@@ -315,7 +328,10 @@ CREATE TABLE auction_results (
   closed_at       TIMESTAMPTZ DEFAULT NOW(),
   closed_reason   TEXT NOT NULL,
   is_paid         BOOLEAN DEFAULT FALSE,
-  tracking_number TEXT
+  tracking_number TEXT,
+  platform_fee    NUMERIC DEFAULT 0,
+  seller_net      NUMERIC DEFAULT 0,
+  payout_id       BIGINT  REFERENCES seller_payouts(id)
 );
 
 -- Auction in-app notifications (outbid, won)
@@ -342,6 +358,9 @@ CREATE TABLE purchases (
   status                  VARCHAR NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'refunded')),
   tracking_number         TEXT,
   shipped_at              TIMESTAMPTZ,
+  platform_fee            NUMERIC DEFAULT 0,
+  seller_net              NUMERIC DEFAULT 0,
+  payout_id               BIGINT  REFERENCES seller_payouts(id),
   created_at              TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -356,6 +375,8 @@ CREATE INDEX idx_auction_notifications_user_sub ON auction_notifications(user_su
 CREATE INDEX idx_gallery_posts_seller_sub ON gallery_posts(seller_sub);
 CREATE INDEX idx_gallery_posts_deleted_at ON gallery_posts(deleted_at) WHERE deleted_at IS NULL;
 CREATE INDEX idx_auctions_end_time ON auctions(end_time);
+CREATE INDEX idx_seller_payouts_seller_sub ON seller_payouts(seller_sub);
+CREATE INDEX idx_purchases_payout_id ON purchases(payout_id);
 
 --  adding users for testing --
 -- User with no profile data

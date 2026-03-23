@@ -16,18 +16,18 @@
 
 ## Profile CRUD
 
-- [x] Upload avatar
-  - [x] Test supported file types
-  - [x] Test file size limits
-- [x] Replace avatar
-- [x] Fill in all text fields
-  - [x] Test required vs optional fields
-- [x] Edit all text fields
-  - [x] Verify changes persist
+- [ ] Upload avatar
+  - [ ] Test supported file types
+  - [ ] Test file size limits
+- [ ] Replace avatar
+- [ ] Fill in all text fields
+  - [ ] Test required vs optional fields
+- [ ] Edit all text fields
+  - [ ] Verify changes persist
 
 ## Subscription Purchase
 
-> **Claude Code: SKIP the initial purchase and the "Return to dashboard" block.** Purchasing a new subscription requires a real Stripe account and cannot be automated. Test users (`USER1`, `USER2`) already have active subscriptions. Start this section from "Return to dashboard signed in" onwards.
+> **Claude Code: SKIP the initial purchase, the "Return to dashboard" block, and Change/Cancel subscription items.** Purchasing a new subscription requires a real Stripe account and cannot be automated. Test users (`USER1`, `USER2`) already have customer IDs and the app launches in `BETA_MODE=true`, which bypasses all subscription checks — logo upload and profile branding fields are accessible without a Stripe purchase. Test the logo upload block below independently.
 
 - [ ] Purchase subscription
   - [ ] Verify payment flow
@@ -37,6 +37,11 @@
   - [ ] Verify _Profile_ updates with logo/ website/ social media accts
   - [ ] Upload logo image
   - [ ] Fill in some/ all text fields
+- [ ] Logo upload and profile branding (testable in beta mode — sign in as USER1)
+  - [ ] Navigate to _Profile_ via the avatar menu
+  - [ ] Upload a logo image — verify it appears in the profile header
+  - [ ] Verify the logo appears on USER1's gallery posts (navigate to a gallery post by USER1 and confirm logo is displayed)
+  - [ ] Verify the logo appears on USER1's auction listings (navigate to an active auction by USER1 and confirm logo is displayed)
 - [ ] Change subscription — SKIP (User 1 has no active Stripe subscription)
   - [ ] Upgrade
   - [ ] Downgrade
@@ -48,134 +53,134 @@
 
 ### Dashboard
 
-- [x] Create new post
-  - [x] Test required fields
-  - [x] Enter a valid quantity
-    - [x] Verify quantity accepts only positive integers
-    - [x] Verify quantity field rejects 0, negative numbers, and non-numeric input
-  - [x] Enter a shipping cost — verify it saves and displays correctly at checkout
-  - [x] Verify post displays in _Dashboard_ tab
-  - [x] Verify post displays in _Quota Tracking_ tab with matching quantity
-  - [x] Verify post displays in _Gallery_
-  - [x] Verify post has all text & images displaying correctly
-- [x] Edit post
-  - [x] Edit text fields
-  - [x] Edit quantity
-    - [x] Verify updated quantity saves correctly
-    - [x] Verify updated quantity syncs to corresponding product in _Quota Tracking_
-  - [x] Add image
-    - [x] Test supported formats
-  - [x] Remove image(s)
-  - [x] Replace image(s)
-  - [x] Verify all changes display in _Products_
-- [x] Delete post
-  - [x] Verify post removal
-  - [x] Test any "undo" functionality if present
-  - [x] Verify the product is deleted in _Products_
+- [ ] Create new post
+  - [ ] Test required fields
+  - [ ] Enter a valid quantity
+    - [ ] Verify quantity accepts only positive integers
+    - [ ] Verify quantity field rejects 0, negative numbers, and non-numeric input
+  - [ ] Enter a shipping cost — verify it saves and displays correctly at checkout
+  - [ ] Verify post displays in _Dashboard_ tab
+  - [ ] Verify post displays in _Quota Tracking_ tab with matching quantity
+  - [ ] Verify post displays in _Gallery_
+  - [ ] Verify post has all text & images displaying correctly
+- [ ] Edit post
+  - [ ] Edit text fields
+  - [ ] Edit quantity
+    - [ ] Verify updated quantity saves correctly
+    - [ ] Verify updated quantity syncs to corresponding product in _Quota Tracking_
+  - [ ] Add image
+    - [ ] Test supported formats
+  - [ ] Remove image(s)
+  - [ ] Replace image(s)
+  - [ ] Verify all changes display in _Products_
+- [ ] Delete post
+  - [ ] Verify post removal
+  - [ ] Test any "undo" functionality if present
+  - [ ] Verify the product is deleted in _Products_
 
 ### Inventory
 
-- [x] Create new snapshot
-  - [x] Save empty snapshot
-  - [x] Create post
-  - [x] Create new snapshot
-  - [x] Verify graph updates & data accuracy
-  - [x] Test save/update functionality
+- [ ] Create new snapshot
+  - [ ] Save empty snapshot
+  - [ ] Create post
+  - [ ] Create new snapshot
+  - [ ] Verify graph updates & data accuracy
+  - [ ] Test save/update functionality
 
 ### Orders
 
-- [x] Create new order
-  - [x] Verify required fields
-- [x] Edit order
-  - [x] Add item(s)
-  - [x] Change item(s)
-  - [x] Remove item(s)
-  - [x] Verify calculations update correctly
-- [x] Delete order
-- [x] Print order — SKIP (not testable via Playwright)
+- [ ] Create new order
+  - [ ] Verify required fields
+- [ ] Edit order
+  - [ ] Add item(s)
+  - [ ] Change item(s)
+  - [ ] Remove item(s)
+  - [ ] Verify calculations update correctly
+- [ ] Delete order
+- [ ] Print order — SKIP (not testable via Playwright)
 
 ### Quota Tracking
 
-- [x] Create new product — test each type individually:
-  - [x] **Auction** type — create, verify it appears in product list
-  - [x] **Direct Sale** type — create, verify it appears in product list
-  - [x] **Inventory** type — create, verify it appears in product list
-  - [x] **Prep-Other** type — create, verify it appears in product list
-  - [x] Test required fields (submit empty form, verify validation)
+- [ ] Create new product — test each type individually:
+  - [ ] **Auction** type — create, verify it appears in product list
+  - [ ] **Direct Sale** type — create, verify it appears in product list
+  - [ ] **Inventory** type — create, verify it appears in product list
+  - [ ] **Prep-Other** type — create, verify it appears in product list
+  - [ ] Test required fields (submit empty form, verify validation)
     > **Note:** The wizard tabs are for organizational display — users can navigate freely between tabs. Validation fires via MUI field indicators and a toast when the Add button is clicked with missing required fields. The Add button correctly gates submission. This is expected behavior; do not mark as a fail.
-- [x] Edit product
-  - [x] Change text fields
+- [ ] Edit product
+  - [ ] Change text fields
   - [ ] Change image
-  - [x] Verify updates save correctly
-- [x] Delete product
-  - [x] Verify removal
-- [x] Create new product with "Create new gallery post" checked
-  - [x] Verify product displays in _Dashboard_ and _Gallery_
+  - [ ] Verify updates save correctly
+- [ ] Delete product
+  - [ ] Verify removal
+- [ ] Create new product with "Create new gallery post" checked
+  - [ ] Verify product displays in _Dashboard_ and _Gallery_
     > **Note:** The "Create new gallery post" checkbox is **only available during initial product creation**. Once a product exists, the checkbox will not appear when editing or after returning from an edit flow — this is intentional by design (gallery post + product are created together or not at all). Click the "New" button to start a fresh product form and the checkbox will be present on the Images step.
 
 ### Calendar
 
-- [x] Set goals
-  - [x] Verify save functionality
-  - [x] Verify daily calculations/ correct images/ data
-- [x] Edit goals
-  - [x] Test updates persist
+- [ ] Set goals
+  - [ ] Verify save functionality
+  - [ ] Verify daily calculations/ correct images/ data
+- [ ] Edit goals
+  - [ ] Test updates persist
 
 ### Analysis
 
-- [x] Set goals
-  - [x] Verify data entry
-- [x] Edit goals
-  - [x] Test changes save correctly
+- [ ] Set goals
+  - [ ] Verify data entry
+- [ ] Edit goals
+  - [ ] Test changes save correctly
 
 ## Auctions
 
-- [x] Create auction
-  - [x] Test required fields (title, starting bid, end date)
-  - [x] Upload auction images
-  - [x] Enter a shipping cost — verify it appears at BIN/auction-payment step
-  - [x] Verify auction appears in public auction listing
-- [x] Bid on auction
-  - [x] Place a valid bid above minimum
-  - [x] Verify bid rejected if below minimum increment
-  - [x] Test 5-minute extension rule (bid placed near end time extends auction)
-  - [x] Verify highest bid updates correctly
-- [x] Buy It Now
-  - [x] Purchase at buy-it-now price
-  - [x] Verify auction closes immediately
-  - [x] Verify purchase appears in buyer's purchases
-  - [x] Verify a congratulations message appears in the messaging system from the seller
-  - [x] Buyer receives "You won!" success toast in real-time (on-site, no page refresh needed)
-  - [x] _Messages_ badge increments immediately in the avatar menu — does not require navigating away and back
-  - [x] Avatar badge reflects updated combined total (messages + won + outbid)
-- [x] Outbid notification (buyer)
-  - [x] Warning toast appears if on-site when outbid
-  - [x] _Purchases_ menu shows orange "N outbid" count on next login if offline when outbid
-  - [x] Badge clears on navigating to _My Purchases_
-- [x] Auction end — winner (buyer)
-  - [x] Success toast appears if on-site when auction closes (applies to both BIN and natural expiry)
-  - [x] _Purchases_ menu shows green "N won" shimmer/count on next login
-  - [x] Avatar badge shows combined total (messages + won + outbid)
-  - [x] Badge clears on navigating to _My Purchases_
-  - [x] Verify a congratulations message appears in the messaging system from the seller
-- [x] Auction end — seller (BIN notification breadcrumb trail)
+- [ ] Create auction
+  - [ ] Test required fields (title, starting bid, end date)
+  - [ ] Upload auction images
+  - [ ] Enter a shipping cost — verify it appears at BIN/auction-payment step
+  - [ ] Verify auction appears in public auction listing
+- [ ] Bid on auction
+  - [ ] Place a valid bid above minimum
+  - [ ] Verify bid rejected if below minimum increment
+  - [ ] Test 5-minute extension rule (bid placed near end time extends auction)
+  - [ ] Verify highest bid updates correctly
+- [ ] Buy It Now
+  - [ ] Purchase at buy-it-now price
+  - [ ] Verify auction closes immediately
+  - [ ] Verify purchase appears in buyer's purchases
+  - [ ] Verify a congratulations message appears in the messaging system from the seller
+  - [ ] Buyer receives "You won!" success toast in real-time (on-site, no page refresh needed)
+  - [ ] _Messages_ badge increments immediately in the avatar menu — does not require navigating away and back
+  - [ ] Avatar badge reflects updated combined total (messages + won + outbid)
+- [ ] Outbid notification (buyer)
+  - [ ] Warning toast appears if on-site when outbid
+  - [ ] _Purchases_ menu shows orange "N outbid" count on next login if offline when outbid
+  - [ ] Badge clears on navigating to _My Purchases_
+- [ ] Auction end — winner (buyer)
+  - [ ] Success toast appears if on-site when auction closes (applies to both BIN and natural expiry)
+  - [ ] _Purchases_ menu shows green "N won" shimmer/count on next login
+  - [ ] Avatar badge shows combined total (messages + won + outbid)
+  - [ ] Badge clears on navigating to _My Purchases_
+  - [ ] Verify a congratulations message appears in the messaging system from the seller
+- [ ] Auction end — seller (BIN notification breadcrumb trail)
   - > **Claude Code note:** All five indicators below are driven by the same `pendingShipmentsCount` store value. Test them together in a single BIN flow: trigger BIN as USER2, then immediately inspect all five as USER1 without navigating away. They should all light up simultaneously. Then enter a tracking number and verify they all clear.
-  - [x] "Your auction sold!" success toast appears in real-time (on-site) — toast text directs seller to "Dashboard → Sales to enter tracking"
-  - [x] _Workspace_ dropdown menu item shows shimmer effect and "(N)" count (e.g. "Workspace (1)") — same treatment as the Messages item
-  - [x] _Workspace_ button in the navbar shows an orange numeric badge
-  - [x] _Dashboard_ tab in the Workspace area shows an orange numeric badge on the tab label
-  - [x] _Sales_ toggle button inside the Dashboard tab shows an orange numeric badge
-  - [x] All five indicators are present immediately on login/refresh — not only reactive to the current session's BIN event
-  - [x] Entering a tracking number in the Sales tab decrements all counts in real-time; all indicators disappear when all sales are tracked
-  - [x] Closed auction rows without tracking show an orange border in Dashboard > Sales tab
-  - [x] Gallery sale rows without tracking show an orange border in Dashboard > Sales tab
-- [x] Real-time list observation (two-user)
-  - [x] User 2 is already on `/auctions` when User 1 creates a new auction — verify the new auction card appears on User 2's page without refreshing
-  - [x] User 2 is on `/auctions` when User 1 BINs an auction — verify the card flips to "closed" on User 2's list without refreshing
-  - [x] Countdown timer ticks — open an active auction card, read the countdown display, wait 2 seconds, verify the displayed time has changed
-- [x] Archive auction — **automatic, not a user action**
+  - [ ] "Your auction sold!" success toast appears in real-time (on-site) — toast text directs seller to "Dashboard → Sales to enter tracking"
+  - [ ] _Workspace_ dropdown menu item shows shimmer effect and "(N)" count (e.g. "Workspace (1)") — same treatment as the Messages item
+  - [ ] _Workspace_ button in the navbar shows an orange numeric badge
+  - [ ] _Dashboard_ tab in the Workspace area shows an orange numeric badge on the tab label
+  - [ ] _Sales_ toggle button inside the Dashboard tab shows an orange numeric badge
+  - [ ] All five indicators are present immediately on login/refresh — not only reactive to the current session's BIN event
+  - [ ] Entering a tracking number in the Sales tab decrements all counts in real-time; all indicators disappear when all sales are tracked
+  - [ ] Closed auction rows without tracking show an orange border in Dashboard > Sales tab
+  - [ ] Gallery sale rows without tracking show an orange border in Dashboard > Sales tab
+- [ ] Real-time list observation (two-user)
+  - [ ] User 2 is already on `/auctions` when User 1 creates a new auction — verify the new auction card appears on User 2's page without refreshing
+  - [ ] User 2 is on `/auctions` when User 1 BINs an auction — verify the card flips to "closed" on User 2's list without refreshing
+  - [ ] Countdown timer ticks — open an active auction card, read the countdown display, wait 2 seconds, verify the displayed time has changed
+- [ ] Archive auction — **automatic, not a user action**
   - > **Claude Code note:** Archiving is automatic — closed auctions move to an archive page on a timed cycle (approximately 48 hours after closing), not instantly, so sellers can still see the auction close in real time. There is no archive button. To test: verify a closed auction still appears on the live auctions page immediately after closing.
-  - [x] Closed auction remains visible on live auction page immediately after closing (not instant-removed)
+  - [ ] Closed auction remains visible on live auction page immediately after closing (not instant-removed)
   - [ ] Closed auction eventually appears on the archive page
   - [ ] Closed auction no longer appears in active listings after archive cycle runs
 
@@ -185,37 +190,141 @@
 >
 > The cart/add-to-cart model has been replaced with a Buy Now flow. Clicking "Buy Now" on a gallery card navigates to the post detail page (intentional — the detail page exposes the quantity selector, which matters when quantity > 1). From the detail page, clicking "Buy Now" navigates straight to checkout. There is no cart or cart drawer.
 
-- [x] Buy Now from gallery card
-  - [x] Verify "Buy Now" button is visible on purchasable items (not sold, price > 0, quantity > 0)
-  - [x] Verify "Buy Now" is not shown on sold items
-  - [x] Click "Buy Now" — verify it navigates to the post detail page (this is intentional — the detail page has a quantity selector so buyers can choose how many to purchase when quantity > 1)
-- [x] Buy Now from post detail
-  - [x] Select quantity from dropdown
-  - [x] Click "Buy Now" — verify checkout shows correct item and selected quantity
-- [x] Checkout
-  - [x] Verify order summary shows correct item, quantity, and total
-  - [x] Verify shipping cost appears as a line item in order summary (when > $0)
-  - [x] Verify total = item price × quantity + shipping
-  - [x] Complete checkout (placeholder processor — any card details will succeed)
-  - [x] Verify redirect to /my-purchases with new purchase visible
-  - [x] Verify inventory decremented after purchase
-  - [x] Verify purchase record created
-- [x] Navigate to /checkout directly (no item state)
-  - [x] Verify "Nothing to purchase" message is shown with Browse Gallery button
-- [x] Failed checkout
-  - [x] **Claude Code: SKIP — placeholder processor always succeeds; no failure path exists until a real payment processor is integrated**
+- [ ] Buy Now from gallery card
+  - [ ] Verify "Buy Now" button is visible on purchasable items (not sold, price > 0, quantity > 0)
+  - [ ] Verify "Buy Now" is not shown on sold items
+  - [ ] Click "Buy Now" — verify it navigates to the post detail page (this is intentional — the detail page has a quantity selector so buyers can choose how many to purchase when quantity > 1)
+- [ ] Buy Now from post detail
+  - [ ] Select quantity from dropdown
+  - [ ] Click "Buy Now" — verify checkout shows correct item and selected quantity
+- [ ] Checkout
+  - [ ] Verify order summary shows correct item, quantity, and total
+  - [ ] Verify shipping cost appears as a line item in order summary (when > $0)
+  - [ ] Verify total = item price × quantity + shipping
+  - [ ] Complete checkout (placeholder processor — any card details will succeed)
+  - [ ] Verify redirect to /my-purchases with new purchase visible
+  - [ ] Verify inventory decremented after purchase
+  - [ ] Verify purchase record created
+- [ ] Navigate to /checkout directly (no item state)
+  - [ ] Verify "Nothing to purchase" message is shown with Browse Gallery button
+- [ ] Failed checkout
+  - [ ] **Claude Code: SKIP — placeholder processor always succeeds; no failure path exists until a real payment processor is integrated**
   - [ ] Verify inventory is not decremented on failure
   - [ ] Verify error message displayed
 
+## Seller Earnings Tab
+
+> **Claude Code note:** Test as a seller (USER1) who has at least one completed purchase against their listings. The Earnings tab is a new 4th toggle in the Dashboard tab group alongside Posts, Auctions, and Sales.
+
+- [ ] Seller navigates to Dashboard and clicks the **Earnings** toggle button
+  - [ ] Earnings view loads without error
+  - [ ] "Pending Payout" card is visible
+  - [ ] "Total Paid Out" card is visible
+  - [ ] Payout history section is visible
+
+- [ ] Seller has no sales — verify empty state
+  - [ ] "Pending Payout" shows $0.00
+  - [ ] "Total Paid Out" shows $0.00
+  - [ ] Payout history shows "No payouts recorded yet"
+
+- [ ] After a gallery post purchase is made against the seller's listing **[two-user: USER2 buys from USER1]**
+  - [ ] Seller clicks Earnings tab
+  - [ ] "Pending Payout" shows a non-zero dollar amount
+  - [ ] "Total Paid Out" still shows $0.00
+
+- [ ] After an auction payment is completed against the seller's auction **[two-user: USER2 pays for won auction from USER1]**
+  - [ ] Seller clicks Earnings tab
+  - [ ] "Pending Payout" reflects the auction seller net
+  - [ ] "Total Paid Out" still shows $0.00
+
+## Admin Payouts Panel
+
+> **Claude Code note:** Test as an admin user. Navigate to `/at-the-bon-fire` and click **Payouts** in the sidebar. This panel has two tables: "Owed to Sellers" and "Payout History."
+
+- [ ] Admin navigates to `/at-the-bon-fire` → clicks **Payouts** in the sidebar
+  - [ ] Payouts panel loads without error
+  - [ ] "Owed to Sellers" table is visible
+  - [ ] "Payout History" table is visible
+
+- [ ] With no sales in the system
+  - [ ] "Owed to Sellers" table is empty or all rows show $0.00 pending
+  - [ ] "Payout History" shows "No payouts recorded yet"
+
+- [ ] After a seller has completed sales **[two-user: USER2 makes a purchase from USER1 first]**
+  - [ ] Seller (USER1) appears in the "Owed to Sellers" table
+  - [ ] Pending balance shown for USER1 is greater than $0.00
+  - [ ] "Pay Now" button is enabled for USER1's row
+
+- [ ] Admin clicks "Pay Now" for a seller with a pending balance
+  - [ ] A dialog/modal opens
+  - [ ] Amount field is pre-filled with the seller's pending balance
+  - [ ] Notes field is present and editable
+  - [ ] Period start and end date fields are present (optional)
+  - [ ] Admin can edit the amount, enter notes, and confirm
+
+- [ ] Admin confirms the payout
+  - [ ] Dialog closes
+  - [ ] Seller's pending balance in the "Owed to Sellers" table updates to $0.00
+  - [ ] "Pay Now" button becomes disabled for that seller
+  - [ ] New row appears in "Payout History" with the correct seller name, amount, and date
+
+- [ ] Seller (USER1) returns to Dashboard → Earnings tab after payout is recorded
+  - [ ] "Pending Payout" now shows $0.00
+  - [ ] "Total Paid Out" reflects the payout amount
+  - [ ] Payout appears in the payout history list with the correct date and amount
+
+- [ ] Seller makes a new sale after receiving a payout **[two-user: USER2 makes another purchase]**
+  - [ ] Seller visits Earnings tab
+  - [ ] "Pending Payout" reflects only the new sale (not previously paid sales)
+  - [ ] "Total Paid Out" remains at the prior payout amount
+
 ## My Purchases
 
-- [x] View purchase history
-  - [x] Verify all completed purchases appear
-  - [x] Verify purchase details (item, price, date) are correct
-- [x] Auction purchases
-  - [x] Verify won auction appears in purchases
-  - [x] Verify buy-it-now purchase appears in purchases
-- [x] Won/outbid badge clears on visit
-  - [x] _Purchases_ shimmer/count is visible before navigating here
-  - [x] Badge disappears on arrival (mark-as-read fires on mount)
-  - [x] Log out and back in — badge does not reappear
+- [ ] View purchase history
+  - [ ] Verify all completed purchases appear
+  - [ ] Verify purchase details (item, price, date) are correct
+- [ ] Auction purchases
+  - [ ] Verify won auction appears in purchases
+  - [ ] Verify buy-it-now purchase appears in purchases
+- [ ] Won/outbid badge clears on visit
+  - [ ] _Purchases_ shimmer/count is visible before navigating here
+  - [ ] Badge disappears on arrival (mark-as-read fires on mount)
+  - [ ] Log out and back in — badge does not reappear
+
+---
+
+## Post-Test Cleanup
+
+> Run after every E2E session to remove accumulated test data (posts, products, auctions, purchases, payouts, messages, S3 images) from the dev database. Preserves the test user accounts themselves.
+
+**Script:** `server/scripts/e2e-cleanup.js`
+
+> **Run from PowerShell** — does not work in bash/Git Bash on Windows. Use `;` to separate env vars.
+
+### Dry run first (preview what will be deleted — no changes made)
+
+```
+heroku run --env "USER1_EMAIL=kevinnail@hotmail.com;USER2_EMAIL=knailgear@gmail.com" "node server/scripts/e2e-cleanup.js --dry-run" --app at-the-fire-dev
+```
+
+### Run the cleanup
+
+```
+heroku run --env "USER1_EMAIL=kevinnail@hotmail.com;USER2_EMAIL=knailgear@gmail.com" "node server/scripts/e2e-cleanup.js" --app at-the-fire-dev
+```
+
+### What gets deleted
+- Gallery posts + additional images (S3 included)
+- Quota tracking products + sales records
+- Test orders (order numbers > 24; seed orders 21–24 are preserved)
+- Inventory snapshots
+- Auctions + bids + auction results + auction notifications
+- Purchases (both USER1 as seller and USER2 as buyer)
+- Seller payouts
+- Image upload quota log
+- Conversations + messages between USER1 and USER2
+- Likes and follows by either test user
+
+### What is preserved
+- User accounts (`cognito_users`, `stripe_customers`, subscriptions, quota goals)
+- Seed orders 21–24

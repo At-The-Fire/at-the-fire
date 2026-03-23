@@ -121,9 +121,10 @@ module.exports = Router()
               await s3Client.send(command);
 
               // Use CloudFront if configured, otherwise fall back to direct S3 URL
-              const secure_url = process.env.CLOUDFRONT_DOMAIN
-                ? `https://${process.env.CLOUDFRONT_DOMAIN}/${key}`
-                : `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+              const secure_url =
+                process.env.APP_ENV !== 'development' && process.env.CLOUDFRONT_DOMAIN
+                  ? `https://${process.env.CLOUDFRONT_DOMAIN}/${key}`
+                  : `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
 
               const result = {
                 public_id: uniqueId,
@@ -272,38 +273,6 @@ module.exports = Router()
 
       // 7. Respond
       res.json(data);
-    } catch (e) {
-      next(e);
-    }
-  })
-
-  // PUT update paid/unpaid (seller only) /////////////////////////////////
-  .put('/:id/paid', [authenticateAWS], async (req, res, next) => {
-    try {
-      const { id } = req.params;
-      const { isPaid } = req.body;
-
-      if (typeof isPaid !== 'boolean') {
-        return res.status(400).json({ error: 'isPaid must be boolean' });
-      }
-
-      const auction = await Auction.getById(id);
-      if (!auction) return res.status(404).json({ message: 'Auction not found' });
-      if (req.userAWSSub !== auction.sellerSub) {
-        return res.status(403).json({ error: 'Forbidden' });
-      }
-
-      const result = await Auction.markPaid(id, isPaid);
-
-      const io = req.app.get('io');
-      if (io) {
-        io.to(`user_${result.winner_sub}`).emit('auction-paid', {
-          auctionId: result.auction_id,
-          isPaid,
-        });
-      }
-
-      res.json(result);
     } catch (e) {
       next(e);
     }

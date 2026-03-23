@@ -27,3 +27,4 @@ seed-kdog-seller.js
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+/tests/.auth/

@@ -17,6 +17,9 @@ describe('Purchase Model', () => {
       item_id: 10,
       quantity: 2,
       amount_paid: '49.98',
+      shipping_cost: '7.00',
+      platform_fee: '2.10',
+      seller_net: '47.88',
       processor_transaction_id: 'pi_abc123',
       status: 'completed',
       created_at: '2024-01-01T00:00:00Z',
@@ -32,7 +35,40 @@ describe('Purchase Model', () => {
     expect(purchase.amountPaid).toBe('49.98');
     expect(purchase.processorTransactionId).toBe('pi_abc123');
     expect(purchase.status).toBe('completed');
+    expect(purchase.shippingCost).toBe('7.00');
+    expect(purchase.platformFee).toBe('2.10');
+    expect(purchase.sellerNet).toBe('47.88');
     expect(purchase.createdAt).toBe('2024-01-01T00:00:00Z');
+  });
+
+  describe('insertCompleted', () => {
+    it('inserts a completed purchase using the provided transaction client', async () => {
+      const mockClient = {
+        query: jest.fn().mockResolvedValueOnce({ rows: [{ id: 42 }] }),
+      };
+
+      const result = await Purchase.insertCompleted(
+        {
+          buyerSub: 'sub_123',
+          sellerSub: 'seller_sub_123',
+          itemType: 'auction',
+          itemId: 77,
+          quantity: 1,
+          amountPaid: 200,
+          shippingCost: 15,
+          platformFee: 6,
+          sellerNet: 194,
+          processorTransactionId: 'pi_abc123',
+        },
+        mockClient,
+      );
+
+      expect(result).toEqual({ id: 42 });
+      expect(mockClient.query).toHaveBeenCalledWith(
+        expect.stringContaining('INSERT INTO purchases'),
+        ['sub_123', 'seller_sub_123', 'auction', 77, 1, 200, 15, 6, 194, 'pi_abc123'],
+      );
+    });
   });
 
   describe('insert', () => {
@@ -112,7 +148,7 @@ describe('Purchase Model', () => {
   });
 
   describe('getByBuyerSub', () => {
-    it.only('returns all purchases for a buyer ordered by created_at DESC', async () => {
+    it('returns all purchases for a buyer ordered by created_at DESC', async () => {
       const mockRows = [
         {
           id: 2,

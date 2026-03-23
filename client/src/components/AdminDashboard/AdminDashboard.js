@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import './AdminDashboard.css';
 import { fetchUserData, deleteUser, fetchInvoices } from '../../services/fetch-atf.js';
+import { getPayoutSummary, getPayoutHistory, createPayout } from '../../services/fetch-payouts.js';
 import userDefaultImage from './../../assets/user.png';
 import { useAuthStore } from '../../stores/useAuthStore.js';
 import { toast } from 'react-toastify';
@@ -15,6 +16,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  TextField,
   Typography,
   useMediaQuery,
 } from '@mui/material';
@@ -69,6 +71,16 @@ const AdminDashboard = () => {
   const [openPostsModal, setOpenPostsModal] = useState(false);
   const [modalPosts, setModalPosts] = useState([]);
   const [modalUser, setModalUser] = useState(null);
+
+  const [payoutSummaries, setPayoutSummaries] = useState([]);
+  const [payoutHistory, setPayoutHistory] = useState([]);
+  const [payoutLoading, setPayoutLoading] = useState(false);
+  const [payNowDialog, setPayNowDialog] = useState(false);
+  const [payNowSeller, setPayNowSeller] = useState(null);
+  const [payNowAmount, setPayNowAmount] = useState('');
+  const [payNowNotes, setPayNowNotes] = useState('');
+  const [payNowPeriodStart, setPayNowPeriodStart] = useState('');
+  const [payNowPeriodEnd, setPayNowPeriodEnd] = useState('');
 
   // functions
   const handleOpenDialog = () => {
@@ -248,6 +260,49 @@ const AdminDashboard = () => {
     }
   }, [isAuthenticated, navigate, error]);
 
+  const loadPayouts = async () => {
+    setPayoutLoading(true);
+    try {
+      const [summaries, history] = await Promise.all([getPayoutSummary(), getPayoutHistory()]);
+      setPayoutSummaries(summaries);
+      setPayoutHistory(history);
+    } catch (e) {
+      toast.error(`Failed to load payout data: ${e.message}`, {
+        theme: 'colored',
+        draggable: true,
+        draggablePercent: 60,
+      });
+    } finally {
+      setPayoutLoading(false);
+    }
+  };
+
+  const handlePayNow = (seller) => {
+    setPayNowSeller(seller);
+    setPayNowAmount(Number(seller.pending_balance).toFixed(2));
+    setPayNowNotes('');
+    setPayNowPeriodStart('');
+    setPayNowPeriodEnd('');
+    setPayNowDialog(true);
+  };
+
+  const handleConfirmPayout = async () => {
+    try {
+      await createPayout({
+        sellerSub: payNowSeller.seller_sub,
+        amount: parseFloat(payNowAmount),
+        periodStart: payNowPeriodStart || null,
+        periodEnd: payNowPeriodEnd || null,
+        notes: payNowNotes || null,
+      });
+      setPayNowDialog(false);
+      toast.success('Payout recorded!', { theme: 'colored', draggable: true, draggablePercent: 60 });
+      loadPayouts();
+    } catch (e) {
+      toast.error(`Payout failed: ${e.message}`, { theme: 'colored', draggable: true, draggablePercent: 60 });
+    }
+  };
+
   const loadInvoices = async () => {
     try {
       const data = await fetchInvoices();
@@ -300,6 +355,7 @@ const AdminDashboard = () => {
   const handleSelectAdminMenu = (setting) => {
     setIsMenuOpen(false);
     setActiveView(setting);
+    if (setting === 'payouts') loadPayouts();
   };
 
   return loading ? (
@@ -336,21 +392,24 @@ const AdminDashboard = () => {
             className={`nav-item ${activeView === 'users' ? 'active' : ''}`}
             onClick={() => handleSelectAdminMenu('users')}
           >
-            <Typography className="nav-icon">👥</Typography>
             Users
+          </Box>{' '}
+          <Box
+            className={`nav-item ${activeView === 'payouts' ? 'active' : ''}`}
+            onClick={() => handleSelectAdminMenu('payouts')}
+          >
+            Payouts
           </Box>
           <Box
             className={`nav-item ${activeView === 'content' ? 'active' : ''}`}
             onClick={() => handleSelectAdminMenu('content')}
           >
-            <Typography className="nav-icon">📄</Typography>
             Content
           </Box>
           <Box
             className={`nav-item ${activeView === 'analytics' ? 'active' : ''}`}
             onClick={() => handleSelectAdminMenu('analytics')}
           >
-            <Typography className="nav-icon">📊</Typography>
             Analytics
           </Box>
           <Box
@@ -437,7 +496,7 @@ const AdminDashboard = () => {
             </Box>
           </Box>
 
-          {/* 
+          {/*
           <Box className="stat-card warning">
             <Box className="stat-header">
               <Typography variant="h5">Monthly Revenue</Typography>
@@ -498,137 +557,267 @@ const AdminDashboard = () => {
           </Box>
         </section>
 
-        <section className="main-view">
-          <Box className="view-header">
-            <h2>User Management</h2>
-            <Box className="view-actions">
-              <Button
-                onClick={handleRefresh}
-                disabled={isRefreshing}
-                className="refresh-button"
-                sx={{
-                  minWidth: '40px',
-                  mr: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1,
-                }}
-              >
-                Refresh:
-                <RefreshCw size={20} className={isRefreshing ? 'animate-spin' : ''} />
-              </Button>
-              {/* <button className="button secondary">Export</button>
-              <button className="button primary">Add User</button> */}
+        {activeView === 'payouts' && (
+          <section className="main-view">
+            <Box className="view-header">
+              <h2>Seller Payouts</h2>
+              <Box className="view-actions">
+                <Button
+                  onClick={loadPayouts}
+                  disabled={payoutLoading}
+                  sx={{ minWidth: '40px', mr: 2, display: 'flex', alignItems: 'center', gap: 1 }}
+                >
+                  Refresh:
+                  <RefreshCw size={20} className={payoutLoading ? 'animate-spin' : ''} />
+                </Button>
+              </Box>
             </Box>
-          </Box>
-          <Box className="data-table">
-            <Box className="data-grid">
-              <Box className="grid-header">
-                <Box className="user-cell">Users</Box>
-                <Box className="desktop-info">
-                  <Box className="cell-joined">Joined</Box>
-                  <Box className="cell-status">Status</Box>
-                  <Box className="cell-content">Content</Box>
-                  <Box className="cell-subscription">Subscription</Box>
-                  <Box className="cell-actions">Actions</Box>
+
+            {payoutLoading && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                <FlamePipe />
+              </Box>
+            )}
+
+            {!payoutLoading && (
+              <Box>
+                <Typography variant="h6" sx={{ px: 2, pt: 2, pb: 1 }}>
+                  Owed to Sellers
+                </Typography>
+                <Box className="data-table">
+                  <Box className="data-grid">
+                    <Box className="grid-header">
+                      <Box sx={{ flex: 2 }}>Seller</Box>
+                      <Box sx={{ flex: 1 }}>Total Earned</Box>
+                      <Box sx={{ flex: 1 }}>Paid Out</Box>
+                      <Box sx={{ flex: 1 }}>Pending</Box>
+                      <Box sx={{ flex: 1 }}>Action</Box>
+                    </Box>
+                    {payoutSummaries.length === 0 && <Typography sx={{ p: 2 }}>No sellers with sales yet.</Typography>}
+                    {payoutSummaries.length > 0 &&
+                      payoutSummaries.map((seller) => (
+                        <Box
+                          key={seller.seller_sub}
+                          className="grid-row"
+                          sx={{ display: 'flex', alignItems: 'center', p: 1 }}
+                        >
+                          <Box sx={{ flex: 2 }}>
+                            {seller.first_name} {seller.last_name}
+                          </Box>
+                          <Box sx={{ flex: 1 }}>${Number(seller.total_earned).toFixed(2)}</Box>
+                          <Box sx={{ flex: 1 }}>${Number(seller.total_paid_out).toFixed(2)}</Box>
+                          <Box
+                            sx={{
+                              flex: 1,
+                              fontWeight: 'bold',
+                              color: Number(seller.pending_balance) > 0 ? 'lightgreen' : 'inherit',
+                            }}
+                          >
+                            ${Number(seller.pending_balance).toFixed(2)}
+                          </Box>
+                          <Box sx={{ flex: 1 }}>
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              disabled={Number(seller.pending_balance) <= 0}
+                              onClick={() => handlePayNow(seller)}
+                            >
+                              Pay Now
+                            </Button>
+                          </Box>
+                        </Box>
+                      ))}
+                  </Box>
+                </Box>
+
+                <Typography variant="h6" sx={{ px: 2, pt: 3, pb: 1 }}>
+                  Payout History
+                </Typography>
+                <Box className="data-table">
+                  <Box className="data-grid">
+                    <Box className="grid-header">
+                      <Box sx={{ flex: 1 }}>Date</Box>
+                      <Box sx={{ flex: 2 }}>Seller</Box>
+                      <Box sx={{ flex: 1 }}>Amount</Box>
+                      <Box sx={{ flex: 2 }}>Notes</Box>
+                    </Box>
+                    {payoutHistory.length === 0 && <Typography sx={{ p: 2 }}>No payouts recorded yet.</Typography>}
+                    {payoutHistory.length > 0 &&
+                      payoutHistory.map((payout) => (
+                        <Box key={payout.id} className="grid-row" sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
+                          <Box sx={{ flex: 1 }}>{new Date(payout.created_at).toLocaleDateString()}</Box>
+                          <Box sx={{ flex: 2 }}>
+                            {payout.first_name} {payout.last_name}
+                          </Box>
+                          <Box sx={{ flex: 1 }}>${Number(payout.amount).toFixed(2)}</Box>
+                          <Box sx={{ flex: 2 }}>{payout.notes || '—'}</Box>
+                        </Box>
+                      ))}
+                  </Box>
                 </Box>
               </Box>
+            )}
+          </section>
+        )}
 
-              {currentUsers
-                .filter((user) => user.id > 5)
-                .map((user, i) => (
-                  <Box key={user.id || i} className="grid-row" sx={{ padding: '0' }}>
-                    {/* Main user info - always visible */}
-                    <Box className="user-cell">
-                      {user.logo_image_url && user.logo_image_url !== 'N/A' ? (
-                        <Box
-                          component="img"
-                          sx={{
-                            height: isMobile ? '50px' : '80px',
-                            width: isMobile ? '50px' : '80px',
-                            borderRadius: '5px',
-                            cursor: 'pointer',
-                            border: '2px solid',
-                            borderColor: (theme) => theme.palette.primary.light,
-                          }}
-                          src={user.logo_image_url}
-                          alt="User"
-                          onClick={() => navigate(`/profile/${user.sub}`)}
-                        />
-                      ) : (
-                        <Box
-                          component="img"
-                          sx={{
-                            height: isMobile ? '50px' : '80px',
-                            width: isMobile ? '50px' : '80px',
-                            borderRadius: '5px',
-                            cursor: 'pointer',
-                            border: '2px solid',
-                            borderColor: (theme) => theme.palette.primary.light,
-                          }}
-                          src={user.image_url}
-                          alt="User"
-                          onClick={() => navigate(`/profile/${user.sub}`)}
-                        />
-                      )}
-                      <Box className="user-info">
-                        <Box className="user-name">
-                          {user.firstName} {user.lastName}
-                        </Box>
-                        <Box className="user-email" sx={{ fontSize: '0.8em', textAlign: 'left' }}>
-                          {user.email.length > 20 ? user.email.slice(0, 20) + '...' : user.email}
-                        </Box>
+        {activeView === 'users' && (
+          <section className="main-view">
+            <Box className="view-header">
+              <h2>User Management</h2>
+              <Box className="view-actions">
+                <Button
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                  className="refresh-button"
+                  sx={{
+                    minWidth: '40px',
+                    mr: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                  }}
+                >
+                  Refresh:
+                  <RefreshCw size={20} className={isRefreshing ? 'animate-spin' : ''} />
+                </Button>
+                {/* <button className="button secondary">Export</button>
+<button className="button primary">Add User</button> */}
+              </Box>
+            </Box>
+            <Box className="data-table">
+              <Box className="data-grid">
+                <Box className="grid-header">
+                  <Box className="user-cell">Users</Box>
+                  <Box className="desktop-info">
+                    <Box className="cell-joined">Joined</Box>
+                    <Box className="cell-status">Status</Box>
+                    <Box className="cell-content">Content</Box>
+                    <Box className="cell-subscription">Subscription</Box>
+                    <Box className="cell-actions">Actions</Box>
+                  </Box>
+                </Box>
 
-                        {!isMobile && (
-                          <>
-                            <Box sx={{ fontSize: '0.8em', color: '#888', textAlign: 'left', lineHeight: '1.2' }}>
-                              sub: {user.sub}
-                            </Box>
-                            <Box sx={{ fontSize: '0.8em', color: '#888', textAlign: 'left', lineHeight: '1.2' }}>
-                              customerId: <span style={{ fontWeight: 'bold', color: '#888' }}>{user.customerId}</span>
-                            </Box>
-                          </>
+                {currentUsers
+                  .filter((user) => user.id > 5)
+                  .map((user, i) => (
+                    <Box key={user.id || i} className="grid-row" sx={{ padding: '0' }}>
+                      {/* Main user info - always visible */}
+                      <Box className="user-cell">
+                        {user.logo_image_url && user.logo_image_url !== 'N/A' ? (
+                          <Box
+                            component="img"
+                            sx={{
+                              height: isMobile ? '50px' : '80px',
+                              width: isMobile ? '50px' : '80px',
+                              borderRadius: '5px',
+                              cursor: 'pointer',
+                              border: '2px solid',
+                              borderColor: (theme) => theme.palette.primary.light,
+                            }}
+                            src={user.logo_image_url}
+                            alt="User"
+                            onClick={() => navigate(`/profile/${user.sub}`)}
+                          />
+                        ) : (
+                          <Box
+                            component="img"
+                            sx={{
+                              height: isMobile ? '50px' : '80px',
+                              width: isMobile ? '50px' : '80px',
+                              borderRadius: '5px',
+                              cursor: 'pointer',
+                              border: '2px solid',
+                              borderColor: (theme) => theme.palette.primary.light,
+                            }}
+                            src={user.image_url}
+                            alt="User"
+                            onClick={() => navigate(`/profile/${user.sub}`)}
+                          />
                         )}
-                      </Box>
-                    </Box>
+                        <Box className="user-info">
+                          <Box className="user-name">
+                            {user.firstName} {user.lastName}
+                          </Box>
+                          <Box className="user-email" sx={{ fontSize: '0.8em', textAlign: 'left' }}>
+                            {user.email.length > 20 ? user.email.slice(0, 20) + '...' : user.email}
+                          </Box>
 
-                    {/* Desktop view - additional info */}
-                    <Box className="desktop-info">
-                      <Box className="cell-joined">
-                        {new Date(user.createdAt).toLocaleDateString('en-US', {
-                          month: 'numeric',
-                          day: 'numeric',
-                          year: '2-digit',
-                        })}
+                          {!isMobile && (
+                            <>
+                              <Box sx={{ fontSize: '0.8em', color: '#888', textAlign: 'left', lineHeight: '1.2' }}>
+                                sub: {user.sub}
+                              </Box>
+                              <Box sx={{ fontSize: '0.8em', color: '#888', textAlign: 'left', lineHeight: '1.2' }}>
+                                customerId: <span style={{ fontWeight: 'bold', color: '#888' }}>{user.customerId}</span>
+                              </Box>
+                            </>
+                          )}
+                        </Box>
                       </Box>
-                      <Box className="cell-status">
+
+                      {/* Desktop view - additional info */}
+                      <Box className="desktop-info">
+                        <Box className="cell-joined">
+                          {new Date(user.createdAt).toLocaleDateString('en-US', {
+                            month: 'numeric',
+                            day: 'numeric',
+                            year: '2-digit',
+                          })}
+                        </Box>
+                        <Box className="cell-status">
+                          <span className={`status-badge ${user.status}`}>{user.status}</span>
+                        </Box>
+                        {/* <Box className="cell-status">
+        <span className={`status-badge ${user.subscription_status}`}>{user.trial_status}</span>
+      </Box> */}
+                        <Box className="cell-content">
+                          <Button
+                            variant="outlined"
+                            style={{ cursor: 'pointer', width: '100%' }}
+                            onClick={() => {
+                              setModalPosts(user.userPosts);
+                              setModalUser(user);
+                              setOpenPostsModal(true);
+                            }}
+                          >
+                            {user.postsCount} posts
+                          </Button>
+                        </Box>
+                        <Box className="cell-subscription">
+                          <span className={`subscription-badge ${user.subscription_status}`}>
+                            {user.subscription_status}
+                          </span>
+                        </Box>
+                        <Box className="cell-actions">
+                          {customerId !== user.customerId ? (
+                            <Box sx={{ minWidth: '70px' }}>
+                              <button className="icon-button edit">✏️</button>
+                              <button
+                                className="icon-button delete"
+                                onClick={() => {
+                                  setUserToDelete(user);
+                                  handleOpenDialog();
+                                }}
+                                disabled={loading}
+                              >
+                                {loading ? '...' : '🗑️'}
+                              </button>
+                            </Box>
+                          ) : (
+                            <Box sx={{ minWidth: '70px' }}>🔥</Box>
+                          )}
+                        </Box>
+                      </Box>
+
+                      {/* Mobile view - critical info inline */}
+                      <Box className="mobile-info">
                         <span className={`status-badge ${user.status}`}>{user.status}</span>
-                      </Box>
-                      {/* <Box className="cell-status">
-                        <span className={`status-badge ${user.subscription_status}`}>{user.trial_status}</span>
-                      </Box> */}
-                      <Box className="cell-content">
-                        <Button
-                          variant="outlined"
-                          style={{ cursor: 'pointer', width: '100%' }}
-                          onClick={() => {
-                            setModalPosts(user.userPosts);
-                            setModalUser(user);
-                            setOpenPostsModal(true);
-                          }}
-                        >
-                          {user.postsCount} posts
-                        </Button>
-                      </Box>
-                      <Box className="cell-subscription">
                         <span className={`subscription-badge ${user.subscription_status}`}>
                           {user.subscription_status}
                         </span>
-                      </Box>
-                      <Box className="cell-actions">
                         {customerId !== user.customerId ? (
-                          <Box sx={{ minWidth: '70px' }}>
-                            <button className="icon-button edit">✏️</button>
+                          <Box sx={{ minWidth: '20px' }}>
+                            {' '}
                             <button
                               className="icon-button delete"
                               onClick={() => {
@@ -641,85 +830,127 @@ const AdminDashboard = () => {
                             </button>
                           </Box>
                         ) : (
-                          <Box sx={{ minWidth: '70px' }}>🔥</Box>
+                          <Box sx={{ minWidth: '35px' }}>🔥</Box>
                         )}
                       </Box>
                     </Box>
-
-                    {/* Mobile view - critical info inline */}
-                    <Box className="mobile-info">
-                      <span className={`status-badge ${user.status}`}>{user.status}</span>
-                      <span className={`subscription-badge ${user.subscription_status}`}>
-                        {user.subscription_status}
-                      </span>
-                      {customerId !== user.customerId ? (
-                        <Box sx={{ minWidth: '20px' }}>
-                          {' '}
-                          <button
-                            className="icon-button delete"
-                            onClick={() => {
-                              setUserToDelete(user);
-                              handleOpenDialog();
-                            }}
-                            disabled={loading}
-                          >
-                            {loading ? '...' : '🗑️'}
-                          </button>
-                        </Box>
-                      ) : (
-                        <Box sx={{ minWidth: '35px' }}>🔥</Box>
-                      )}
-                    </Box>
-                  </Box>
-                ))}
+                  ))}
+              </Box>
             </Box>
-          </Box>
 
-          <Box className="pagination">
-            <Button
-              className="page-button"
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-            >
-              ←
-            </Button>
+            <Box className="pagination">
+              <Button
+                className="page-button"
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                ←
+              </Button>
 
-            {[...Array(totalPages)].map((_, index) => {
-              const pageNumber = index + 1;
-              if (
-                pageNumber === 1 ||
-                pageNumber === totalPages ||
-                (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
-              ) {
-                return (
-                  <Button
-                    key={pageNumber}
-                    className={`page-button ${currentPage === pageNumber ? 'active' : ''}`}
-                    onClick={() => setCurrentPage(pageNumber)}
-                  >
-                    {pageNumber}
-                  </Button>
-                );
-              } else if (pageNumber === currentPage - 2 || pageNumber === currentPage + 2) {
-                return (
-                  <Typography key={pageNumber} className="page-ellipsis">
-                    ...
-                  </Typography>
-                );
-              }
-              return null;
-            })}
+              {[...Array(totalPages)].map((_, index) => {
+                const pageNumber = index + 1;
+                if (
+                  pageNumber === 1 ||
+                  pageNumber === totalPages ||
+                  (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                ) {
+                  return (
+                    <Button
+                      key={pageNumber}
+                      className={`page-button ${currentPage === pageNumber ? 'active' : ''}`}
+                      onClick={() => setCurrentPage(pageNumber)}
+                    >
+                      {pageNumber}
+                    </Button>
+                  );
+                } else if (pageNumber === currentPage - 2 || pageNumber === currentPage + 2) {
+                  return (
+                    <Typography key={pageNumber} className="page-ellipsis">
+                      ...
+                    </Typography>
+                  );
+                }
+                return null;
+              })}
 
-            <Button
-              className="page-button"
-              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-            >
-              →
-            </Button>
-          </Box>
-        </section>
+              <Button
+                className="page-button"
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              >
+                →
+              </Button>
+            </Box>
+          </section>
+        )}
       </main>
+
+      <Dialog open={payNowDialog} onClose={() => setPayNowDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          Record Payout — {payNowSeller?.first_name} {payNowSeller?.last_name}
+        </DialogTitle>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: '16px !important' }}>
+          <TextField
+            label="Amount ($)"
+            type="number"
+            value={payNowAmount}
+            onChange={(e) => setPayNowAmount(e.target.value)}
+            fullWidth
+            inputProps={{ min: 0, step: '0.01' }}
+          />
+          <TextField
+            label="Period Start (optional)"
+            type="date"
+            value={payNowPeriodStart}
+            onChange={(e) => setPayNowPeriodStart(e.target.value)}
+            fullWidth
+            InputLabelProps={{ shrink: true }}
+          />
+          <TextField
+            label="Period End (optional)"
+            type="date"
+            value={payNowPeriodEnd}
+            onChange={(e) => setPayNowPeriodEnd(e.target.value)}
+            fullWidth
+            InputLabelProps={{ shrink: true }}
+          />
+          <TextField
+            label="Notes (e.g. 'March 2026 payout via ACH')"
+            value={payNowNotes}
+            onChange={(e) => setPayNowNotes(e.target.value)}
+            fullWidth
+            multiline
+            rows={2}
+          />
+        </DialogContent>
+        <DialogActions sx={{ display: 'flex', justifyContent: 'space-between' }}>
+          <Button
+            sx={{
+              width: '100%',
+              fontSize: '1rem',
+              color: 'lightgreen',
+              border: '2px solid lightgreen',
+              '&:hover': { backgroundColor: 'lightgreen', color: 'green' },
+            }}
+            onClick={() => setPayNowDialog(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            sx={{
+              width: '100%',
+              fontSize: '1rem',
+              color: 'orange',
+              border: '2px solid orange',
+              '&:hover': { backgroundColor: 'orange', color: 'black' },
+            }}
+            onClick={handleConfirmPayout}
+            disabled={!payNowAmount || parseFloat(payNowAmount) <= 0}
+          >
+            Confirm Payout
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog
         open={openDialog}
