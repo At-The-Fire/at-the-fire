@@ -1,4 +1,5 @@
 const pool = require('../utils/pool');
+const { encrypt, decrypt } = require('../services/encryption');
 
 module.exports = class Purchase {
   id;
@@ -15,6 +16,7 @@ module.exports = class Purchase {
   createdAt;
   platformFee;
   sellerNet;
+  shippingAddress;
   // Optional join fields
   title;
   imageUrls;
@@ -37,22 +39,25 @@ module.exports = class Purchase {
     this.sellerNet = row.seller_net ?? 0;
     this.title = row.title || null;
     this.imageUrls = null;
+    const raw = row.shipping_address ? decrypt(row.shipping_address) : null;
+    this.shippingAddress = raw ? JSON.parse(raw) : null;
   }
 
   // Insert a completed purchase within a transaction.
   // client must be provided (pool client mid-transaction).
   static async insertCompleted(
-    { buyerSub, sellerSub, itemType, itemId, quantity, amountPaid, shippingCost, platformFee, sellerNet, processorTransactionId },
+    { buyerSub, sellerSub, itemType, itemId, quantity, amountPaid, shippingCost, platformFee, sellerNet, processorTransactionId, shippingAddress },
     client
   ) {
+    const encryptedAddress = shippingAddress ? encrypt(JSON.stringify(shippingAddress)) : null;
     const { rows } = await client.query(
       `INSERT INTO purchases
          (buyer_sub, seller_sub, item_type, item_id, quantity, amount_paid,
-          shipping_cost, platform_fee, seller_net, processor_transaction_id, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'completed')
+          shipping_cost, platform_fee, seller_net, processor_transaction_id, shipping_address, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'completed')
        RETURNING id`,
       [buyerSub, sellerSub, itemType, itemId, quantity, amountPaid,
-       shippingCost, platformFee, sellerNet, processorTransactionId]
+       shippingCost, platformFee, sellerNet, processorTransactionId, encryptedAddress]
     );
     return rows[0];
   }
