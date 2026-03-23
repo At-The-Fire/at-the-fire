@@ -361,6 +361,7 @@ CREATE TABLE purchases (
   platform_fee            NUMERIC DEFAULT 0,
   seller_net              NUMERIC DEFAULT 0,
   payout_id               BIGINT  REFERENCES seller_payouts(id),
+  shipping_address        TEXT,  -- AES-256 encrypted JSON: { fullName, line1, line2, city, state, zip, country }
   created_at              TIMESTAMPTZ DEFAULT NOW()
 );
 
