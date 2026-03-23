@@ -1,7 +1,12 @@
+jest.mock('../../../lib/utils/pool');
+jest.mock('../../../lib/services/encryption', () => ({
+  encrypt: jest.fn((text) => `encrypted:${text}`),
+  decrypt: jest.fn((text) => (text ? text.replace(/^encrypted:/, '') : null)),
+}));
+
 const Auction = require('../../../lib/models/Auction.js');
 const pool = require('../../../lib/utils/pool.js');
-
-jest.mock('../../../lib/utils/pool');
+const { decrypt } = require('../../../lib/services/encryption');
 
 describe('Auction Model', () => {
   beforeEach(() => {
@@ -134,6 +139,7 @@ describe('Auction Model', () => {
           is_active: true,
           created_at: new Date(),
           updated_at: new Date(),
+          shipping_address: null,
         },
       ];
       pool.query.mockResolvedValueOnce({ rows: mockRows });
@@ -143,7 +149,38 @@ describe('Auction Model', () => {
       expect(results).toHaveLength(1);
       expect(results[0]).toBeInstanceOf(Auction);
       expect(results[0].sellerSub).toBe('sub_seller');
+      expect(results[0].winnerShippingAddress).toBeNull();
       expect(pool.query).toHaveBeenCalledWith(expect.any(String), ['sub_seller']);
+    });
+
+    it('decrypts winner shipping address when present', async () => {
+      const addr = { fullName: 'Jane Smith', line1: '123 Main St', city: 'Portland', state: 'OR', zip: '97201' };
+      const mockRows = [
+        {
+          id: 2,
+          title: 'Sold Auction',
+          seller_sub: 'sub_seller',
+          image_urls: [],
+          start_price: '50.00',
+          buy_now_price: null,
+          current_bid: null,
+          start_time: new Date(),
+          end_time: new Date(),
+          is_active: false,
+          created_at: new Date(),
+          updated_at: new Date(),
+          winner_sub: 'sub_winner',
+          final_bid: '150.00',
+          is_paid: true,
+          shipping_address: `encrypted:${JSON.stringify(addr)}`,
+        },
+      ];
+      pool.query.mockResolvedValueOnce({ rows: mockRows });
+
+      const results = await Auction.getBySeller('sub_seller');
+
+      expect(decrypt).toHaveBeenCalledWith(`encrypted:${JSON.stringify(addr)}`);
+      expect(results[0].winnerShippingAddress).toEqual(addr);
     });
 
     it('returns empty array when seller has no auctions', async () => {
@@ -355,7 +392,7 @@ describe('Auction Model', () => {
   });
 
   describe('getUserAuctionWins', () => {
-    it('returns auction wins for a user', async () => {
+    it('returns auction wins for a user including shippingCost', async () => {
       const mockRows = [
         {
           id: 1,
@@ -368,6 +405,7 @@ describe('Auction Model', () => {
           title: 'Won Auction',
           image_urls: ['image.jpg'],
           buy_now_price: '500.00',
+          shipping_cost: '12.00',
           tracking_number: null,
         },
       ];
@@ -380,6 +418,32 @@ describe('Auction Model', () => {
       expect(results[0].winnerSub).toBe('sub_123');
       expect(results[0].finalBid).toBe(250);
       expect(results[0].title).toBe('Won Auction');
+      expect(results[0].shippingCost).toBe(12);
+    });
+
+    it('defaults shippingCost to 0 when shipping_cost is null', async () => {
+      const mockRows = [
+        {
+          id: 2,
+          auction_id: 6,
+          winner_sub: 'sub_123',
+          final_bid: '100.00',
+          closed_at: '2024-01-09',
+          closed_reason: 'buy_now',
+          is_paid: true,
+          title: 'Free Ship Auction',
+          image_urls: [],
+          buy_now_price: '100.00',
+          shipping_cost: null,
+          tracking_number: null,
+        },
+      ];
+
+      pool.query.mockResolvedValueOnce({ rows: mockRows });
+
+      const results = await Auction.getUserAuctionWins('sub_123');
+
+      expect(results[0].shippingCost).toBe(0);
     });
   });
 
