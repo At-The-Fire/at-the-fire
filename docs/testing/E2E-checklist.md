@@ -290,3 +290,41 @@
   - [ ] _Purchases_ shimmer/count is visible before navigating here
   - [ ] Badge disappears on arrival (mark-as-read fires on mount)
   - [ ] Log out and back in — badge does not reappear
+
+---
+
+## Post-Test Cleanup
+
+> Run after every E2E session to remove accumulated test data (posts, products, auctions, purchases, payouts, messages, S3 images) from the dev database. Preserves the test user accounts themselves.
+
+**Script:** `server/scripts/e2e-cleanup.js`
+
+> **Run from PowerShell** — does not work in bash/Git Bash on Windows. Use `;` to separate env vars.
+
+### Dry run first (preview what will be deleted — no changes made)
+
+```
+heroku run --env "USER1_EMAIL=kevinnail@hotmail.com;USER2_EMAIL=knailgear@gmail.com" "node server/scripts/e2e-cleanup.js --dry-run" --app at-the-fire-dev
+```
+
+### Run the cleanup
+
+```
+heroku run --env "USER1_EMAIL=kevinnail@hotmail.com;USER2_EMAIL=knailgear@gmail.com" "node server/scripts/e2e-cleanup.js" --app at-the-fire-dev
+```
+
+### What gets deleted
+- Gallery posts + additional images (S3 included)
+- Quota tracking products + sales records
+- Test orders (order numbers > 24; seed orders 21–24 are preserved)
+- Inventory snapshots
+- Auctions + bids + auction results + auction notifications
+- Purchases (both USER1 as seller and USER2 as buyer)
+- Seller payouts
+- Image upload quota log
+- Conversations + messages between USER1 and USER2
+- Likes and follows by either test user
+
+### What is preserved
+- User accounts (`cognito_users`, `stripe_customers`, subscriptions, quota goals)
+- Seed orders 21–24

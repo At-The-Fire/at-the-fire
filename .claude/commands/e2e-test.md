@@ -130,6 +130,23 @@ A prioritized list of issues to address, grouped by severity:
 
 ---
 
+## Image Upload Fixture
+
+File uploads (avatar, logo, post images, auction images) **are testable** using local files. Use the fixture image at:
+
+```
+client/public/logo-icon-6-192.png
+```
+
+This is a 192×192 PNG in the repo root and is always available. When a checklist item requires uploading an avatar, logo, or product/auction image:
+1. Click the upload button to reveal the file input.
+2. Use `browser_file_upload` with the absolute local path to `client/public/logo-icon-6-192.png`.
+3. Verify the uploaded image appears in the UI.
+
+**Do NOT skip file upload tests citing "no local fixture" or "test environment blocks it" — that is incorrect. The fixture image exists. Use it.**
+
+---
+
 ## What Is Out of Scope
 
 The following should be marked SKIPPED with an explanation rather than attempted:
@@ -137,7 +154,6 @@ The following should be marked SKIPPED with an explanation rather than attempted
 - Payment processing with real transactions
 - Admin actions not explicitly listed in the checklist (see Admin Session Rules above)
 - Anything requiring a native mobile app
-- File uploads if the test environment blocks it
 
 ---
 
