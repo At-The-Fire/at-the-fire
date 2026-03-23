@@ -219,7 +219,7 @@ describe('Auction routes', () => {
       expect(response.body.length).toBe(2);
       expect(response.body[0]).toHaveProperty('secure_url');
       expect(response.body[0]).toHaveProperty('public_id');
-      expect(response.body[0].secure_url).toContain('cloudfront.net');
+      expect(response.body[0].secure_url).toContain('amazonaws.com');
       expect(response.body[0].secure_url).toContain('auction-images');
     });
   });
