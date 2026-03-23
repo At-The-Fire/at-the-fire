@@ -902,6 +902,17 @@ export default function Dashboard({ products, setProducts, customerId }) {
                                       No tracking yet
                                     </Typography>
                                   )}
+                                  {sale.shippingAddress && (
+                                    <Typography
+                                      variant="body2"
+                                      sx={{ fontSize: '.7rem', color: 'text.secondary', textAlign: 'left', mt: 0.25 }}
+                                    >
+                                      {sale.shippingAddress.fullName}, {sale.shippingAddress.line1}
+                                      {sale.shippingAddress.line2 ? `, ${sale.shippingAddress.line2}` : ''},{' '}
+                                      {sale.shippingAddress.city}, {sale.shippingAddress.state}{' '}
+                                      {sale.shippingAddress.zip}
+                                    </Typography>
+                                  )}
                                 </Box>
                               </Box>
 
@@ -1043,6 +1054,19 @@ export default function Dashboard({ products, setProducts, customerId }) {
                                       sx={{ fontSize: '.75rem', color: 'text.secondary', textAlign: 'left' }}
                                     >
                                       No tracking yet
+                                    </Typography>
+                                  )}
+                                  {auction.winnerShippingAddress && (
+                                    <Typography
+                                      variant="body2"
+                                      sx={{ fontSize: '.7rem', color: 'text.secondary', textAlign: 'left', mt: 0.25 }}
+                                    >
+                                      {auction.winnerShippingAddress.fullName}, {auction.winnerShippingAddress.line1}
+                                      {auction.winnerShippingAddress.line2
+                                        ? `, ${auction.winnerShippingAddress.line2}`
+                                        : ''}
+                                      , {auction.winnerShippingAddress.city}, {auction.winnerShippingAddress.state}{' '}
+                                      {auction.winnerShippingAddress.zip}
                                     </Typography>
                                   )}
                                 </Box>
