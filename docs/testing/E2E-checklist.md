@@ -51,6 +51,8 @@
 
 ## Dashboard CRUD
 
+> **Route note for all Dashboard CRUD tests:** When a step says "verify post displays in _Gallery_" or similar, navigate to `/` (the home/feed route). The gallery listing is at `/` — do NOT navigate to `/gallery`, it does not exist and will 404. Post detail pages are at `/gallery/[id]`.
+
 ### Dashboard
 
 - [ ] Create new post
@@ -157,7 +159,8 @@
   - [ ] Shipping address form is present and required fields are enforced (same as gallery checkout)
   - [ ] Complete checkout with valid address — verify redirect to /my-purchases
   - [ ] Won auction card in /my-purchases shows "Paid" status after payment
-  - [ ] Seller (USER1) navigates to Dashboard → Sales tab — verify winner's shipping address is visible on the closed auction row
+  - [ ] Seller (USER1) navigates to Dashboard → Sales tab — verify the closed auction row shows a paid/completed status (not pending payment)
+  - [ ] Verify winner's shipping address is visible on the closed auction row
 - [ ] Outbid notification (buyer)
   - [ ] Warning toast appears if on-site when outbid
   - [ ] _Purchases_ menu shows orange "N outbid" count on next login if offline when outbid
@@ -201,6 +204,8 @@
 > **Claude Code note:** The checkout uses a placeholder payment processor — no real payment provider is integrated yet. Any card details entered will result in a successful transaction. Do not use Stripe test card numbers; they have no meaning here. The "Failed checkout" block cannot be tested until a real payment processor is integrated.
 >
 > The cart/add-to-cart model has been replaced with a Buy Now flow. Clicking "Buy Now" on a gallery card navigates to the post detail page (intentional — the detail page exposes the quantity selector, which matters when quantity > 1). From the detail page, clicking "Buy Now" navigates straight to checkout. There is no cart or cart drawer.
+>
+> **Route note:** The gallery feed (the listing of all posts) is at `/` — the home/root route. Do NOT navigate to `/gallery` — that route does not exist and will 404. Individual post detail pages are at `/gallery/[id]` (e.g. `/gallery/1227`) — those ARE valid.
 
 - [ ] Buy Now from gallery card
   - [ ] Verify "Buy Now" button is visible on purchasable items (not sold, price > 0, quantity > 0)
