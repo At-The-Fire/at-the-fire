@@ -118,9 +118,8 @@ describe('AWS Cognito User tests', () => {
 
   it('should return error for an existing email', async () => {
     const mockUserData = {
-      email: process.env.TEST_EMAIL,
-      sub: process.env.TEST_SUB,
-      // sub: process.env.TEST_SUB_NO_PROFILE,
+      sub: process.env.TEST_SUB_FULL_CUSTOMER,
+      email: process.env.TEST_EMAIL_FULL_CUSTOMER,
       tosVersion: '2026-03-09',
     };
     const response = await request(app).post('/api/v1/auth/new-user').send(mockUserData);
