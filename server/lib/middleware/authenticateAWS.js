@@ -33,7 +33,6 @@ module.exports = async (req, res, next) => {
       return res.status(401).json({
         message: 'You must be signed in to continue: missing or invalid token',
         code: 401,
-        type: 'MissingOrInvalidToken',
       });
     }
 
@@ -52,19 +51,16 @@ module.exports = async (req, res, next) => {
         return res.status(401).json({
           message: 'Token has expired!',
           code: 401,
-          type: 'TokenExpiredError',
         });
       } else if (error.message.includes('Missing Key ID')) {
         return res.status(401).json({
           message: 'Missing Key ID in token header!',
           code: 401,
-          type: 'MissingKeyIDError',
         });
       } else {
         return res.status(401).json({
           message: 'Token verification failed!',
           code: 401,
-          type: 'TokenVerificationError',
         });
       }
     }
@@ -87,7 +83,6 @@ module.exports = async (req, res, next) => {
         return res.status(401).json({
           message: 'User does not exist',
           code: 401,
-          type: 'UserNotFoundError',
         });
       }
 
@@ -97,7 +92,6 @@ module.exports = async (req, res, next) => {
       return res.status(401).json({
         message: 'User verification failed',
         code: 401,
-        type: 'UserVerificationError',
       });
     }
 
