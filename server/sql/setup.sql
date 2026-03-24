@@ -46,7 +46,8 @@ bio VARCHAR(255),
 email_hash VARCHAR(255) UNIQUE NOT NULL,
 social_media_links JSON,
 accepted_tos_at TIMESTAMPTZ,
-tos_version VARCHAR(20)
+tos_version VARCHAR(20),
+is_admin BOOLEAN DEFAULT false
 );
 
 CREATE TABLE stripe_customers (
