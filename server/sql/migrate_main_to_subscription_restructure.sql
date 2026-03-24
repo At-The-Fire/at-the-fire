@@ -18,10 +18,18 @@ BEGIN;
 
 -- ============================================================
 -- 1. cognito_users — add Terms-of-Service acceptance fields
+--    and is_admin flag
 -- ============================================================
 ALTER TABLE cognito_users
   ADD COLUMN IF NOT EXISTS accepted_tos_at TIMESTAMPTZ,
-  ADD COLUMN IF NOT EXISTS tos_version     VARCHAR(20);
+  ADD COLUMN IF NOT EXISTS tos_version     VARCHAR(20),
+  ADD COLUMN IF NOT EXISTS is_admin        BOOLEAN DEFAULT false;
+
+-- NOTE: After running this migration, manually flag the admin user:
+--   UPDATE cognito_users SET is_admin = true WHERE sub = '<your-cognito-sub>';
+-- The sub can be found in the Cognito console or by querying cognito_users.
+-- This replaces the old ADMIN_ID env var (Stripe customer ID string comparison),
+-- which should be removed from .env after this is applied.
 
 
 -- ============================================================
