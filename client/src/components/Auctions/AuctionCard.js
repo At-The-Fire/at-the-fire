@@ -1,4 +1,5 @@
 import { useMediaQuery, useTheme } from '@mui/material';
+import userDefaultImage from './../../assets/user.png';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { buyItNow, getBids } from '../../services/fetch-bids.js';
@@ -238,6 +239,18 @@ export default function AuctionCard({ auction }) {
             )}
           </div>
 
+          <button
+            className="seller-profile-btn"
+            onClick={() => navigate(`/profile/${auction.sellerSub}`)}
+          >
+            <img
+              src={auction.sellerLogoImageUrl || userDefaultImage}
+              alt={auction.sellerDisplayName || auction.sellerFirstName || 'Seller'}
+              className="seller-avatar"
+            />
+            <span>{auction.sellerDisplayName || auction.sellerFirstName || 'View Seller'}</span>
+          </button>
+
           <h2>{auction.title}</h2>
           <p style={{ whiteSpace: 'pre-wrap' }}>{auction.description}</p>
 
@@ -290,18 +303,22 @@ export default function AuctionCard({ auction }) {
           <div className="auction-actions">
             {isActive ? (
               <>
-                <button
-                  type="button"
-                  onClick={handleBidClick}
-                  className="bid-btn"
-                  style={{ background: highBidder ? 'green' : '' }}
-                >
-                  {highBidder ? "You're the high bidder" : 'Place Bid'}
-                </button>
-                {auction.buyNowPrice && (
-                  <button type="button" onClick={handleBuyNowClick} className="buy-btn">
-                    Buy Now
-                  </button>
+                {user !== auction.sellerSub && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleBidClick}
+                      className="bid-btn"
+                      style={{ background: highBidder ? 'green' : '' }}
+                    >
+                      {highBidder ? "You're the high bidder" : 'Place Bid'}
+                    </button>
+                    {auction.buyNowPrice && (
+                      <button type="button" onClick={handleBuyNowClick} className="buy-btn">
+                        Buy Now
+                      </button>
+                    )}
+                  </>
                 )}
               </>
             ) : (
