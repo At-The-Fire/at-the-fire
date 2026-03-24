@@ -44,6 +44,7 @@ module.exports = app.post(
     try {
       event = stripe.webhooks.constructEvent(request.body, sig, endpointSecret);
     } catch (e) {
+      console.error('Stripe webhook verification failed:', e.message);
       return response.status(400).send(`Webhook error: ${e.message}`);
     }
 
