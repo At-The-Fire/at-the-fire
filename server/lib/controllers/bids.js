@@ -65,6 +65,19 @@ module.exports = Router()
         return res.status(400).json({ error: 'auctionId and bidAmount are required' });
       }
 
+      // fetch auction to validate bidder is not the seller
+      const auctionForCheck = await Auction.getById(auctionId);
+      if (!auctionForCheck || !auctionForCheck.isActive) {
+        await client.query('ROLLBACK');
+        client.release();
+        return res.status(400).json({ error: 'Auction not found or not active' });
+      }
+      if (bidderSub === auctionForCheck.sellerSub) {
+        await client.query('ROLLBACK');
+        client.release();
+        return res.status(403).json({ error: 'You cannot bid on your own auction' });
+      }
+
       // get current highest bid
       const currentHighest = await Bid.getHighestBid(auctionId);
 
@@ -100,7 +113,7 @@ module.exports = Router()
       try {
         const { EXTENSION_MS, EXTENSION_WINDOW_MS } = auctionTimers;
 
-        const auction = await Auction.getById(auctionId);
+        const auction = auctionForCheck;
         if (auction && auction.isActive && auction.endTime) {
           const now = new Date();
           const endTime = new Date(auction.endTime);
