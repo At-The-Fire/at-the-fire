@@ -16,7 +16,7 @@ function getKeyBuffer() {
   }
 
   cachedKeySource = keySource;
-  cachedKeyBuffer = crypto.scryptSync(keySource, 'atf-salt-v1', 32);
+  cachedKeyBuffer = crypto.scryptSync(keySource, process.env.ENCRYPTION_SALT || 'atf-salt-v1', 32);
   return cachedKeyBuffer;
 }
 
