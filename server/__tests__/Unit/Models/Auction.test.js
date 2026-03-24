@@ -26,6 +26,9 @@ describe('Auction Model', () => {
       end_time: '2024-01-07T00:00:00Z',
       is_active: true,
       seller_sub: 'sub_seller123',
+      seller_display_name: 'Seller Display',
+      seller_logo_image_url: 'https://cdn.example.com/seller.png',
+      seller_first_name: 'Seller',
       created_at: '2024-01-01T00:00:00Z',
       updated_at: '2024-01-01T00:00:00Z',
       is_paid: false,
@@ -36,8 +39,30 @@ describe('Auction Model', () => {
     expect(auction.id).toBe(1);
     expect(auction.title).toBe('Test Auction');
     expect(auction.sellerSub).toBe('sub_seller123');
+    expect(auction.sellerDisplayName).toBe('Seller Display');
+    expect(auction.sellerLogoImageUrl).toBe('https://cdn.example.com/seller.png');
+    expect(auction.sellerFirstName).toBe('Seller');
     expect(auction.imageUrls).toEqual(['http://test.com/image1.jpg', 'http://test.com/image2.jpg']);
     expect(auction.isActive).toBe(true);
+  });
+
+  it('sets nullable seller profile fields to null when missing', () => {
+    const row = {
+      id: 2,
+      title: 'No Seller Profile Auction',
+      image_urls: [],
+      start_price: '10.00',
+      start_time: '2024-01-01T00:00:00Z',
+      end_time: '2024-01-02T00:00:00Z',
+      is_active: true,
+      seller_sub: 'sub_seller123',
+    };
+
+    const auction = new Auction(row);
+
+    expect(auction.sellerDisplayName).toBeNull();
+    expect(auction.sellerLogoImageUrl).toBeNull();
+    expect(auction.sellerFirstName).toBeNull();
   });
 
   describe('insert', () => {
@@ -154,7 +179,13 @@ describe('Auction Model', () => {
     });
 
     it('decrypts winner shipping address when present', async () => {
-      const addr = { fullName: 'Jane Smith', line1: '123 Main St', city: 'Portland', state: 'OR', zip: '97201' };
+      const addr = {
+        fullName: 'Jane Smith',
+        line1: '123 Main St',
+        city: 'Portland',
+        state: 'OR',
+        zip: '97201',
+      };
       const mockRows = [
         {
           id: 2,

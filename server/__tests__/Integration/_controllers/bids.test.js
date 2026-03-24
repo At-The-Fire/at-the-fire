@@ -228,6 +228,18 @@ describe('Bids routes', () => {
       expect(response.status).toBe(409);
     });
 
+    it('returns 403 when seller attempts to bid on their own auction', async () => {
+      authState.user = { sub: process.env.TEST_SUB_FULL_CUSTOMER };
+
+      const response = await request(app).post('/api/v1/bids').send({
+        auctionId: testAuctionId,
+        bidAmount: 150,
+      });
+
+      expect(response.status).toBe(403);
+      expect(response.body.error).toBe('You cannot bid on your own auction');
+    });
+
     it('creates an outbid notification for the previous highest bidder', async () => {
       // Bidder1 places first bid
       await request(app)
