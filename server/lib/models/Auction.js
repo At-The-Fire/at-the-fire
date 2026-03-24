@@ -13,6 +13,9 @@ module.exports = class Auction {
   endTime;
   isActive;
   sellerSub;
+  sellerDisplayName;
+  sellerLogoImageUrl;
+  sellerFirstName;
   createdAt;
   updatedAt;
   winnerSub;
@@ -34,6 +37,9 @@ module.exports = class Auction {
     this.endTime = row.end_time;
     this.isActive = row.is_active;
     this.sellerSub = row.seller_sub;
+    this.sellerDisplayName = row.seller_display_name ?? null;
+    this.sellerLogoImageUrl = row.seller_logo_image_url ?? null;
+    this.sellerFirstName = row.seller_first_name ?? null;
     this.createdAt = row.created_at;
     this.updatedAt = row.updated_at;
     this.winnerSub = row.winner_sub ?? null;
@@ -130,9 +136,14 @@ module.exports = class Auction {
   static async getById(id) {
     const { rows } = await pool.query(
       `
-      SELECT *
-      FROM auctions
-      WHERE id = $1
+      SELECT a.*,
+        sc.display_name AS seller_display_name,
+        sc.logo_image_url AS seller_logo_image_url,
+        cu.first_name AS seller_first_name
+      FROM auctions a
+      LEFT JOIN cognito_users cu ON a.seller_sub = cu.sub
+      LEFT JOIN stripe_customers sc ON cu.sub = sc.aws_sub
+      WHERE a.id = $1
       `,
       [id],
     );
