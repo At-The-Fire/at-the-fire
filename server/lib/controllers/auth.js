@@ -208,13 +208,15 @@ module.exports = Router()
         subscription = await getSubscriptionByCustomerId({ customerId });
       }
 
+      const cognitoUser = await AWSUser.getCognitoUserBySub({ sub });
+
       res.json({
         hasSubscription: true,
         customerId,
         subscription,
         email,
         name,
-        admin: customerId === process.env.ADMIN_ID,
+        admin: cognitoUser?.isAdmin || false,
         confirmed,
         betaAccess: betaModeActive,
       });
