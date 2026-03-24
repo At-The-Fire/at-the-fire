@@ -12,9 +12,7 @@ export default function AuctionArchive() {
       const all = await getAuctions();
       const GRACE_PERIOD_MS = 2 * 60 * 60 * 1000;
       const now = Date.now();
-      const archive = all.filter(
-        (a) => !a.isActive && now - new Date(a.endTime).getTime() >= GRACE_PERIOD_MS
-      );
+      const archive = all.filter((a) => !a.isActive && now - new Date(a.endTime).getTime() >= GRACE_PERIOD_MS);
       setAuctions(archive);
     }
     load();
@@ -39,8 +37,7 @@ export default function AuctionArchive() {
           </button>
         </div>
 
-        <h1 style={{ margin: 0 }}>Archive</h1>
-        <p>Collected glass art — final prices private</p>
+        <h1 style={{ margin: '0 0 1rem 0' }}>Archive</h1>
         <div className="auction-grid">
           {auctions.map((a) => (
             <div key={a.id} className="auction-preview-item" onClick={() => navigate(`/auctions/${a.id}`)}>
