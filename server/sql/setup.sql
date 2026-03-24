@@ -402,32 +402,24 @@ VALUES
 ('123e4567-e89b-42d3-a456-426614174103', 'stripe-customer-id_noProfile', NULL, 'customerNoProfile@example.com', NULL, NULL, NULL, NULL, NULL, true, 'dummy_hash_8');
 
 -- Customer with profile data
-INSERT INTO "cognito_users"  ("bio", "created_at", "customer_id", "email", "first_name", "image_url", "last_name", "public_id", "sub", "email_hash")
+INSERT INTO "cognito_users"  ("bio", "created_at", "customer_id", "email", "first_name", "image_url", "last_name", "public_id", "sub", "email_hash","is_admin")
 VALUES
-('Bio for full customer', NOW(), 'stripe-customer-id_full', 'fullCustomer@example.com', 'CustomerFirst', 'image_url_path', 'CustomerLast', 'publicID_fullCustomer', '123e4567-e89b-42d3-a456-426614174104', 'dummy_hash_9');
+('Bio for full customer', NOW(), 'stripe-customer-id_full', 'fullCustomer@example.com', 'CustomerFirst', 'image_url_path', 'CustomerLast', 'publicID_fullCustomer', '123e4567-e89b-42d3-a456-426614174104', 'dummy_hash_9', true);
 
 -- Test Customer (2) with profile data
-INSERT INTO "cognito_users"  ("bio", "created_at", "customer_id", "email", "first_name", "image_url", "last_name", "public_id", "sub", "email_hash")
+INSERT INTO "cognito_users"  ("bio", "created_at", "customer_id", "email", "first_name", "image_url", "last_name", "public_id", "sub", "email_hash", "is_admin")
 VALUES
-('Bio for full customer 2', NOW(), 'cus_OVLKmXa6lrzktm', 'kevinnail@hotmail.com', 'CustomerTestFirst', 'image_url_path', 'CustomerTestLast', 'publicID_fullTestCustomer', '0861e380-30a1-70f8-82fd-0dc85cc975aa', 'dummy_hash_15');
-
--- Test Customer (2) with customer data
-INSERT INTO "stripe_customers"
-("aws_sub", "customer_id", "display_name", "email", "logo_image_url", "logo_public_id", "name", "phone", "website_url", "confirmed", "email_hash")
-VALUES   ('0861e380-30a1-70f8-82fd-0dc85cc975aa', 'cus_OVLKmXa6lrzktm', 'Test Customer 2', 'kevinnail@hotmail.com', 'logo_image_url_path2', 'publicID_logo2', 'FullName2', '555-3333', 'http://website.com', true, 'dummy_hash_15');
-
- -- dTest Customer (2)  data insertions for testing
-INSERT INTO orders (customer_id, order_number, date, is_fulfilled, client_name, items, shipping) VALUES
-('cus_OVLKmXa6lrzktm', 21, '2023-10-01', true, 'Up In Smoke', '[{"name": "glass stuff", "category": "Recyclers", "description": "all fume with opals and it has a lot of other stuff I would love to talk about for a while", "qty": 5, "rate": 1000}, {"name": "glass stuff", "category": "Dry pieces", "description": "fume + dichro", "qty": 20, "rate": 20}]',100),
-('cus_OVLKmXa6lrzktm', 22, '2023-10-02', true, 'Puff Puff Pass', '[{"name": "glass stuff", "category": "Slides", "description": "dichro and fume", "qty": 5, "rate": 250}, {"name": "glass stuff", "category": "Dry Pipes", "description": "all fume", "qty": 5, "rate": 640}]',40),
-('cus_OVLKmXa6lrzktm', 23, '2023-10-03', false, 'Pipes Galore', '[{"name": "glass stuff", "category": "Recyclers", "description": "all fume with opals", "qty": 5, "rate": 1000}, {"name": "glass stuff", "category": "Dry pieces", "description": "fume + dichro", "qty": 20, "rate": 20}]',50),
-('cus_OVLKmXa6lrzktm', 24, '2023-10-04', false, 'Robert (collector)', '[{"name": "glass stuff", "category": "Slides", "description": "all fume with opals", "qty": 5, "rate": 250}, {"name": "glass stuff", "category": "Dry Pipes", "description": "dichro and fume", "qty": 5, "rate": 640}]',0);
-
-
+('Bio for full customer 2', NOW(), NULL, 'fullCustomer-2@example.com', 'CustomerTestFirst', 'image_url_path', 'CustomerTestLast', 'publicID_fullTestCustomer', '0861e380-30a1-70f8-82fd-0dc85ccaaaaa', 'dummy_hash_15', false);
 
 INSERT INTO "stripe_customers"
 ("aws_sub", "customer_id", "display_name", "email", "logo_image_url", "logo_public_id", "name", "phone", "website_url", "confirmed", "email_hash")
 VALUES   ('123e4567-e89b-42d3-a456-426614174104', 'stripe-customer-id_full', 'Display Name', 'fullCustomer@example.com', 'logo_image_url_path', 'publicID_logo', 'FullName', '555-1234', 'http://website.com', true, 'dummy_hash_10');
+
+INSERT INTO orders (customer_id, order_number, date, is_fulfilled, client_name, items, shipping) VALUES
+('stripe-customer-id_full', 21, '2023-10-01', true, 'Up In Smoke', '[{"name": "glass stuff", "category": "Recyclers", "description": "all fume with opals and it has a lot of other stuff I would love to talk about for a while", "qty": 5, "rate": 1000}, {"name": "glass stuff", "category": "Dry pieces", "description": "fume + dichro", "qty": 20, "rate": 20}]',100),
+('stripe-customer-id_full', 22, '2023-10-02', true, 'Puff Puff Pass', '[{"name": "glass stuff", "category": "Slides", "description": "dichro and fume", "qty": 5, "rate": 250}, {"name": "glass stuff", "category": "Dry Pipes", "description": "all fume", "qty": 5, "rate": 640}]',40),
+('stripe-customer-id_full', 23, '2023-10-03', false, 'Pipes Galore', '[{"name": "glass stuff", "category": "Recyclers", "description": "all fume with opals", "qty": 5, "rate": 1000}, {"name": "glass stuff", "category": "Dry pieces", "description": "fume + dichro", "qty": 20, "rate": 20}]',50),
+('stripe-customer-id_full', 24, '2023-10-04', false, 'Robert (collector)', '[{"name": "glass stuff", "category": "Slides", "description": "all fume with opals", "qty": 5, "rate": 250}, {"name": "glass stuff", "category": "Dry Pipes", "description": "dichro and fume", "qty": 5, "rate": 640}]',0);
 
 INSERT INTO "quota_goals"
 ("monthly_quota","work_days","customer_id")
@@ -473,12 +465,12 @@ VALUES
 INSERT INTO "subscriptions"
 ("customer_id", "subscription_id", "is_active", "interval", "subscription_start_date", "subscription_end_date", "status")
 VALUES
-('cus_OVLKmXa6lrzktm', 'sub_1Q6MzaGO3TmEVjN2qhRhKIMP', true, 'month', 1728092470, 1762925540, 'active');
+('stripe-customer-id_full', 'sub_1Q6MzaGO3TmEVjN2qhRhKIMP', true, 'month', 1728092470, 1762925540, 'active');
 
 INSERT INTO "invoices"
 ("customer_id", "invoice_id","start_date","end_date","invoice_status","subscription_id","amount_due","amount_paid","created_at")
 VALUES
-('cus_OVLKmXa6lrzktm',	'in_1Q6MzaGO3TmEVjN2K0KqjuLs',	1728092470,	1730770870,	'paid',	'sub_1Q6MzaGO3TmEVjN2qhRhKIMP',	1500.00,	1500.00,	'2024-10-05 01:41:13.414583');
+('stripe-customer-id_full',	'in_1Q6MzaGO3TmEVjN2K0KqjuLs',	1728092470,	1730770870,	'paid',	'sub_1Q6MzaGO3TmEVjN2qhRhKIMP',	1500.00,	1500.00,	'2024-10-05 01:41:13.414583');
 
 
 INSERT INTO "subscriptions"
