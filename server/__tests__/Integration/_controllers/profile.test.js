@@ -340,6 +340,7 @@ describe('Profile routes that use mocked middleware: /profile/user-update/:sub a
       socialMediaLinks: {},
       acceptedTosAt: null,
       tosVersion: null,
+      isAdmin: false,
     });
   });
 
