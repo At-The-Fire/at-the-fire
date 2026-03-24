@@ -185,7 +185,7 @@ module.exports = Router()
       const auction = await Auction.getById(req.params.id);
       if (!auction) return res.status(404).json({ message: 'Auction not found' });
 
-      const isAdmin = req.customerId === process.env.ADMIN_ID;
+      const isAdmin = req.isAdmin;
       const isOwner = req.userAWSSub === auction.sellerSub;
       if (!isAdmin && !isOwner) return res.status(403).json({ error: 'Forbidden' });
 
@@ -213,7 +213,7 @@ module.exports = Router()
       }
 
       // 2. Check ownership (seller or admin)
-      const isAdmin = req.customerId === process.env.ADMIN_ID;
+      const isAdmin = req.isAdmin;
       const isOwner = req.userAWSSub === existingAuction.sellerSub;
       if (!isAdmin && !isOwner) {
         return res.status(403).json({ error: 'Forbidden' });
