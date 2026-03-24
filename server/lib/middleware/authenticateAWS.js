@@ -81,15 +81,17 @@ module.exports = async (req, res, next) => {
     // DB lookup after successful verification
     try {
       const sub = req.userAWSSub;
-      const userExists = await getCognitoUserBySub({ sub });
+      const user = await getCognitoUserBySub({ sub });
 
-      if (!userExists) {
+      if (!user) {
         return res.status(401).json({
           message: 'User does not exist',
           code: 401,
           type: 'UserNotFoundError',
         });
       }
+
+      req.isAdmin = user.isAdmin;
     } catch (e) {
       console.error('User verification failed:', e);
       return res.status(401).json({
