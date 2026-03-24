@@ -39,6 +39,7 @@ module.exports = class AWSUser {
     this.displayName = row.display_name;
     this.acceptedTosAt = row.accepted_tos_at;
     this.tosVersion = row.tos_version;
+    this.isAdmin = row.is_admin;
   }
 
   // email hashing functions
