@@ -357,17 +357,29 @@ export default function Dashboard({ products, setProducts, customerId }) {
         {/* Thumbnail */}
         {auction.imageUrls?.[0] ? (
           <Box
-            component="img"
-            src={auction.imageUrls[0]}
-            alt={auction.title}
+            component="button"
+            type="button"
+            onClick={() => navigate(`/auctions/${auction.id}`)}
+            aria-label={`Open auction ${auction.title}`}
             sx={{
+              p: 0,
+              border: 0,
+              background: 'transparent',
               width: { xs: '60px', sm: '100px' },
               height: { xs: '60px', sm: '100px' },
-              objectFit: 'cover',
-              objectPosition: 'center',
               display: 'block',
+              cursor: 'pointer',
+              '& img': {
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                objectPosition: 'center',
+                display: 'block',
+              },
             }}
-          />
+          >
+            <Box component="img" src={auction.imageUrls[0]} alt={auction.title} />
+          </Box>
         ) : (
           <Box
             sx={{
@@ -922,7 +934,14 @@ export default function Dashboard({ products, setProducts, customerId }) {
                                           size="small"
                                           onClick={() => {
                                             const a = sale.shippingAddress;
-                                            const text = [a.fullName, a.line1, a.line2, `${a.city}, ${a.state} ${a.zip}`].filter(Boolean).join('\n');
+                                            const text = [
+                                              a.fullName,
+                                              a.line1,
+                                              a.line2,
+                                              `${a.city}, ${a.state} ${a.zip}`,
+                                            ]
+                                              .filter(Boolean)
+                                              .join('\n');
                                             navigator.clipboard.writeText(text);
                                             setCopiedId(`sale-${sale.id}`);
                                             setTimeout(() => setCopiedId(null), 2000);
@@ -1090,12 +1109,21 @@ export default function Dashboard({ products, setProducts, customerId }) {
                                         , {auction.winnerShippingAddress.city}, {auction.winnerShippingAddress.state}{' '}
                                         {auction.winnerShippingAddress.zip}
                                       </Typography>
-                                      <Tooltip title={copiedId === `auction-${auction.id}` ? 'Copied!' : 'Copy address'}>
+                                      <Tooltip
+                                        title={copiedId === `auction-${auction.id}` ? 'Copied!' : 'Copy address'}
+                                      >
                                         <IconButton
                                           size="small"
                                           onClick={() => {
                                             const a = auction.winnerShippingAddress;
-                                            const text = [a.fullName, a.line1, a.line2, `${a.city}, ${a.state} ${a.zip}`].filter(Boolean).join('\n');
+                                            const text = [
+                                              a.fullName,
+                                              a.line1,
+                                              a.line2,
+                                              `${a.city}, ${a.state} ${a.zip}`,
+                                            ]
+                                              .filter(Boolean)
+                                              .join('\n');
                                             navigator.clipboard.writeText(text);
                                             setCopiedId(`auction-${auction.id}`);
                                             setTimeout(() => setCopiedId(null), 2000);
