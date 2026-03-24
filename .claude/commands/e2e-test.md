@@ -73,7 +73,7 @@ The admin account (`ADMIN_EMAIL` / `ADMIN_PASSWORD`) grants access to `/at-the-b
 
 ## Report Format
 
-When all checklist items are complete, generate a file in this project at `.claude/reports/e2e-report-[YYYY-MM-DD].md` with the following structure:
+When all checklist items are complete, generate a file in this project at `.claude/reports/e2e-testing/e2e-report-[YYYY-MM-DD].md` with the following structure:
 ```
 # E2E Test Report
 **Date:** [date]
