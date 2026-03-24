@@ -5,14 +5,14 @@ const app = require('../../../lib/app');
 
 // Mock user data
 const mockUser = {
-  email: process.env.TEST_EMAIL,
-  sub: process.env.TEST_SUB,
-  customer_id: process.env.TEST_CUSTOMER_ID,
+  email: process.env.TEST_EMAIL_FULL_CUSTOMER,
+  sub: process.env.TEST_SUB_FULL_CUSTOMER,
+  customer_id: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
 };
 
 // Mock customer data
 const mockCustomer = {
-  customerId: process.env.TEST_CUSTOMER_ID,
+  customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
   isActive: true,
   subscriptionEndDate: 1630435200,
 };
@@ -54,7 +54,7 @@ describe('orders routes', () => {
       {
         client_name: 'Robert (collector)',
         created_at: expect.any(String),
-        customerId: 'cus_OVLKmXa6lrzktm',
+        customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
         date: expect.any(String),
         id: '4',
         is_fulfilled: false,
@@ -80,7 +80,7 @@ describe('orders routes', () => {
       {
         client_name: 'Pipes Galore',
         created_at: expect.any(String),
-        customerId: 'cus_OVLKmXa6lrzktm',
+        customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
         date: expect.any(String),
         id: '3',
         is_fulfilled: false,
@@ -106,7 +106,7 @@ describe('orders routes', () => {
       {
         client_name: 'Puff Puff Pass',
         created_at: expect.any(String),
-        customerId: 'cus_OVLKmXa6lrzktm',
+        customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
         date: expect.any(String),
         id: '2',
         is_fulfilled: true,
@@ -132,7 +132,7 @@ describe('orders routes', () => {
       {
         client_name: 'Up In Smoke',
         created_at: expect.any(String),
-        customerId: 'cus_OVLKmXa6lrzktm',
+        customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
         date: expect.any(String),
         id: '1',
         is_fulfilled: true,
@@ -197,7 +197,7 @@ describe('orders routes', () => {
     expect(resp.body).toEqual({
       client_name: 'John Collectorson',
       created_at: expect.any(String),
-      customerId: 'cus_OVLKmXa6lrzktm',
+      customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
       date: expect.any(String),
       id: '5',
       is_fulfilled: false,
@@ -476,7 +476,7 @@ describe('orders routes', () => {
     expect(response.body).toEqual({
       client_name: 'John Collectorson Johnson',
       created_at: expect.any(String),
-      customerId: 'cus_OVLKmXa6lrzktm',
+      customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
       date: expect.any(String),
       id: '1',
       is_fulfilled: true,
@@ -516,7 +516,7 @@ describe('orders routes', () => {
     expect(response.body).toEqual({
       client_name: 'John Collectorson Johnson',
       created_at: expect.any(String),
-      customerId: 'cus_OVLKmXa6lrzktm',
+      customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
       date: expect.any(String),
       id: '1',
       is_fulfilled: true,
@@ -539,7 +539,7 @@ describe('orders routes', () => {
     expect(response2.status).toBe(200);
     expect(response2.body).toEqual({
       id: '1',
-      customerId: 'cus_OVLKmXa6lrzktm',
+      customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
       created_at: expect.any(String),
       order_number: '21',
       date: expect.any(String),
@@ -579,7 +579,7 @@ describe('orders routes', () => {
     expect(response.body).toEqual({
       client_name: 'John Collectorson Johnson',
       created_at: expect.any(String),
-      customerId: 'cus_OVLKmXa6lrzktm',
+      customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
       date: expect.any(String),
       id: '1',
       is_fulfilled: true,
@@ -645,7 +645,7 @@ describe('orders routes', () => {
       {
         client_name: 'Robert (collector)',
         created_at: expect.any(String),
-        customerId: 'cus_OVLKmXa6lrzktm',
+        customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
         date: expect.any(String),
         id: '4',
         is_fulfilled: false,
@@ -671,7 +671,7 @@ describe('orders routes', () => {
       {
         client_name: 'Pipes Galore',
         created_at: expect.any(String),
-        customerId: 'cus_OVLKmXa6lrzktm',
+        customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
         date: expect.any(String),
         id: '3',
         is_fulfilled: false,
@@ -697,7 +697,7 @@ describe('orders routes', () => {
       {
         client_name: 'Puff Puff Pass',
         created_at: expect.any(String),
-        customerId: 'cus_OVLKmXa6lrzktm',
+        customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
         date: expect.any(String),
         id: '2',
         is_fulfilled: true,
@@ -723,7 +723,7 @@ describe('orders routes', () => {
       {
         client_name: 'Up In Smoke',
         created_at: expect.any(String),
-        customerId: 'cus_OVLKmXa6lrzktm',
+        customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
         date: expect.any(String),
         id: '1',
         is_fulfilled: true,
@@ -760,7 +760,7 @@ describe('orders routes', () => {
       {
         client_name: 'Robert (collector)',
         created_at: expect.any(String),
-        customerId: 'cus_OVLKmXa6lrzktm',
+        customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
         date: expect.any(String),
         id: '4',
         is_fulfilled: false,
@@ -786,7 +786,7 @@ describe('orders routes', () => {
       {
         client_name: 'Pipes Galore',
         created_at: expect.any(String),
-        customerId: 'cus_OVLKmXa6lrzktm',
+        customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
         date: expect.any(String),
         id: '3',
         is_fulfilled: false,
@@ -812,7 +812,7 @@ describe('orders routes', () => {
       {
         client_name: 'Puff Puff Pass',
         created_at: expect.any(String),
-        customerId: 'cus_OVLKmXa6lrzktm',
+        customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
         date: expect.any(String),
         id: '2',
         is_fulfilled: true,
@@ -843,5 +843,4 @@ describe('orders routes', () => {
     expect(response.status).toBe(404);
     expect(response.body).toEqual({ message: 'Order not found' });
   });
-
 });
