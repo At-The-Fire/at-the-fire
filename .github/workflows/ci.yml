@@ -17,6 +17,7 @@ jobs:
         env:
           POSTGRES_USER: my_test_user
           POSTGRES_PASSWORD: my_test_password
+          POSTGRES_DB: at_the_fire_test
       redis:
         image: redis:latest
         ports:
@@ -89,4 +90,3 @@ jobs:
           REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
           REDIS_HOST: ${{ secrets.REDIS_HOST }}
           REDIS_PORT: ${{ secrets.REDIS_PORT }}
-          POSTGRES_DB: at_the_fire_test
