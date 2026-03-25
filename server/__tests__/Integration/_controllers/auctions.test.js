@@ -200,7 +200,7 @@ describe('Auction routes', () => {
   });
 
   describe('POST /api/v1/auctions/upload', () => {
-    it.only('should upload images to S3', async () => {
+    it('should upload images to S3', async () => {
       const response = await request(app)
         .post('/api/v1/auctions/upload')
         .attach(
