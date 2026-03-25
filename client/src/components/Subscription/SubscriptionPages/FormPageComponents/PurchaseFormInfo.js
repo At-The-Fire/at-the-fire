@@ -6,7 +6,7 @@ export default function PurchaseFormInfo() {
   return (
     <Container maxWidth="sm">
       <Typography variant="h4" gutterBottom>
-        Purchase Subscription
+        Upgrade to Premium
       </Typography>
       <Typography
         variant="body1"
@@ -24,7 +24,7 @@ export default function PurchaseFormInfo() {
           color: 'white',
         }}
       >
-        All new signups receive a <strong>60-day free trial</strong>!
+        Premium plans start with a <strong>60-day free trial</strong>.
       </Typography>
       <List sx={{ mb: 2 }}>
         <ListItem alignItems="flex-start">
@@ -34,7 +34,8 @@ export default function PurchaseFormInfo() {
           <ListItemText
             primary={
               <span>
-                <strong>First in line:</strong> Beta users get early access to new features and updates.
+                <strong>Free stays free:</strong> Your gallery posting and snapshot workflow remain available without a
+                Premium subscription.
               </span>
             }
           />
@@ -46,8 +47,8 @@ export default function PurchaseFormInfo() {
           <ListItemText
             primary={
               <span>
-                <strong>No charge during Beta:</strong> Beta testers will not be charged while we are in beta. When beta
-                ends, you will still get your full 60-day free trial before any charges.
+                <strong>Premium unlocks the workspace:</strong> Orders, Products, Calendar, and Analysis are the paid
+                tools you are upgrading into.
               </span>
             }
           />
@@ -59,7 +60,7 @@ export default function PurchaseFormInfo() {
           <ListItemText
             primary={
               <span>
-                <strong>Easy management:</strong> Update your info or subscription anytime in the{' '}
+                <strong>Easy management:</strong> Update your billing info or subscription anytime in the{' '}
                 <strong>Stripe Customer Portal</strong> from your <strong>Workspace &gt; Dashboard</strong>.
               </span>
             }
@@ -67,7 +68,7 @@ export default function PurchaseFormInfo() {
         </ListItem>
       </List>
       <Typography variant="body2" sx={{ textAlign: 'center', color: 'gray' }}>
-        You&apos;ll be notified before any charges occur when your free trial ends.
+        Beta access remains free, and when billing begins you still receive the full 60-day trial before any charge.
       </Typography>
     </Container>
   );

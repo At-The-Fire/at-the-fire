@@ -1,7 +1,6 @@
 import React from 'react';
 import { Container, Link, Typography, Grid, Box, Paper, Button } from '@mui/material';
 import { useAuthStore } from '../../../../stores/useAuthStore.js';
-import venmo from '../../../../assets/Venmo_Logo_Blue.png';
 export default function LandingPageInfo({ isMobile, handleSignInToSubscribe, handleStageChange, navigate }) {
   const { isAuthenticated } = useAuthStore();
   return (
@@ -20,51 +19,57 @@ export default function LandingPageInfo({ isMobile, handleSignInToSubscribe, han
       <Container sx={{ '&.MuiContainer-root': { padding: 0 } }}>
         <Paper sx={{ padding: '1.5rem 2rem', borderRadius: '15px' }}>
           <Typography variant="h4" gutterBottom sx={{ mt: 1 }}>
-            Features
+            Plans at a glance
           </Typography>
           <Typography variant="h5" gutterBottom sx={{ mt: 3, textAlign: 'left' }}>
-            Subscription Tiers
+            Free vs Premium
           </Typography>
           <Box sx={{ pl: 2, textAlign: 'left' }}>
             <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-              Basic Account (Free):
+              Free Account:
             </Typography>
-            <Typography paragraph>Allows users to log in and out, manage a profile, and view galleries.</Typography>
+            <Typography paragraph>
+              Create your profile, publish gallery posts, build inventory snapshots, follow artists, message, browse
+              auctions, and use the marketplace-facing side of the platform.
+            </Typography>
 
             <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-              Paid Subscription:
+              Premium Subscription:
             </Typography>
             <Box sx={{ pl: 2 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 1 }}>
-                Content Posting:
-              </Typography>
-              <Typography paragraph>Create gallery posts that contribute to the inventory list</Typography>
-
-              <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                Inventory Management:
-              </Typography>
-              <Typography paragraph>View inventory snapshots and download CSV files</Typography>
-
-              <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                Orders & Goals:
+                Orders:
               </Typography>
               <Typography paragraph>
-                Create/manage orders, track daily/monthly production quotas, and set goals
+                Manage order status, customer handoff, and fulfillment workflow in one place
               </Typography>
 
               <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                Data Visualization:
+                Products:
               </Typography>
-              <Typography paragraph>Access graphical and tabular data analysis for sales and production</Typography>
+              <Typography paragraph>Organize products, pricing, inventory state, and snapshot history</Typography>
+
+              <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                Calendar:
+              </Typography>
+              <Typography paragraph>
+                See production pace and sales activity over time with a clearer scheduling view
+              </Typography>
+
+              <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                Analysis:
+              </Typography>
+              <Typography paragraph>
+                Review trends, totals, and performance data that help you make better selling decisions
+              </Typography>
             </Box>
           </Box>
         </Paper>
       </Container>{' '}
       <Paper sx={{ padding: '15px 20px', mt: '0px' }}>
         <Typography variant="body1" textAlign="left" sx={{ letterSpacing: '.1rem' }}>
-          Why subscribe? We designed this website to be a powerful tool for creators to help organize and run their
-          businesses, so they can lighten the load of trying to keep track of everything so they can focus more on what
-          matters: making art.
+          Premium is not the price of entry anymore. It is the upgrade for sellers who need the full workspace after
+          they have already started posting, tracking, and building an audience for free.
         </Typography>
       </Paper>
       {isMobile && (
@@ -79,11 +84,11 @@ export default function LandingPageInfo({ isMobile, handleSignInToSubscribe, han
                   onClick={handleStageChange}
                   sx={{ fontSize: '1.5rem', mt: '25px' }}
                 >
-                  Purchase a Subscription
+                  Upgrade to Premium
                 </Button>
               ) : (
                 <Button color="primary" variant="contained" onClick={handleSignInToSubscribe}>
-                  Sign-up to Subscribe
+                  Create Account to Upgrade
                 </Button>
               )}
             </Box>
@@ -91,7 +96,7 @@ export default function LandingPageInfo({ isMobile, handleSignInToSubscribe, han
         </Grid>
       )}
       <Typography sx={{ textAlign: 'center', width: '100%' }}>
-        Your subscription will be handled securely and directly through{' '}
+        Premium billing is handled securely through{' '}
         <Link href="https://stripe.com/" target="_blank" rel="noopener" sx={{ textDecoration: 'none' }}>
           Stripe
         </Link>

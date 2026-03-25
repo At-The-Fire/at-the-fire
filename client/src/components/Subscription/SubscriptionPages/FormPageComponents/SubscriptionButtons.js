@@ -15,10 +15,10 @@ export default function SubscriptionButtons({ handleClickSubscribe }) {
       }}
     >
       <Button variant="contained" color="primary" value={monthlyPriceId} onClick={handleClickSubscribe}>
-        Choose Monthly Subscription $15/mth
+        Choose Monthly Premium $15/mth
       </Button>
       <Button variant="contained" color="primary" value={yearlyPriceId} onClick={handleClickSubscribe}>
-        Choose Yearly Subscription $150/yr
+        Choose Yearly Premium $150/yr
       </Button>
     </Box>
   );
