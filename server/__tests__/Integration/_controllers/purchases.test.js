@@ -363,6 +363,24 @@ describe('Purchases routes', () => {
       expect(response.body).toEqual([]);
     });
 
+    it('excludes auction purchases — only gallery_post items are returned', async () => {
+      // Seed both item types for the same buyer.
+      await pool.query(
+        `
+        INSERT INTO purchases (buyer_sub, seller_sub, item_type, item_id, quantity, amount_paid)
+        VALUES ($1, $2, 'gallery_post', $3, 1, '25.00'),
+               ($1, $2, 'auction',     $4, 1, '100.00')
+        `,
+        [mockBuyer.sub, process.env.TEST_SUB_FULL_CUSTOMER, testPostId, testAuctionId],
+      );
+
+      const response = await request(app).get('/api/v1/purchases');
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveLength(1);
+      expect(response.body[0].itemType).toBe('gallery_post');
+    });
+
     it('returns purchases ordered by created_at DESC (newest first)', async () => {
       await pool.query(
         `
@@ -389,6 +407,56 @@ describe('Purchases routes', () => {
       expect(new Date(response.body[0].createdAt).getTime()).toBeGreaterThan(
         new Date(response.body[1].createdAt).getTime(),
       );
+    });
+  });
+
+  describe('GET /api/v1/purchases/seller', () => {
+    it('returns gallery_post purchase records for the authenticated seller', async () => {
+      await pool.query(
+        `
+        INSERT INTO purchases (buyer_sub, seller_sub, item_type, item_id, quantity, amount_paid, status)
+        VALUES ($1, $2, 'gallery_post', $3, 1, '25.00', 'completed')
+        `,
+        [process.env.TEST_SUB_NO_PROFILE, mockBuyer.sub, testPostId],
+      );
+
+      const response = await request(app).get('/api/v1/purchases/seller');
+
+      expect(response.status).toBe(200);
+      expect(Array.isArray(response.body)).toBe(true);
+      expect(response.body).toHaveLength(1);
+      expect(response.body[0]).toMatchObject({
+        sellerSub: mockBuyer.sub,
+        itemType: 'gallery_post',
+        itemId: testPostId,
+        quantity: 1,
+        status: 'completed',
+      });
+    });
+
+    it('excludes auction purchases — only gallery_post items are returned to seller', async () => {
+      // Seed both item types for the same seller.
+      await pool.query(
+        `
+        INSERT INTO purchases (buyer_sub, seller_sub, item_type, item_id, quantity, amount_paid, status)
+        VALUES ($1, $2, 'gallery_post', $3, 1,  '85.00', 'completed'),
+               ($1, $2, 'auction',     $4, 1, '250.00', 'completed')
+        `,
+        [process.env.TEST_SUB_NO_PROFILE, mockBuyer.sub, testPostId, testAuctionId],
+      );
+
+      const response = await request(app).get('/api/v1/purchases/seller');
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveLength(1);
+      expect(response.body[0].itemType).toBe('gallery_post');
+    });
+
+    it('returns empty array when seller has no gallery purchases', async () => {
+      const response = await request(app).get('/api/v1/purchases/seller');
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual([]);
     });
   });
 
