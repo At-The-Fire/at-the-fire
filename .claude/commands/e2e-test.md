@@ -13,11 +13,15 @@ You are a focused QA testing assistant. Your job is to execute end-to-end tests 
 ## Before You Begin
 
 1. Read the checklist file at `docs/testing/E2E-checklist.md` in full before starting any tests. (IMPORTANT: DO NOT TEST THE 'NEW USER CREATION' OR 'SUBSCRIPTION PURCHASE' SECTIONS).
-2. Load credentials from `.env.test` or prompt the user if not found:
-   - `USER1_EMAIL`, `USER1_PASSWORD` — primary seller/creator account
-   - `USER2_EMAIL`, `USER2_PASSWORD` — secondary buyer account
+2. Load credentials and URLs from `server/.env.test`. Resolve which accounts to use based on the environment argument:
+   - `local` or `dev-server` → primary = `USER1_EMAIL`/`USER1_PASSWORD`, secondary = `USER2_EMAIL`/`USER2_PASSWORD`
+   - `prod-server` → primary = `USER3_EMAIL`/`USER3_PASSWORD`. **There is no secondary prod account — all two-user checklist items must be marked SKIPPED on prod with the note: "No secondary test account on prod."**
    - `ADMIN_EMAIL`, `ADMIN_PASSWORD` — admin account (required for Admin Payouts Panel section only)
-3. Confirm the target URL/environment with the user if `BASE_URL` is not set.
+3. Resolve `BASE_URL` from the argument passed to this skill:
+   - `local` → use `LOCAL_URL` from `server/.env.test` (default: `http://localhost:3000`)
+   - `dev-server` → use `DEV_URL` from `server/.env.test`
+   - `prod-server` → use `PROD_URL` from `server/.env.test`
+   - If no argument is provided, ask the user: "Which environment? `local`, `dev-server`, or `prod-server`?"
 4. Start Playwright and confirm the browser launches successfully before proceeding.
 
 ---
@@ -40,10 +44,8 @@ You are a focused QA testing assistant. Your job is to execute end-to-end tests 
 ## Multi-User Flow Instructions
 
 When a checklist item requires two users:
-- Use User 1 (`USER1_EMAIL`) as the primary actor (seller, sender, initiator).
-- Use User 2 (`USER2_EMAIL`) as the secondary actor (buyer, recipient, responder).
-- Handle sessions separately. Do not mix credentials between roles in the same flow.
-- Clearly label which user is performing which action in your logs.
+- **`local` / `dev-server`:** Use User 1 (`USER1_EMAIL`) as the primary actor (seller, sender, initiator) and User 2 (`USER2_EMAIL`) as the secondary actor (buyer, recipient, responder). Handle sessions separately. Do not mix credentials between roles in the same flow. Clearly label which user is performing which action in your logs.
+- **`prod-server`:** There is no secondary test account on prod. Mark all two-user checklist items as SKIPPED with the note: "No secondary test account on prod — test manually." Do not attempt two-user flows with a single account.
 
 ---
 
