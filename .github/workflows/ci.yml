@@ -32,7 +32,7 @@ jobs:
         run: npm test --prefix server -- --detectOpenHandles --forceExit
         env:
           CI: true
-          DATABASE_URL: postgres://my_test_user:my_test_password@postgres:5432/my_test_user
+          DATABASE_URL: postgres://my_test_user:my_test_password@postgres:5432/at_the_fire_test
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           SALT_ROUNDS: ${{ secrets.SALT_ROUNDS }}
           COOKIE_NAME: ${{ secrets.COOKIE_NAME }}
