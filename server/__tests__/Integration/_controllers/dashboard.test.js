@@ -411,7 +411,11 @@ describe('posts/ post details/ S3 routes', () => {
     expect(response.body.files).toBeDefined();
     expect(Array.isArray(response.body.files)).toBe(true);
     expect(response.body.files.length).toBe(2);
-    expect(response.body.files[0].secure_url).toContain('amazonaws.com');
+    const expectedDomain =
+      process.env.APP_ENV !== 'development' && process.env.CLOUDFRONT_DOMAIN
+        ? process.env.CLOUDFRONT_DOMAIN
+        : 'amazonaws.com';
+    expect(response.body.files[0].secure_url).toContain(expectedDomain);
   });
 
   it('POST /dashboard/images should store public_id and url in the database', async () => {

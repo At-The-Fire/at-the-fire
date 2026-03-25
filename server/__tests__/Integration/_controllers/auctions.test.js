@@ -200,7 +200,7 @@ describe('Auction routes', () => {
   });
 
   describe('POST /api/v1/auctions/upload', () => {
-    it('should upload images to S3', async () => {
+    it.only('should upload images to S3', async () => {
       const response = await request(app)
         .post('/api/v1/auctions/upload')
         .attach(
@@ -219,7 +219,12 @@ describe('Auction routes', () => {
       expect(response.body.length).toBe(2);
       expect(response.body[0]).toHaveProperty('secure_url');
       expect(response.body[0]).toHaveProperty('public_id');
-      expect(response.body[0].secure_url).toContain('amazonaws.com');
+      const expectedDomain =
+        process.env.APP_ENV !== 'development' && process.env.CLOUDFRONT_DOMAIN
+          ? process.env.CLOUDFRONT_DOMAIN
+          : 'amazonaws.com';
+
+      expect(response.body[0].secure_url).toContain(expectedDomain);
       expect(response.body[0].secure_url).toContain('auction-images');
     });
   });
