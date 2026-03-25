@@ -119,8 +119,8 @@ export default function PaymentWidget({ amount, items, onSuccess, onError, disab
       <Typography variant="h6" gutterBottom>
         Payment
       </Typography>
-      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-        Test mode — no real charge will be made
+      <Typography variant="body2" sx={{ color: 'warning.main', mb: 1, fontWeight: 600 }}>
+        Not yet active — no order will be fulfilled
       </Typography>
       {amount > 0 && (
         <Typography variant="body2" sx={{ mb: 2, color: 'primary.main' }}>
