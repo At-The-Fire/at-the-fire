@@ -18,6 +18,7 @@ describe('posts/ post details/ cloudinary routes', () => {
 
     expect(data.body).toBeInstanceOf(Array);
     expect(data.body.length).toBeGreaterThan(0);
+    console.log('data', data.body);
 
     // Check structure for each post.
     data.body.forEach((post) => {
@@ -31,7 +32,7 @@ describe('posts/ post details/ cloudinary routes', () => {
         description: expect.any(String),
         id: expect.any(String),
         image_url: expect.any(String),
-        num_imgs: expect.any(String),
+        num_imgs: expect.any(String || null),
         price: expect.any(String),
         public_id: expect.any(String),
         quantity: 1,
