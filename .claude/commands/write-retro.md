@@ -33,19 +33,19 @@ Summarize the overall period — what was the theme or focus? Flag anything nota
 
 ## Step 1 - Collect work evidence
 
-First, read the last retro date:
+First, read the last retro timestamp:
 
 ```bash
 cat .claude/last-retro
 ```
 
-This tells you the date of the last retro written. Use the day AFTER that date as the start of your git log range.
+This contains an ISO datetime (e.g. `2026-03-25T00:15:00`) marking the exact moment the last retro was written. Use it directly as the `--after` cutoff — do NOT add a day. This captures any commits made after that precise moment, including work done later the same day.
 
 Then run:
 
 ```bash
-git log --after="LAST_RETRO_DATE" --no-merges --pretty=format:"%ad %h %s" --date=short
-git log --after="LAST_RETRO_DATE" --no-merges --pretty=format:"%ad" --date=short | sort | uniq
+git log --after="LAST_RETRO_TIMESTAMP" --no-merges --pretty=format:"%ad %h %s" --date=short
+git log --after="LAST_RETRO_TIMESTAMP" --no-merges --pretty=format:"%ad" --date=short | sort | uniq
 git branch -a
 ```
 
@@ -83,10 +83,10 @@ Requirements:
 - A 302 response is success — the script executed correctly.
 - Do NOT use the Google Docs MCP tools for this step.
 
-After a successful POST, update the last retro date:
+After a successful POST, update the last retro timestamp:
 
 ```bash
-echo "MM/DD/YY" > .claude/last-retro
+date +"%Y-%m-%dT%H:%M:%S" > .claude/last-retro
 ```
 
-Write today's date (the end date of the retro range) in MM/DD/YY format.
+This saves the current local time as an ISO datetime so the next retro captures everything after this exact moment.
