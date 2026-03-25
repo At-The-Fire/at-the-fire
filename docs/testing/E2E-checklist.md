@@ -190,6 +190,7 @@
   - [ ] Closed auction rows without tracking show an orange border in Dashboard > Sales tab
   - [ ] Gallery sale rows without tracking show an orange border in Dashboard > Sales tab
 - [ ] Real-time list observation (two-user)
+  > **Claude Code:** These are automatable using two browser tabs. Open Tab 1 as watcher (USER2 / secondary buyer) on `/auctions`, then switch to Tab 2 as actor (USER3 / seller) to trigger the event. Switch back to Tab 1 without navigating — wait 2–3 seconds for the WebSocket event, then screenshot and verify the UI updated. See "Two-Session Real-Time Tests" section in `e2e-test.md` for the full protocol.
   - [ ] User 2 is already on `/auctions` when User 1 creates a new auction — verify the new auction card appears on User 2's page without refreshing
   - [ ] User 2 is on `/auctions` when User 1 BINs an auction — verify the card flips to "closed" on User 2's list without refreshing
   - [ ] Countdown timer ticks — open an active auction card, read the countdown display, wait 2 seconds, verify the displayed time has changed
