@@ -78,12 +78,12 @@ export default function ResponsiveAppBar() {
 
   userMenuItems =
     isAuthenticated && !loadingCustomerId
-      ? [messages, workspace, 'Purchases', 'Profile', 'User Guide', 'Logout']
+      ? [messages, workspace, 'Subscription', 'Purchases', 'Profile', 'User Guide', 'Logout']
       : [];
 
   const pages = user
-    ? [isFeedView ? 'Gallery' : 'Feed', 'Auctions', 'Sign Up', 'Sign In', 'About', 'Contact']
-    : ['Auctions', 'Sign Up', 'Sign In', 'About', 'Contact'];
+    ? [isFeedView ? 'Gallery' : 'Feed', 'Auctions', 'Subscription', 'Sign Up', 'Sign In', 'About', 'Contact']
+    : ['Auctions', 'Subscription', 'Sign Up', 'Sign In', 'About', 'Contact'];
   // Handles expanding and collapsing search input on mobile
   const handleSearchToggle = () => {
     setSearchExpanded(!searchExpanded);

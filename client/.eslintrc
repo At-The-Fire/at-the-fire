@@ -21,7 +21,7 @@
   },
   "rules": {
     "eqeqeq": ["error", "always"],
-    "no-console": "warn",
+    "no-console": ["warn", { "allow": ["error"] }],
     "indent": "off",
     "quotes": [
       "error",

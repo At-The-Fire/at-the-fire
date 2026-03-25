@@ -182,9 +182,8 @@ export default function UserGuide() {
           Welcome to the User Guide!
         </Typography>
         <Typography variant="body2" paragraph sx={{ textAlign: 'left' }}>
-          This guide will help you navigate through all the subscription features and capabilities of our platform.
-          Whether you&apos;re just getting started or looking to make the most of advanced features, you&apos;ll find
-          everything you need to know here.
+          This guide walks through the current platform experience: free posting and inventory snapshots, Premium
+          workspace tabs, and the marketplace flows for buying, selling, and auctions.
         </Typography>
       </StyledPaper>
       {/* Table of Contents First */}
@@ -206,6 +205,9 @@ export default function UserGuide() {
             Detailed Features Guide
           </Link>
           <Box sx={{ pl: 2 }}>
+            <Link href="#marketplace" onClick={(e) => handleNavClick(e, 'marketplace')}>
+              • Marketplace: Buying, Selling, and Auctions
+            </Link>
             <Link href="#dashboard" onClick={(e) => handleNavClick(e, 'dashboard')}>
               • Dashboard Tab
             </Link>
@@ -465,6 +467,59 @@ export default function UserGuide() {
         <Typography variant="h6" gutterBottom fontWeight="bold">
           Detailed Features Guide
         </Typography>
+
+        <StyledAccordion id="marketplace">
+          <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ minHeight: '48px' }}>
+            <Typography variant="subtitle1" fontWeight="medium">
+              Marketplace: Buying, Selling, and Auctions
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails sx={{ pt: 0, pb: 1 }}>
+            <AccordionContent>
+              <Typography variant="body1" gutterBottom sx={{ textAlign: 'left' }}>
+                The platform now supports both gallery sales and auction flows for buyers and sellers.
+              </Typography>
+              <FeatureList>
+                <GuideItem>
+                  <ItemTitle variant="subtitle2" sx={{ textAlign: 'left', marginLeft: '20px' }}>
+                    Buying from gallery listings
+                  </ItemTitle>
+                  <ItemDescription sx={{ textAlign: 'left', marginLeft: '40px' }}>
+                    Buyers can add eligible gallery items to cart and proceed to checkout. Purchase history and status
+                    updates are available in <span style={{ fontWeight: '700' }}>Purchases</span>.
+                  </ItemDescription>
+                </GuideItem>
+                <GuideItem>
+                  <ItemTitle variant="subtitle2" sx={{ textAlign: 'left', marginLeft: '20px' }}>
+                    Selling and fulfillment workflow
+                  </ItemTitle>
+                  <ItemDescription sx={{ textAlign: 'left', marginLeft: '40px' }}>
+                    Sellers manage inventory/listings in Workspace, then track incoming sales and add tracking info from
+                    Dashboard tools.
+                  </ItemDescription>
+                </GuideItem>
+                <GuideItem>
+                  <ItemTitle variant="subtitle2" sx={{ textAlign: 'left', marginLeft: '20px' }}>
+                    Auctions and bidding
+                  </ItemTitle>
+                  <ItemDescription sx={{ textAlign: 'left', marginLeft: '40px' }}>
+                    Auctions are separate from gallery posts: users can place bids, receive outbid/win notifications,
+                    and complete auction purchases from the same account.
+                  </ItemDescription>
+                </GuideItem>
+                <GuideItem>
+                  <ItemTitle variant="subtitle2" sx={{ textAlign: 'left', marginLeft: '20px' }}>
+                    Current checkout status
+                  </ItemTitle>
+                  <ItemDescription sx={{ textAlign: 'left', marginLeft: '40px' }}>
+                    Checkout screens are live and integrated into the flow. If a payment-processing warning appears,
+                    treat checkout as in-progress rollout until the final processor configuration is complete.
+                  </ItemDescription>
+                </GuideItem>
+              </FeatureList>
+            </AccordionContent>
+          </AccordionDetails>
+        </StyledAccordion>
 
         <StyledAccordion id="dashboard">
           <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ minHeight: '48px' }}>

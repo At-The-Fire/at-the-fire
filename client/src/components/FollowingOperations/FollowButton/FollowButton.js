@@ -25,6 +25,7 @@ const FollowButton = ({ userId, initialIsFollowing = false, profileLoading }) =>
         setIsFollowing(status.isFollowing);
       } catch (error) {
         if (process.env.REACT_APP_APP_ENV === 'development') {
+          // eslint-disable-next-line
           console.error('Error checking follow status:', error);
         }
       } finally {
@@ -53,6 +54,7 @@ const FollowButton = ({ userId, initialIsFollowing = false, profileLoading }) =>
       setIsFollowing(!isFollowing);
     } catch (error) {
       if (process.env.REACT_APP_APP_ENV === 'development') {
+        // eslint-disable-next-line
         console.error('Follow toggle error:', error);
       }
     } finally {

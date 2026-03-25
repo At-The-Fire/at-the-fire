@@ -57,13 +57,56 @@ export default function SubscriptionLandingPage() {
   ];
 
   const features = [
-    'Create your own gallery and profile page with the ability to create content.',
-    'Keep track of post inventory valuations over time. Download CSV file from your dashboard for spreadsheets, etc. Track orders and print invoices.',
-    'Set goals for monthly and daily quotas to manage your production.',
-    'See how your business is doing at a glance with a color coded calendar. You can always review what you made, when, and for how much $ to stay consistent with your product.',
-    'Monthly analysis with user data based graphs.',
-    'Peace of mind that your data is encrypted with AES-256 encryption- no one is stealing your data. ',
+    'Start free with a public profile, gallery posting, and inventory snapshots.',
+    'Show work, build your audience, and keep your catalog organized from day one.',
+    'Run seller activity across gallery listings and auctions while buyers track bids and purchases in one account.',
+    'Use the cart and checkout flow as it rolls toward full payment processor launch.',
+    'Upgrade to Premium for the locked workspace tabs: Orders, Products, Calendar, and Analysis.',
+    'Track production goals, sales history, inventory movement, and performance trends in one place.',
+    'Keep account and business data protected with encrypted storage and secure subscription billing through Stripe.',
   ];
+
+  const renderPrimaryCta = () =>
+    isAuthenticated ? (
+      <Box>
+        <Button color="primary" variant="contained" onClick={handleStageChange} sx={{ fontSize: '1.5rem', mt: '25px' }}>
+          Upgrade to Premium
+        </Button>
+        <Typography
+          variant="h6"
+          sx={{
+            color: 'success.main',
+            fontWeight: 'bold',
+            mt: 1,
+            textAlign: 'center',
+          }}
+        >
+          Premium starts with a 60-day free trial.
+        </Typography>
+      </Box>
+    ) : (
+      <Box>
+        <Button
+          color="primary"
+          variant="contained"
+          onClick={handleSignInToSubscribe}
+          sx={{ fontSize: '1.5rem', mt: '25px' }}
+        >
+          Create Account to Upgrade
+        </Button>
+        <Typography
+          variant="h6"
+          sx={{
+            color: 'success.main',
+            fontWeight: 'bold',
+            textAlign: 'center',
+            mt: '.3rem',
+          }}
+        >
+          Premium starts with a 60-day free trial.
+        </Typography>
+      </Box>
+    );
 
   const StyledPaper = styled(Paper)(({ theme }) => ({
     padding: theme.spacing(2),
@@ -82,56 +125,10 @@ export default function SubscriptionLandingPage() {
   return (
     <Box sx={{ flexGrow: 1, p: isMobile ? 0 : 2, position: 'absolute', top: '70px' }}>
       <Typography variant="h4" textAlign={'left'} sx={{ borderBottom: '2px solid green' }}>
-        Become a subscriber!
+        Free to join. Premium to run the business side.
       </Typography>
       <Grid item xs={12} md={6}>
-        <Box textAlign="center">
-          {isAuthenticated ? (
-            <Box>
-              <Button
-                color="primary"
-                variant="contained"
-                onClick={handleStageChange}
-                sx={{ fontSize: '1.5rem', mt: '25px' }}
-              >
-                Purchase a Subscription
-              </Button>
-              <Typography
-                variant="h6"
-                sx={{
-                  color: 'success.main',
-                  fontWeight: 'bold',
-                  mt: 1,
-                  textAlign: 'center',
-                }}
-              >
-                Start with a 60-day free trial!
-              </Typography>
-            </Box>
-          ) : (
-            <Box>
-              <Button
-                color="primary"
-                variant="contained"
-                onClick={handleSignInToSubscribe}
-                sx={{ fontSize: '1.5rem', mt: '25px' }}
-              >
-                Sign-up to Subscribe
-              </Button>
-              <Typography
-                variant="h6"
-                sx={{
-                  color: 'success.main',
-                  fontWeight: 'bold',
-                  textAlign: 'center',
-                  mt: '.3rem',
-                }}
-              >
-                Start with a 60-day free trial!
-              </Typography>
-            </Box>
-          )}
-        </Box>
+        <Box textAlign="center">{renderPrimaryCta()}</Box>
       </Grid>
       <Grid container spacing={4} alignItems="start" sx={{ padding: '20px' }}>
         {/* Text and Video Section */}
@@ -165,7 +162,7 @@ export default function SubscriptionLandingPage() {
               }}
             >
               <Typography variant="h6" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
-                A Gallery, Business & Inventory Management Platform for Artists and Collectors
+                A gallery and seller workspace for artists, collectors, auctions, and direct sales.
               </Typography>
             </Box>
           </Box>
@@ -180,7 +177,7 @@ export default function SubscriptionLandingPage() {
           >
             {' '}
             <Typography variant="h5" textAlign="left" sx={{ letterSpacing: '.1rem', marginBottom: '10px' }}>
-              Our platform offers:
+              What the offer looks like now:
             </Typography>
             <Box
               sx={{
@@ -202,12 +199,11 @@ export default function SubscriptionLandingPage() {
           </Box>
           <Paper sx={{ padding: '15px 20px', margin: '2rem 0' }}>
             <Typography variant="body1" paragraph sx={{ textAlign: 'left' }}>
-              <em>At The Fire</em> is a subscription-based social media, business software, and gallery site designed
-              for artists to showcase their collections and offer their work for sale. Collectors are welcome to
-              subscribe as well. The platform features a tiered subscription model- basic accounts are free, while a
-              paid subscription unlocks business accounting and sales analysis tools. Artists can create posts, manage
-              inventory, track sales, and analyze production while having a clear picture of what is helping them to
-              achieve their goals. If you&apos;d like to take a deeper dive into how things work, check out our{' '}
+              <em>At The Fire</em> now has a much clearer split between free access and Premium workspace tools. Free
+              accounts can create a profile, publish gallery content, build inventory snapshots, and participate in the
+              marketplace side of the platform. Premium is for sellers who want the deeper operating system: orders,
+              products, calendar visibility, and analysis. If you&apos;d like to take a deeper dive into how things
+              work, check out our{' '}
               <span
                 onClick={() => {
                   navigate('/user-guide');
@@ -329,70 +325,23 @@ export default function SubscriptionLandingPage() {
           >
             {' '}
             <Typography variant="h5" gutterBottom>
-              The purpose is to set a goal for daily/ monthly production and stick to it.
+              Premium is about clarity after the work is posted.
             </Typography>
             <Typography variant="body1" gutterBottom sx={{ textAlign: 'left' }}>
-              Use At The Fire to manage your quota with graphs, a calendar, and analysis. Take the pulse of your
-              business at a glance with color coded display in the calendar &, monthly summaries. Publish your work for
-              sale or display, link to other platforms e.g. GlassPass, Instagram, etc. Create invoices for orders and
-              keep track of what is completed or still in progress. At The FIre is here to help you run your business
-              more effectively so you can reach those goals.
+              Post for free, then upgrade when you need operational depth. Premium brings together order management,
+              product tracking, production planning, and analysis so you can see what sold, what is in progress, and
+              where your momentum is coming from. Sellers can use that layer to stay organized while the public-facing
+              gallery, auctions, and buyer experience continue to expand.
             </Typography>
           </Paper>
           <Box>
             <PromotionalVideo />
           </Box>
           <Typography sx={{ textAlign: 'center', mt: 3 }}>
-            Click the button below to purchase a monthly or yearly subscription.
+            Upgrade when you want the Premium workspace tools behind your gallery.
           </Typography>
           {/* Action Button */}
-          <Box textAlign="center">
-            {isAuthenticated ? (
-              <Box>
-                <Button
-                  color="primary"
-                  variant="contained"
-                  onClick={handleStageChange}
-                  sx={{ fontSize: '1.5rem', mt: '25px' }}
-                >
-                  Purchase a Subscription
-                </Button>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    color: 'success.main',
-                    fontWeight: 'bold',
-                    mt: 1,
-                    textAlign: 'center',
-                  }}
-                >
-                  Start with a 60-day free trial!
-                </Typography>
-              </Box>
-            ) : (
-              <Box>
-                <Button
-                  color="primary"
-                  variant="contained"
-                  onClick={handleSignInToSubscribe}
-                  sx={{ fontSize: '1.5rem', mt: '25px' }}
-                >
-                  Sign-up to Subscribe
-                </Button>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    color: 'success.main',
-                    fontWeight: 'bold',
-                    textAlign: 'center',
-                    mt: '.3rem',
-                  }}
-                >
-                  Start with a 60-day free trial!
-                </Typography>
-              </Box>
-            )}
-          </Box>
+          <Box textAlign="center">{renderPrimaryCta()}</Box>
         </Grid>
         <Grid
           item

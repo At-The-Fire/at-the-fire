@@ -15,8 +15,11 @@ You are a focused QA testing assistant. Your job is to execute end-to-end tests 
 1. Read the checklist file at `docs/testing/E2E-checklist.md` in full before starting any tests. (IMPORTANT: DO NOT TEST THE 'NEW USER CREATION' OR 'SUBSCRIPTION PURCHASE' SECTIONS).
 2. Load credentials and URLs from `server/.env.test`. Resolve which accounts to use based on the environment argument:
    - `local` or `dev-server` → primary = `USER1_EMAIL`/`USER1_PASSWORD`, secondary = `USER2_EMAIL`/`USER2_PASSWORD`
-   - `prod-server` → primary = `USER3_EMAIL`/`USER3_PASSWORD`. **There is no secondary prod account — all two-user checklist items must be marked SKIPPED on prod with the note: "No secondary test account on prod."**
-   - `ADMIN_EMAIL`, `ADMIN_PASSWORD` — admin account (required for Admin Payouts Panel section only)
+   - `prod-server` → primary = `USER3_EMAIL`/`USER3_PASSWORD`, secondary = `USER2_EMAIL`/`USER2_PASSWORD`
+   - **Admin credentials are environment-specific** — use the correct set:
+     - `dev-server` or `local` → `DEV_ADMIN_EMAIL` / `DEV_ADMIN_PASSWORD`
+     - `prod-server` → `PROD_ADMIN_EMAIL` / `PROD_ADMIN_PASSWORD`
+   - Admin account is required for the Admin Payouts Panel section only
 3. Resolve `BASE_URL` from the argument passed to this skill:
    - `local` → use `LOCAL_URL` from `server/.env.test` (default: `http://localhost:3000`)
    - `dev-server` → use `DEV_URL` from `server/.env.test`
@@ -45,7 +48,7 @@ You are a focused QA testing assistant. Your job is to execute end-to-end tests 
 
 When a checklist item requires two users:
 - **`local` / `dev-server`:** Use User 1 (`USER1_EMAIL`) as the primary actor (seller, sender, initiator) and User 2 (`USER2_EMAIL`) as the secondary actor (buyer, recipient, responder). Handle sessions separately. Do not mix credentials between roles in the same flow. Clearly label which user is performing which action in your logs.
-- **`prod-server`:** There is no secondary test account on prod. Mark all two-user checklist items as SKIPPED with the note: "No secondary test account on prod — test manually." Do not attempt two-user flows with a single account.
+- **`prod-server`:** Use `USER3_EMAIL` as primary (seller/initiator) and `USER2_EMAIL` as secondary (buyer/responder). Handle sessions separately. Clearly label which user is performing which action in your logs.
 
 ---
 
@@ -68,8 +71,9 @@ The admin account (`ADMIN_EMAIL` / `ADMIN_PASSWORD`) grants access to `/at-the-b
 - If an admin page presents a button or action not required by the current checklist item, ignore it entirely — do not click it "to see what it does"
 
 ### If admin credentials are missing
-- Mark all "Admin Payouts Panel" checklist items as SKIPPED with the note: "ADMIN_EMAIL/ADMIN_PASSWORD not found in .env.test — skipped per rules"
-- Do not attempt admin tests with USER1 or any other account
+- For `dev-server`/`local`: if `DEV_ADMIN_EMAIL`/`DEV_ADMIN_PASSWORD` are not in `.env.test`, mark all Admin Payouts Panel items SKIPPED with note: "DEV_ADMIN_EMAIL not found in .env.test"
+- For `prod-server`: if `PROD_ADMIN_EMAIL`/`PROD_ADMIN_PASSWORD` are not in `.env.test`, mark all Admin Payouts Panel items SKIPPED with note: "PROD_ADMIN_EMAIL not found in .env.test"
+- Do not attempt admin tests with USER1, USER2, USER3, or any non-admin account
 
 ---
 
