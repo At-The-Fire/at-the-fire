@@ -1,4 +1,4 @@
-import { Box, Button, Divider, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, Divider, TextField, Typography } from '@mui/material';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 import { confirmPurchase, confirmAuctionPurchase, createAuctionPaymentIntent } from '../../services/fetch-purchases.js';
@@ -116,6 +116,11 @@ export default function Checkout() {
       <Typography variant="h5" gutterBottom>
         Checkout
       </Typography>
+
+      <Alert severity="warning" sx={{ mb: 3, fontSize: '1rem', fontWeight: 600 }}>
+        Purchases are not yet available. Payment processing is being finalized — no order will be fulfilled if you
+        proceed.
+      </Alert>
 
       {/* Order Summary */}
       <Box sx={{ mb: 3 }}>
