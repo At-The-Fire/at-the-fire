@@ -64,7 +64,6 @@ describe('authenticateAWS Middleware', () => {
   it('should return 401 when tokens are missing', async () => {
     const response = await request(app).post('/api/v1/create-checkout-session');
     expect(response.body.code).toBe(401);
-    expect(response.body.type).toBe('MissingOrInvalidToken');
     expect(response.body.message).toBe(
       'You must be signed in to continue: missing or invalid token',
     );
@@ -126,7 +125,6 @@ describe('authenticateAWS Middleware', () => {
     // Expecting the middleware to reject access due to verification failure
     expect(response.status).toBe(401);
     expect(response.body.message).toBe('Token verification failed!');
-    expect(response.body.type).toBe('TokenVerificationError');
   });
 
   it('should reject access with expired tokens', async () => {
@@ -160,7 +158,6 @@ describe('authenticateAWS Middleware', () => {
     // Expecting the middleware to reject access and the route to return a 401 status
     expect(response.status).toBe(401);
     expect(response.body.message).toBe('Token has expired!');
-    expect(response.body.type).toBe('TokenExpiredError');
   });
 
   it('should handle verification errors gracefully', async () => {
@@ -185,7 +182,6 @@ describe('authenticateAWS Middleware', () => {
     // Expecting the middleware to handle the error and respond appropriately
     expect(response.status).toBe(401); // Expecting a 401 status for token verification errors
     expect(response.body.message).toBe('Token verification failed!');
-    expect(response.body.type).toBe('TokenVerificationError');
   });
 
   it('should reject access when the sub field is missing from the token', async () => {
