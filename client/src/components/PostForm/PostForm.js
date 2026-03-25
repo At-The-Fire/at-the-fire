@@ -13,7 +13,6 @@ import {
   Select,
   TextField,
   Typography,
-  useMediaQuery,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import DashboardSubMgt from '../Subscription/SubscriptionPages/DashboardSubMgt/DashboardSubMgt.js';
@@ -30,6 +29,7 @@ import imageCompression from 'browser-image-compression';
 import FlamePipe from '../FlamePipe/FlamePipe.js';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_QUANTITY_DIGITS = 10;
 
 export default function PostForm({
   title = '',
@@ -40,6 +40,8 @@ export default function PostForm({
   imageUrls,
   sold = false,
   date_sold = null,
+  quantity = '',
+  shipping_cost = 0,
 }) {
   // form wasn't showing current values in edit mode, this fixed it
   useEffect(() => {
@@ -51,8 +53,10 @@ export default function PostForm({
       setCurrentImages(imageUrls);
       setSoldInput(sold);
       setDateSoldInput(date_sold);
+      setQuantityInput(quantity || '');
+      setShippingCostInput(shipping_cost ?? 0);
     }
-  }, [title, description, price, category, imageUrls, sold, date_sold]);
+  }, [title, description, price, category, imageUrls, sold, date_sold, quantity, shipping_cost]);
   const { restricted } = usePostStore();
 
   const [titleInput, setTitleInput] = useState(title);
@@ -66,8 +70,8 @@ export default function PostForm({
   const [deletedImages, setDeletedImages] = useState([]);
 
   const [soldInput, setSoldInput] = useState(sold);
-
-  const isMobile = useMediaQuery('(max-width:767px)');
+  const [quantityInput, setQuantityInput] = useState(quantity || '');
+  const [shippingCostInput, setShippingCostInput] = useState(shipping_cost ?? 0);
 
   const [files, setFiles] = useState([]);
   const onDrop = useCallback((acceptedFiles) => {
@@ -104,7 +108,7 @@ export default function PostForm({
 
   // Display thumbnails
   const thumbs = !loading && (files.length > 0 || currentImages.length > 0) && (
-    <Box className="thumbnails-container" sx={{ minHeight: '100px', marginTop: '20px' }}>
+    <Box className="thumbnails-container" sx={{ minHeight: '100px' }}>
       {/* Display newly selected files */}
       {files.map((file, index) => (
         <div key={file.name} className="thumbnail-wrapper">
@@ -220,6 +224,8 @@ export default function PostForm({
         num_imgs: files.length,
         sold: soldInput,
         date_sold: dateSoldInput,
+        quantity: quantityInput !== '' ? Number(quantityInput) : null,
+        shippingCost: Number(shippingCostInput) || 0,
       };
 
       // Upload new images to S3 and get their URLs + post details
@@ -302,6 +308,29 @@ export default function PostForm({
         draggable: true,
         draggablePercent: 60,
         toastId: 'postForm-3',
+        autoClose: true,
+      });
+    }
+  };
+
+  const handleQuantityEdit = (value) => {
+    if (value === '') {
+      setQuantityInput('');
+      return;
+    }
+
+    if (!/^\d+$/.test(value)) {
+      return;
+    }
+
+    if (value.length <= MAX_QUANTITY_DIGITS) {
+      setQuantityInput(value);
+    } else {
+      toast.warn(`Limit of ${MAX_QUANTITY_DIGITS} digits`, {
+        theme: 'colored',
+        draggable: true,
+        draggablePercent: 60,
+        toastId: 'postForm-4',
         autoClose: true,
       });
     }
@@ -457,87 +486,107 @@ export default function PostForm({
               </div>
             </div>
 
-            <FormControl component="fieldset" className="sold-radio-group " sx={{ marginTop: '20px' }}>
-              <RadioGroup
-                className=".sold-radio-group"
-                aria-label="sold status"
-                name="sold-status-group"
-                value={soldInput ? soldInput : 'false'}
-                row
-              >
-                <FormControlLabel
-                  value="true"
-                  checked={soldInput === true}
-                  onChange={() => setSoldInput(true)}
-                  control={<Radio />}
-                  label="Sold"
-                />
-                <FormControlLabel
-                  value="false"
-                  checked={soldInput === false}
-                  onChange={() => {
-                    setSoldInput(false);
-                    setDateSoldInput(null);
-                  }}
-                  control={<Radio />}
-                  label="Available"
-                />
-              </RadioGroup>
-            </FormControl>
+            <div className="desk-qty-ship-row">
+              <TextField
+                placeholder="Quantity (optional)"
+                className="image-input"
+                type="number"
+                name="quantity"
+                inputProps={{ min: 1, step: 1 }}
+                value={quantityInput}
+                onChange={(e) => handleQuantityEdit(e.target.value)}
+              />
+              <TextField
+                placeholder="Shipping cost (optional)"
+                className="image-input"
+                type="number"
+                name="shippingCost"
+                inputProps={{ min: 0, step: 1 }}
+                InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+                value={shippingCostInput}
+                onChange={(e) => setShippingCostInput(e.target.value)}
+              />
+            </div>
 
-            {soldInput && (
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DatePicker
-                  className="date-sold-date-picker"
-                  label="Date Sold"
-                  value={getDateSoldValue()}
-                  onChange={(newValue) => {
-                    const newDateValue = newValue ? newValue.getTime() : null;
-                    setDateSoldInput(newDateValue);
-                  }}
-                  required={soldInput}
-                  slotProps={{
-                    textField: {
-                      fullWidth: true,
-                      required: soldInput,
-                      error: soldInput && !dateSoldInput,
-                      helperText:
-                        soldInput && !dateSoldInput ? 'Date sold is required when item is marked as sold' : '',
-                      sx: {
-                        mt: 1,
-                        '& .MuiFormLabel-root': {
-                          fontSize: '0.75rem',
-                        },
-                        '& .MuiInputBase-root': {
-                          height: 45,
-                        },
-                      },
-                    },
-                  }}
-                />
-              </LocalizationProvider>
-            )}
+            <div className="sold-status-section">
+              <FormControl component="fieldset" className="sold-radio-group">
+                <RadioGroup
+                  className="sold-radio-options"
+                  aria-label="sold status"
+                  name="sold-status-group"
+                  value={soldInput ? soldInput : 'false'}
+                  row
+                >
+                  <FormControlLabel
+                    value="true"
+                    checked={soldInput === true}
+                    onChange={() => setSoldInput(true)}
+                    control={<Radio />}
+                    label="Sold"
+                  />
+                  <FormControlLabel
+                    value="false"
+                    checked={soldInput === false}
+                    onChange={() => {
+                      setSoldInput(false);
+                      setDateSoldInput(null);
+                    }}
+                    control={<Radio />}
+                    label="Available"
+                  />
+                </RadioGroup>
+              </FormControl>
 
-            {!restricted ? (
-              <Box
-                {...getRootProps()}
-                className="dropzone"
-                sx={{
-                  marginTop: soldInput ? (isMobile ? '30px' : '100px') : '10px',
-                }}
-              >
-                <input {...getInputProps()} />
-                <label className="file-upload-label" style={{ color: 'lightgreen' }}>
-                  {files.length === 0
-                    ? 'Choose up to 10 images'
-                    : `${files.length} file${files.length > 1 ? 's' : ''} selected`}
-                </label>
-              </Box>
-            ) : (
-              <Typography>Image Select Disabled</Typography>
-            )}
-            {/* {thumbs} */}
-            {!restricted ? thumbs : ''}
+              {soldInput && (
+                <div className="sold-date-field">
+                  <LocalizationProvider dateAdapter={AdapterDateFns}>
+                    <DatePicker
+                      className="date-sold-date-picker"
+                      label="Date Sold"
+                      value={getDateSoldValue()}
+                      onChange={(newValue) => {
+                        const newDateValue = newValue ? newValue.getTime() : null;
+                        setDateSoldInput(newDateValue);
+                      }}
+                      required={soldInput}
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          required: soldInput,
+                          error: soldInput && !dateSoldInput,
+                          helperText:
+                            soldInput && !dateSoldInput ? 'Date sold is required when item is marked as sold' : '',
+                          sx: {
+                            '& .MuiFormLabel-root': {
+                              fontSize: '0.75rem',
+                            },
+                            '& .MuiInputBase-root': {
+                              height: 45,
+                            },
+                          },
+                        },
+                      }}
+                    />
+                  </LocalizationProvider>
+                </div>
+              )}
+            </div>
+
+            <div className="desk-media-section">
+              {!restricted ? (
+                <Box {...getRootProps()} className="dropzone">
+                  <input {...getInputProps()} />
+                  <label className="file-upload-label" style={{ color: 'lightgreen' }}>
+                    {files.length === 0
+                      ? 'Choose up to 10 images'
+                      : `${files.length} file${files.length > 1 ? 's' : ''} selected`}
+                  </label>
+                </Box>
+              ) : (
+                <Typography>Image Select Disabled</Typography>
+              )}
+              {!restricted ? thumbs : ''}
+            </div>
 
             <Box className="btn-container" sx={{ marginBottom: '40px' }}>
               <Button variant="outlined" onClick={() => navigate('/dashboard')} sx={{ margin: '0px 15px' }}>
@@ -550,10 +599,10 @@ export default function PostForm({
                   variant="outlined"
                   disabled={loading || (files.length === 0 && currentImages.length === 0)}
                 >
-                  {loading ? 'Uploading...' : 'Upload'}
+                  {loading ? 'Uploading...' : 'Create Post'}
                 </Button>
               ) : (
-                <Typography>Upload Disabled</Typography>
+                <Typography>Post Creation Disabled</Typography>
               )}
             </Box>
           </form>

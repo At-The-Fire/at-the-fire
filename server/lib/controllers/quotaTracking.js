@@ -40,6 +40,11 @@ module.exports = Router()
         ...req.body,
         customer_id,
       });
+
+      if (data.post_id && data.qty) {
+        await Post.updateQuantityById(data.post_id, data.qty);
+      }
+
       res.json(data);
     } catch (e) {
       next(e);
@@ -57,7 +62,11 @@ module.exports = Router()
       const data = await QuotaProduct.updateProduct(req.body, req.params.id, customerId);
 
       if (!data) {
-        res.status(404).send({ error: 'Product not found' });
+        return res.status(404).send({ error: 'Product not found' });
+      }
+
+      if (data.post_id && data.qty) {
+        await Post.updateQuantityById(data.post_id, data.qty);
       }
 
       // Add sales array for the updated product, matching GET behavior
@@ -71,10 +80,16 @@ module.exports = Router()
 
   .delete('/:id', authDelUp, async (req, res, next) => {
     try {
-      const deletedProduct = await QuotaProduct.deleteProduct(req.params.id);
+      const product = await QuotaProduct.getQuotaProductById(req.params.id);
 
-      if (!deletedProduct) {
-        res.status(404).send({ error: 'Product not found' });
+      if (!product) {
+        return res.status(404).send({ error: 'Product not found' });
+      }
+
+      if (product.sold) {
+        await QuotaProduct.softDeleteProduct(product.id);
+      } else {
+        await QuotaProduct.deleteProduct(req.params.id);
       }
 
       res.status(204).send();

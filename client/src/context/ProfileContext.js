@@ -166,6 +166,7 @@ export const ProfileProvider = ({ children }) => {
     if (user) {
       fetchProfile(user);
     }
+    // eslint-disable-next-line
   }, [user]);
 
   const value = {

@@ -17,6 +17,7 @@ export const fetchConversations = async () => {
     return data;
   } catch (e) {
     if (process.env.REACT_APP_APP_ENV === 'development') {
+      // eslint-disable-next-line
       console.error('Error fetching conversations:', e);
     }
     throw e;
@@ -41,6 +42,7 @@ export const createConversations = async (participantSubs) => {
     return data;
   } catch (e) {
     if (process.env.REACT_APP_APP_ENV === 'development') {
+      // eslint-disable-next-line
       console.error('Error fetching conversations:', e);
     }
     throw e;
@@ -68,6 +70,7 @@ export const sendNewMessage = async (conversationId, content) => {
     return data;
   } catch (e) {
     if (process.env.REACT_APP_APP_ENV === 'development') {
+      // eslint-disable-next-line
       console.error('Error fetching conversations:', e);
     }
     throw e;
@@ -88,6 +91,7 @@ export const fetchMessagesForConversation = async (conversationId) => {
     return data;
   } catch (e) {
     if (process.env.REACT_APP_APP_ENV === 'development') {
+      // eslint-disable-next-line
       console.error('Error fetching conversations:', e);
     }
     throw e;
@@ -105,6 +109,7 @@ export const deleteMessage = async (conversationId) => {
     if (!response.ok) throw new Error('Failed to delete conversation');
   } catch (e) {
     if (process.env.REACT_APP_APP_ENV === 'development') {
+      // eslint-disable-next-line
       console.error('Error fetching conversations:', e);
     }
     throw e;

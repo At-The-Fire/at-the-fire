@@ -125,7 +125,7 @@ export default function Auth() {
 
   return (
     <>
-      {!loginLoading && !pageLoading && !loadingAuth ? (
+      {!loginLoading && !pageLoading && !loadingAuth && !isAuthenticated ? (
         <Box className={'auth-form-wrapper'}>
           <Container maxWidth={'xs'} className={'auth-form-container'}>
             <Box

@@ -17,6 +17,8 @@ module.exports = class AWSUser {
   emailHash;
   socialMediaLinks;
   displayName;
+  acceptedTosAt;
+  tosVersion;
 
   constructor(row) {
     this.id = row.id;
@@ -35,6 +37,9 @@ module.exports = class AWSUser {
     this.emailHash = row.email_hash;
     this.socialMediaLinks = row.social_media_links;
     this.displayName = row.display_name;
+    this.acceptedTosAt = row.accepted_tos_at;
+    this.tosVersion = row.tos_version;
+    this.isAdmin = row.is_admin;
   }
 
   // email hashing functions
@@ -50,19 +55,17 @@ module.exports = class AWSUser {
     return rows.length > 0;
   }
 
-  static async insertAWS({ sub, email }) {
+  static async insertAWS({ sub, email, tosVersion }) {
     if (await this.emailExists(email)) {
       throw new Error(
         'duplicate key value violates unique constraint "cognito_users_email_key"'
       );
     }
     const { rows } = await pool.query(
-      `
-INSERT INTO cognito_users (sub, email, email_hash)
-      VALUES ($1, $2, $3)
-      RETURNING *
-      `,
-      [sub, encrypt(email), this.hashEmail(email)]
+      `INSERT INTO cognito_users (sub, email, email_hash, accepted_tos_at, tos_version)
+      VALUES ($1, $2, $3, NOW(), $4)
+      RETURNING *`,
+      [sub, encrypt(email), this.hashEmail(email), tosVersion]
     );
 
     return new AWSUser(rows[0]);
@@ -86,15 +89,15 @@ INSERT INTO cognito_users (sub, email, email_hash)
     // return rows[0];
   }
 
-  static async getGalleryPosts(customer_id) {
+  static async getGalleryPosts(sub) {
     const { rows } = await pool.query(
       `
     SELECT * FROM gallery_posts
-    WHERE customer_id=$1
+    WHERE seller_sub=$1 AND deleted_at IS NULL
     ORDER BY created_at DESC;
-    
+
   `,
-      [customer_id]
+      [sub]
     );
     return rows.map((row) => new Post(row));
   }
@@ -154,7 +157,7 @@ INSERT INTO cognito_users (sub, email, email_hash)
       [sub]
     );
 
-    return rows[0];
+    return rows[0] ? decrypt(rows[0].email) : null;
   }
 
   static async getAllUsers() {
@@ -187,25 +190,25 @@ INSERT INTO cognito_users (sub, email, email_hash)
     return new AWSUser(rows[0]);
   }
 
-  static async checkAndRecordImageUploads(customerId, imageCount) {
+  static async checkAndRecordImageUploads(sub, imageCount) {
     const recentUploads = await pool.query(
-      `SELECT SUM(image_count) 
-      FROM image_uploads 
-      WHERE customer_id = $1 
+      `SELECT SUM(image_count)
+      FROM image_uploads
+      WHERE user_sub = $1
       AND created_at > NOW() - INTERVAL '24 hours'`,
-      [customerId]
+      [sub]
     );
 
     const existingCount = parseInt(recentUploads.rows[0].sum) || 0;
 
     if (existingCount + imageCount > 100) {
-      throw new Error('Daily upload limit of 50 images exceeded');
+      throw new Error('Daily upload limit of 100 images exceeded');
     }
 
     await pool.query(
-      `INSERT INTO image_uploads (customer_id, image_count)
+      `INSERT INTO image_uploads (user_sub, image_count)
       VALUES ($1, $2)`,
-      [customerId, imageCount]
+      [sub, imageCount]
     );
 
     return true;

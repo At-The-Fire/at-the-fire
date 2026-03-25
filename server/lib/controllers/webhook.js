@@ -42,25 +42,9 @@ module.exports = app.post(
     let event;
     const sig = request.headers['stripe-signature'];
     try {
-      if (process.env.NODE_ENV === 'test') {
-        // Skip constructEvent and mock event directly in tests
-        event = {
-          type: 'invoice.payment_succeeded',
-          data: {
-            object: {
-              id: 'invoice_12345',
-              status: 'paid',
-              subscription: 'sub_12345',
-              amount_due: 5000,
-              amount_paid: 5000,
-            },
-          },
-        };
-      } else {
-        // Real Stripe signature verification for production and development
-        event = stripe.webhooks.constructEvent(request.body, sig, endpointSecret);
-      }
+      event = stripe.webhooks.constructEvent(request.body, sig, endpointSecret);
     } catch (e) {
+      console.error('Stripe webhook verification failed:', e.message);
       return response.status(400).send(`Webhook error: ${e.message}`);
     }
 
@@ -94,11 +78,13 @@ module.exports = app.post(
               // check if customer already exists
               const customer = await StripeCustomer.getStripeByAWSSub(awsSub);
 
-              if (customer) {
-                return customer;
+              if (customer && !customer.customerId.startsWith('beta_')) {
+                break;
+              } else if (customer && customer.customerId.startsWith('beta_')) {
+                console.info('Found stale beta placeholder, replacing with real Stripe customer');
+                await StripeCustomer.replaceBetaPlaceholder(customer.customerId, customerId, awsSub);
               } else {
                 console.info('No customer found, inserting new customer');
-                // Insert the customer with all available data
                 await StripeCustomer.insertNewStripeCustomerAndAwsUser(customerId, awsSub);
               }
             } catch (e) {
@@ -242,7 +228,7 @@ module.exports = app.post(
                     subscriptionData.subscriptionEndDate,
                     subscriptionData.subscriptionStartDate,
                     subscriptionData.subscriptionEndDate,
-                    isTrial ? 'trialing' : '',
+                    isTrial ? 'trialing' : 'active',
                   );
 
                   await StripeCustomer.updateCustomerConfirmedStatus(dataObject['customer'], true);
@@ -454,6 +440,12 @@ module.exports = app.post(
           }
 
           break;
+
+        // Phase 2/3: Payment processor webhook events for direct sales and auctions
+        // case 'payment.completed': // processor-specific event name TBD
+        //   // Purchase.updateStatus(purchaseId, 'completed')
+        //   // Purchase.updateTransactionId(purchaseId, transactionId)
+        //   break;
       }
       response.sendStatus(200);
     } catch (e) {

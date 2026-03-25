@@ -19,8 +19,17 @@ export default function Dashboard() {
   const [daysRemaining, setDaysRemaining] = useState();
   const [trialSubscription, setTrialSubscription] = useState();
 
-  const { isAuthenticated, handleSignOut, email, setUser, setIsAuthenticated, setCustomerId, customerId, trialStatus } =
-    useAuthStore();
+  const {
+    isAuthenticated,
+    handleSignOut,
+    email,
+    setUser,
+    setIsAuthenticated,
+    setCustomerId,
+    customerId,
+    trialStatus,
+    betaAccess,
+  } = useAuthStore();
 
   const { fetchBillingPeriod } = useStripeCustomer();
   const navigate = useNavigate();
@@ -87,7 +96,16 @@ export default function Dashboard() {
       }
       return data;
     } catch (e) {
-      if (e.code !== 401 && e.code !== 403) {
+      if (e.code === 401) {
+        useAuthStore.getState().handleAuthError(e.code, e.message);
+      } else if (e.code === 403) {
+        toast.error(e.message, {
+          theme: 'colored',
+          draggable: true,
+          draggablePercent: 60,
+          autoClose: false,
+        });
+      } else {
         if (process.env.REACT_APP_APP_ENV === 'development') {
           // eslint-disable-next-line no-console
           console.error('Error contacting Stripe :', e);
@@ -97,17 +115,47 @@ export default function Dashboard() {
           draggable: true,
           draggablePercent: 60,
         });
-      } else {
-        useAuthStore.getState().handleAuthError(e.code, e.message);
       }
     } finally {
       setPageLoading(false);
     }
   };
 
-  const oldCustomerNewSubscription = () => {
-    navigate('/subscription/form');
-  };
+
+  if (betaAccess) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', padding: '16px' }}>
+        <Typography
+          variant="body2"
+          sx={{
+            border: '1px solid',
+            borderColor: (theme) => theme.palette.primary.main,
+            borderRadius: '4px',
+            padding: '6px 16px',
+            color: (theme) => theme.palette.primary.light,
+          }}
+        >
+          Beta Access — Free
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (!customerId) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', padding: '16px' }}>
+        <Button
+          size="small"
+          variant="contained"
+          onClick={() => navigate('/subscription')}
+          startIcon={<AccountBalanceOutlinedIcon />}
+          sx={{ width: '300px', borderRadius: '5px' }}
+        >
+          Get Premium
+        </Button>
+      </Box>
+    );
+  }
 
   return (
     <>
@@ -194,27 +242,15 @@ export default function Dashboard() {
                 </Box>
               )}
             </Box>
-            {!restricted ? (
-              <Button
-                size="small"
-                variant="contained"
-                onClick={handleOpenCustomerPortal}
-                startIcon={<AccountBalanceOutlinedIcon />}
-                sx={{ width: '300px', borderRadius: '5px', marginTop: '8px' }}
-              >
-                Subscription Billing
-              </Button>
-            ) : (
-              <Button
-                size="small"
-                variant="contained"
-                onClick={oldCustomerNewSubscription}
-                sx={{ width: '300px' }}
-                startIcon={<AccountBalanceOutlinedIcon />}
-              >
-                Renew Subscription
-              </Button>
-            )}
+            <Button
+              size="small"
+              variant="contained"
+              onClick={handleOpenCustomerPortal}
+              startIcon={<AccountBalanceOutlinedIcon />}
+              sx={{ width: '300px', borderRadius: '5px', marginTop: '8px' }}
+            >
+              Subscription Billing
+            </Button>
           </Container>
         </Box>
       ) : (

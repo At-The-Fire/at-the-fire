@@ -84,6 +84,10 @@ module.exports = Router()
         return res.status(400).send({ message: 'Message length can not be 0.' });
       }
 
+      if (content.length > 5000) {
+        return res.status(400).send({ message: 'Message is too long (max 5000 characters).' });
+      }
+
       // Check cache first for conversations
       const cacheKey = `conversation:${senderSub}`;
       let conversations;
@@ -126,9 +130,9 @@ module.exports = Router()
 
         if (participantSub !== senderSub) {
           const updatedUnreadCount = await Conversations.getIsReadCount(participantSub);
-          io.emit('new message', {
+          io.to(`user_${participantSub}`).emit('new message', {
             recipient: participantSub, // Identifies the intended recipient.
-            unreadCount: updatedUnreadCount.unread_count, // The recipient's current unread count.
+            unreadCount: parseInt(updatedUnreadCount.unread_count, 10),
             conversationId,
             senderSub,
             content,

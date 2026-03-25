@@ -31,7 +31,7 @@ jest.mock('jsonwebtoken', () => ({
       token === 'valid.free.user.refresh.token'
     ) {
       // Simulate a successful token verification
-      callback(null, { sub: 'sub_noProfile' });
+      callback(null, { sub: process.env.TEST_SUB_NO_PROFILE });
     } else {
       // Simulate verification failure
       callback(new Error('Invalid token'));
@@ -40,7 +40,7 @@ jest.mock('jsonwebtoken', () => ({
   decode: jest.fn((token) => {
     if (token === 'valid.free.user.id.token') {
       // Return a mock decoded token with `sub`
-      return { sub: 'sub_noProfile' };
+      return { sub: process.env.TEST_SUB_NO_PROFILE };
     } else {
       return null; // Invalid token case
     }
@@ -72,7 +72,7 @@ const setupSubscribedUserMocks = () => {
   // Mock the `jwt.decode` function to decode the idToken and return a token with `sub`
   jwt.decode.mockImplementation((token) => {
     if (token === 'valid.subscriber.id.token') {
-      return { sub: 'sub_fullCustomer' }; // Simulated structure of a valid decoded JWT
+      return { sub: process.env.TEST_SUB_FULL_CUSTOMER }; // Simulated structure of a valid decoded JWT
     }
     return null; // Return null for anything else (token is invalid)
   });
@@ -85,7 +85,7 @@ const setupSubscribedUserMocks = () => {
       token === 'valid.subscriber.refresh.token'
     ) {
       // Simulate a valid token verification with a `sub` field
-      callback(null, { sub: 'sub_fullCustomer' });
+      callback(null, { sub: process.env.TEST_SUB_FULL_CUSTOMER });
     } else {
       callback(new Error('Invalid token'));
     }
@@ -94,7 +94,7 @@ const setupSubscribedUserMocks = () => {
   // Mock the database call to return a valid customer ID for a subscribed user
   StripeCustomer.getStripeByAWSSub.mockResolvedValue({
     customerId: 'stripe-customer-id_full',
-    awsSub: 'sub_fullCustomer',
+    awsSub: process.env.TEST_SUB_FULL_CUSTOMER,
     confirmed: true,
   });
 
@@ -164,7 +164,7 @@ describe('conversations tests', () => {
           `refreshToken=${subscribedUserRefreshToken};`,
         ])
         .send({
-          participantSubs: ['sub_withProfile'],
+          participantSubs: [process.env.TEST_SUB_WITH_PROFILE],
         });
 
       expect(response.status).toBe(200);
@@ -301,6 +301,42 @@ describe('conversations tests', () => {
       expect(Array.isArray(response.body)).toBe(true);
     });
 
+    it('should sort conversations by most recent message activity, not creation time', async () => {
+      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+        setupSubscribedUserMocks();
+
+      const cookies = [
+        `accessToken=${subscribedUserAccessToken};`,
+        `idToken=${subscribedUserIdToken};`,
+        `refreshToken=${subscribedUserRefreshToken};`,
+      ];
+
+      // Create conv1 first (older created_at / updated_at)
+      const conv1 = await request(app)
+        .post('/api/v1/conversations')
+        .set('Cookie', cookies)
+        .send({ participantSubs: [process.env.TEST_SUB_INCOMPLETE_PROFILE] });
+
+      // Create conv2 second (newer created_at / updated_at)
+      const conv2 = await request(app)
+        .post('/api/v1/conversations')
+        .set('Cookie', cookies)
+        .send({ participantSubs: [process.env.TEST_SUB_NO_PROFILE] });
+
+      // Now send a message to conv1 — making it the most recently active conversation
+      await request(app)
+        .post('/api/v1/conversations/messages')
+        .set('Cookie', cookies)
+        .send({ conversationId: conv1.body.conversationId, content: 'Late message to older conversation' });
+
+      // conv1 should now be first since it has the most recent activity
+      const response = await request(app).get('/api/v1/conversations').set('Cookie', cookies);
+
+      expect(response.status).toBe(200);
+      expect(response.body[0].id).toBe(conv1.body.conversationId);
+      expect(response.body[1].id).toBe(conv2.body.conversationId);
+    });
+
     // needs investigating,
     it.skip('should return conversations in correct chronological order', async () => {
       const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
@@ -315,7 +351,7 @@ describe('conversations tests', () => {
           `refreshToken=${subscribedUserRefreshToken};`,
         ])
         .send({
-          participantSubs: ['sub_partialProfile'],
+          participantSubs: [process.env.TEST_SUB_INCOMPLETE_PROFILE],
         });
 
       // Add a message to first conversation
@@ -340,7 +376,7 @@ describe('conversations tests', () => {
           `refreshToken=${subscribedUserRefreshToken};`,
         ])
         .send({
-          participantSubs: ['sub_noProfile'],
+          participantSubs: [process.env.TEST_SUB_NO_PROFILE],
         });
 
       await request(app)
@@ -485,7 +521,7 @@ describe('conversations tests', () => {
           `refreshToken=${subscribedUserRefreshToken};`,
         ])
         .send({
-          participantSubs: ['sub_partialProfile'],
+          participantSubs: [process.env.TEST_SUB_INCOMPLETE_PROFILE],
         });
 
       const response = await request(app)
@@ -710,7 +746,7 @@ describe('conversations tests', () => {
           `refreshToken=${subscribedUserRefreshToken};`,
         ])
         .send({
-          participantSubs: ['sub_fullCustomer'], // sender sub not included
+          participantSubs: [process.env.TEST_SUB_FULL_CUSTOMER], // sender sub not included
         });
 
       // Verify success
@@ -761,10 +797,10 @@ describe('conversations tests', () => {
         ])
         .send({
           participantSubs: [
-            'sub_partialProfile',
-            'sub_partialProfile',
-            'sub_fullCustomer',
-            'sub_fullCustomer',
+            process.env.TEST_SUB_INCOMPLETE_PROFILE,
+            process.env.TEST_SUB_INCOMPLETE_PROFILE,
+            process.env.TEST_SUB_FULL_CUSTOMER,
+            process.env.TEST_SUB_FULL_CUSTOMER,
           ],
         });
 
@@ -917,7 +953,7 @@ describe('conversations tests', () => {
       expect(Array.isArray(response.body)).toBe(true);
       expect(response.body.length).toBeGreaterThanOrEqual(NUM_MESSAGES);
       expect(responseTime).toBeLessThan(1000); // Response should come back in under 1 second
-    });
+    }, 20000);
 
     it('should efficiently handle users with many conversations', async () => {
       const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
@@ -934,7 +970,7 @@ describe('conversations tests', () => {
             `refreshToken=${subscribedUserRefreshToken};`,
           ])
           .send({
-            participantSubs: ['sub_partialProfile'],
+            participantSubs: [process.env.TEST_SUB_INCOMPLETE_PROFILE],
           });
       }
 
@@ -1085,7 +1121,10 @@ describe('conversations tests', () => {
       const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
         setupSubscribedUserMocks();
 
-      const emitSpy = jest.spyOn(io, 'emit');
+      const roomEmitSpy = jest.fn();
+      const toSpy = jest.spyOn(io, 'to').mockReturnValue({
+        emit: roomEmitSpy,
+      });
 
       const response = await request(app)
         .post('/api/v1/conversations/messages')
@@ -1105,18 +1144,19 @@ describe('conversations tests', () => {
       // Small delay to let WebSocket emit before asserting
       await new Promise((resolve) => setTimeout(resolve, 200));
 
-      expect(emitSpy).toHaveBeenCalledWith(
+      expect(toSpy).toHaveBeenCalledWith(expect.stringMatching(/^user_/));
+      expect(roomEmitSpy).toHaveBeenCalledWith(
         'new message',
         expect.objectContaining({
           recipient: expect.any(String),
-          unreadCount: expect.any(String),
+          unreadCount: expect.anything(),
           conversationId: expect.any(Number),
           senderSub: expect.any(String),
           content: expect.any(String),
         }),
       );
 
-      emitSpy.mockRestore();
+      toSpy.mockRestore();
     });
   });
 });

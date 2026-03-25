@@ -7,25 +7,24 @@ function hashEmail(email) {
 }
 // this runs on setup and  is for encrypting the user test data
 async function encryptCognitoUsers(pool) {
-  const allUsers = await pool.query(
-    'SELECT id, first_name, last_name, email FROM cognito_users'
-  );
+  const allUsers = await pool.query('SELECT id, first_name, last_name, email FROM cognito_users');
 
   for (const user of allUsers.rows) {
     const encryptedEmail = encrypt(user.email);
     const emailHash = hashEmail(user.email);
     const { id } = user;
 
-    await pool.query(
-      'UPDATE cognito_users SET email = $1,email_hash = $2 WHERE id = $3',
-      [encryptedEmail, emailHash, id]
-    );
+    await pool.query('UPDATE cognito_users SET email = $1,email_hash = $2 WHERE id = $3', [
+      encryptedEmail,
+      emailHash,
+      id,
+    ]);
   }
 }
 // this runs on setup and is for encrypting the customer test data
 async function encryptStripeCustomers(pool) {
   const allCustomers = await pool.query(
-    'SELECT customer_id, name, email, phone FROM stripe_customers'
+    'SELECT customer_id, name, email, phone FROM stripe_customers',
   );
 
   for (const customer of allCustomers.rows) {
@@ -35,14 +34,14 @@ async function encryptStripeCustomers(pool) {
 
     await pool.query(
       'UPDATE stripe_customers SET email = $1, phone = $2,email_hash = $3 WHERE customer_id = $4',
-      [encryptedEmail, encryptedPhone, emailHash, customer.customer_id]
+      [encryptedEmail, encryptedPhone, emailHash, customer.customer_id],
     );
   }
 }
 // this runs on setup and is for encrypting the customer product test data
 async function encryptQuotaTracking(pool) {
   const allProducts = await pool.query(
-    'SELECT type, title, description, category, price, image_url, public_id,customer_id FROM quota_tracking'
+    'SELECT type, title, description, category, price, image_url, public_id,customer_id FROM quota_tracking',
   );
 
   for (const product of allProducts.rows) {
@@ -65,16 +64,14 @@ async function encryptQuotaTracking(pool) {
         encryptedImageUrl,
         encryptedPublicId,
         product.customer_id,
-      ]
+      ],
     );
   }
 }
 
 // this runs on setup and is for encrypting the customer test data
 async function encryptMessages(pool) {
-  const allMessages = await pool.query(
-    'SELECT content, sender_sub FROM messages'
-  );
+  const allMessages = await pool.query('SELECT content, sender_sub FROM messages');
 
   for (const message of allMessages.rows) {
     const encryptedContent = encrypt(message.content);
@@ -107,9 +104,7 @@ module.exports = (pool) => {
       if (dbNotFound) {
         const [err, db] = dbNotFound;
         console.error('❌ Error: ' + err);
-        console.info(
-          `Try running \`createdb -U postgres ${db}\` in your terminal`
-        );
+        console.info(`Try running \`createdb -U postgres ${db}\` in your terminal`);
       } else {
         console.error(error);
         console.error('❌ Error: ' + error.message);

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Box, Grid, Typography, Paper, Avatar, useMediaQuery } from '@mui/material';
+import { Box, Button, Grid, Typography, Paper, Avatar, useMediaQuery } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import userDefaultImage from './../../assets/user.png'; // Fix the path as needed
 import { useTheme } from '@emotion/react';
@@ -23,6 +23,11 @@ export default function GalleryCard({ item }) {
   // Handle card click navigation
   const handleCardClick = async (postId) => {
     navigate(`/gallery/${postId}`);
+  };
+
+  const handleBuyNow = (e) => {
+    e.stopPropagation();
+    navigate(`/gallery/${item.id}`);
   };
 
   // Observer to handle lazy-loading images
@@ -203,6 +208,19 @@ export default function GalleryCard({ item }) {
               }
             </Box>
           </Box>
+          {!item.sold && item.price > 0 && (item.quantity === null || item.quantity > 0) && (
+            <Box onClick={(e) => e.stopPropagation()} sx={{ px: 1, pb: 1 }}>
+              <Button
+                size="small"
+                variant="outlined"
+                fullWidth
+                onClick={handleBuyNow}
+                sx={{ fontSize: '.65rem', py: 0.25 }}
+              >
+                Buy Now
+              </Button>
+            </Box>
+          )}
         </Paper>
       </Box>
     </Grid>

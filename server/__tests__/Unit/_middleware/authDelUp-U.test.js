@@ -23,6 +23,7 @@ describe('authDelUp Middleware', () => {
     req = {
       params: { id: '123' },
       customerId: 'customer123',
+      userAWSSub: 'sub_123',
       originalUrl: '/dashboard/123', // Default to posts route
     };
 
@@ -40,7 +41,7 @@ describe('authDelUp Middleware', () => {
     it('should call next() when user owns the post', async () => {
       Post.getById.mockResolvedValue({
         id: '123',
-        customer_id: 'customer123',
+        seller_sub: 'sub_123',
         title: 'Test Post',
       });
 
@@ -71,7 +72,7 @@ describe('authDelUp Middleware', () => {
     it('should return 403 when user is not the post creator', async () => {
       Post.getById.mockResolvedValue({
         id: '123',
-        customer_id: 'different_customer',
+        seller_sub: 'different_sub',
         title: 'Test Post',
       });
 

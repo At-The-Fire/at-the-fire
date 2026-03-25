@@ -3,13 +3,16 @@ import { createCookies, deleteCookies } from '../services/cookieAPI';
 import { toast } from 'react-toastify';
 import { AmazonCognitoIdentity, userPool } from '../services/userPool.js';
 import usePostStore from './usePostStore.js';
+import { websocketService } from '../services/websocketService.js';
 
 const BASE_URL = process.env.REACT_APP_BASE_URL;
+const TOS_VERSION = '2026-03-09';
 
 export const useAuthStore = create((set, get) => ({
   // State
   accessToken: null,
   admin: false,
+  hasAuthChecked: false,
   cookiesSet: false,
   customerId: null,
   email: '',
@@ -23,10 +26,13 @@ export const useAuthStore = create((set, get) => ({
   stripeName: '',
   tokenExpiryTime: null,
   user: null,
+  sub: null,
   signingOut: false,
   isRefreshing: false,
   isConfirmed: false,
   trialStatus: false,
+  betaAccess: false,
+  hasPremiumAccess: false,
   challengeName: null,
   challengeUser: null,
   challengeParams: null,
@@ -49,8 +55,11 @@ export const useAuthStore = create((set, get) => ({
 
   // Dedicated auth error handler
   handleAuthError: (statusCode, message = '') => {
+    // eslint-disable-next-line
     console.log('ERROR');
+    // eslint-disable-next-line
     console.log('statusCode', statusCode);
+    // eslint-disable-next-line
     console.log('message', message);
 
     if (statusCode === 401) {
@@ -97,7 +106,7 @@ export const useAuthStore = create((set, get) => ({
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ email, sub: result.userSub }),
+          body: JSON.stringify({ email, sub: result.userSub, tosVersion: TOS_VERSION }),
         });
         const data = await resp.json();
         if (resp.ok) {
@@ -112,7 +121,8 @@ export const useAuthStore = create((set, get) => ({
           // eslint-disable-next-line no-console
           console.error(e);
         }
-        !toast.error(`Account error: ${e}`, {
+        const message = e?.error || e?.message || String(e);
+        !toast.error(`Account error: ${message}`, {
           theme: 'colored',
           draggable: true,
           draggablePercent: 60,
@@ -206,6 +216,7 @@ export const useAuthStore = create((set, get) => ({
       set({
         error: null,
         user: null,
+        sub: null,
         isAuthenticated: false,
         signingOut: false,
         customerId: null,
@@ -216,6 +227,8 @@ export const useAuthStore = create((set, get) => ({
         password: '',
         admin: false,
         trialStatus: false,
+        betaAccess: false,
+        hasPremiumAccess: false,
       });
 
       usePostStore.getState().reset();
@@ -347,6 +360,7 @@ export const useAuthStore = create((set, get) => ({
         } else {
           // Only proceed with the Stripe customer check if the user is fully authenticated
           const customerData = type === 'sign-in' ? await get().checkStripeCustomer() : null;
+          const betaAccess = customerData?.data?.betaAccess || false;
           set({
             isAuthenticated: true,
             isConfirmed: customerData?.data?.confirmed,
@@ -356,6 +370,12 @@ export const useAuthStore = create((set, get) => ({
             password: '',
             cPassword: '',
             trialStatus: customerData?.data?.subscription?.status,
+            betaAccess,
+            hasPremiumAccess:
+              betaAccess ||
+              (customerData?.data?.confirmed &&
+                (customerData?.data?.subscription?.isActive ||
+                  ['active', 'trialing'].includes(customerData?.data?.subscription?.status))),
           });
           return true;
         }
@@ -423,8 +443,11 @@ export const useAuthStore = create((set, get) => ({
       return;
     }
 
+    set({ loadingAuth: true });
+
     const cognitoUser = userPool.getCurrentUser();
     if (!cognitoUser) {
+      set({ isAuthenticated: false, loadingAuth: false, hasAuthChecked: true });
       return;
     }
 
@@ -444,16 +467,25 @@ export const useAuthStore = create((set, get) => ({
       if (session.isValid()) {
         const customerData = await get().checkStripeCustomer();
 
+        const betaAccess = customerData?.data?.betaAccess || false;
         set({
           accessToken: session.accessToken.jwtToken,
           admin: customerData?.data?.admin,
           user: cognitoUser.getUsername(),
+          sub: session.getIdToken().payload.sub,
           email: session.getIdToken().payload.email,
           tokenExpiryTime: session.getIdToken().getExpiration(),
           isAuthenticated: true,
           customerId: customerData?.data?.customerId || null,
           isConfirmed: customerData?.data?.confirmed || null,
+          betaAccess,
+          hasPremiumAccess:
+            betaAccess ||
+            (customerData?.data?.confirmed &&
+              (customerData?.data?.subscription?.isActive ||
+                ['active', 'trialing'].includes(customerData?.data?.subscription?.status))),
         });
+        websocketService.connect();
       } else {
         set({
           accessToken: '',
@@ -487,6 +519,8 @@ export const useAuthStore = create((set, get) => ({
           autoClose: false,
         });
       }
+    } finally {
+      set({ loadingAuth: false, hasAuthChecked: true });
     }
   },
 
@@ -569,6 +603,7 @@ export const useAuthStore = create((set, get) => ({
         body: JSON.stringify({
           email: challengeParams.userAttributes.email,
           sub: sub,
+          tosVersion: TOS_VERSION,
         }),
       });
 

@@ -21,32 +21,20 @@ module.exports = class Invoices {
     this.amountPaid = row.amount_paid;
   }
 
-  static async insertNewInvoice(
-    invoiceID,
-    subscriptionID,
-    customerId,
-    startDate,
-    endDate
-  ) {
+  static async insertNewInvoice(invoiceID, subscriptionID, customerId, startDate, endDate) {
     const { rows } = await pool.query(
       `
       INSERT INTO invoices (invoice_id, subscription_id, customer_id, start_date, end_date)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING *
       `,
-      [invoiceID, subscriptionID, customerId, startDate, endDate]
+      [invoiceID, subscriptionID, customerId, startDate, endDate],
     );
 
     return new Invoices(rows[0]);
   }
 
-  static async updateInvoice(
-    invoiceID,
-    invoiceStatus,
-    subscription_id,
-    amount_due,
-    amount_paid
-  ) {
+  static async updateInvoice(invoiceID, invoiceStatus, subscription_id, amount_due, amount_paid) {
     const { rows } = await pool.query(
       `
       UPDATE invoices
@@ -54,7 +42,7 @@ module.exports = class Invoices {
       WHERE invoice_id = $1
       RETURNING *
       `,
-      [invoiceID, invoiceStatus, subscription_id, amount_due, amount_paid]
+      [invoiceID, invoiceStatus, subscription_id, amount_due, amount_paid],
     );
     return new Invoices(rows[0]);
   }
@@ -67,8 +55,9 @@ module.exports = class Invoices {
       ORDER BY created_at DESC
       LIMIT 1
       `,
-      [customerId]
+      [customerId],
     );
+    if (!rows[0]) return null;
     return new Invoices(rows[0]);
   }
 
@@ -78,7 +67,7 @@ module.exports = class Invoices {
       SELECT * FROM invoices
       ORDER BY created_at DESC
       `,
-      []
+      [],
     );
     return rows.map((row) => new Invoices(row));
   }

@@ -23,7 +23,6 @@ jest.mock('jsonwebtoken', () => ({
 jest.mock('../../../lib/models/StripeCustomer', () => ({
   getStripeByAWSSub: jest.fn(),
   getAllCustomers: jest.fn(),
-  deleteSubscriber: jest.fn(),
 }));
 
 jest.mock('../../../lib/models/Subscriptions', () => ({
@@ -116,14 +115,6 @@ describe('authenticateAWS Middleware', () => {
       },
     }));
 
-    // Set up StripeCustomer mock implementation
-    StripeCustomer.deleteSubscriber.mockImplementation((sub) => {
-      if (sub === process.env.TEST_SUB_FULL_CUSTOMER) {
-        return Promise.resolve({});
-      }
-      return Promise.resolve(null);
-    });
-
     return setup(pool);
   });
 
@@ -165,7 +156,7 @@ describe('authenticateAWS Middleware', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
-      message: 'User successfully deleted from both DB and Cognito',
+      message: 'User successfully deleted',
     });
   });
 
@@ -189,55 +180,7 @@ describe('authenticateAWS Middleware', () => {
 
     expect(response.status).toBe(404);
     expect(response.body).toEqual({
-      message: 'User not found in DB',
-    });
-  });
-
-  it('DELETE /delete-subscriber/:sub should delete subscriber when authenticated', async () => {
-    const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
-      setupSubscribedUserMocks();
-
-    const response = await request(app)
-      .delete(`/api/v1/atf-operations/delete-subscriber/${process.env.TEST_SUB_FULL_CUSTOMER}`)
-      .set('Cookie', [
-        `accessToken=${subscribedUserAccessToken};`,
-        `idToken=${subscribedUserIdToken};`,
-        `refreshToken=${subscribedUserRefreshToken};`,
-      ]);
-
-    expect(response.status).toBe(200);
-    expect(response.body).toEqual({
-      message: 'Subscriber successfully deleted from both DB and Stripe',
-    });
-  });
-
-  it('DELETE /delete-subscriber/:sub should return 404 for non-existent subscriber', async () => {
-    const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
-      setupSubscribedUserMocks();
-
-    // Override getStripeByAWSSub to return null for non-existent user
-    StripeCustomer.getStripeByAWSSub.mockImplementationOnce((sub) => {
-      if (sub === 'non-existent-sub') {
-        return Promise.resolve(null);
-      }
-      return Promise.resolve({
-        customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
-        awsSub: process.env.TEST_SUB_FULL_CUSTOMER,
-        confirmed: true,
-      });
-    });
-
-    const response = await request(app)
-      .delete('/api/v1/atf-operations/delete-subscriber/non-existent-sub')
-      .set('Cookie', [
-        `accessToken=${subscribedUserAccessToken};`,
-        `idToken=${subscribedUserIdToken};`,
-        `refreshToken=${subscribedUserRefreshToken};`,
-      ]);
-
-    expect(response.status).toBe(404);
-    expect(response.body).toEqual({
-      message: 'Subscriber not found in DB',
+      message: 'User not found',
     });
   });
 

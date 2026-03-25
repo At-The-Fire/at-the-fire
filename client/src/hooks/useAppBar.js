@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/useAuthStore.js';
 import { useQuery } from '../context/QueryContext.js';
 import { useNotificationStore } from '../stores/useNotificationStore.js';
+import { useAuctionEventsStore } from '../stores/useAuctionEventsStore.js';
 
 export default function useAppBar({ setAnchorElNav, setAnchorElUser }) {
   const {
@@ -21,6 +22,7 @@ export default function useAppBar({ setAnchorElNav, setAnchorElUser }) {
   const { unreadCount } = useNotificationStore();
   const mobileOpen = useNotificationStore((state) => state.mobileOpen);
   const setMobileOpen = useNotificationStore((state) => state.setMobileOpen);
+  const pendingShipmentsCount = useAuctionEventsStore((s) => s.pendingShipmentsCount);
 
   const { toggleFeedView, isFeedView } = useQuery();
 
@@ -63,12 +65,16 @@ export default function useAppBar({ setAnchorElNav, setAnchorElUser }) {
       case 'Contact':
         closeNavHelper('contact');
         break;
+      case 'Auctions':
+        closeNavHelper('auctions');
+        break;
       default:
         setAnchorElNav(null);
         break;
     }
   };
   const messages = unreadCount === 0 ? 'Messages' : `Messages (${unreadCount})`;
+  const workspace = pendingShipmentsCount > 0 ? `Workspace (${pendingShipmentsCount})` : 'Workspace';
 
   const closeNavMenuHelper = (url) => {
     setAnchorElUser(null);
@@ -76,7 +82,7 @@ export default function useAppBar({ setAnchorElNav, setAnchorElUser }) {
   };
 
   const handleCloseUserMenu = (e) => {
-    switch (e.target.textContent) {
+    switch (e.currentTarget.dataset.value ?? e.target.textContent) {
       case 'Logout':
         handleSignOut(email, setUser, setIsAuthenticated, setCustomerId);
         setEmail('');
@@ -95,7 +101,10 @@ export default function useAppBar({ setAnchorElNav, setAnchorElUser }) {
         if (!mobileOpen) setMobileOpen(true);
         closeNavMenuHelper('messages');
         break;
-      case 'Workspace':
+      case 'Purchases':
+        closeNavMenuHelper('/my-purchases');
+        break;
+      case workspace:
         closeNavMenuHelper('dashboard');
         break;
       case 'Profile':

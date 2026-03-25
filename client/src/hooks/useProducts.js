@@ -26,7 +26,9 @@ export function useProducts() {
       // Set date_sold to date if sold is true and date_sold is null- //^this is for legacy data that had no date_sold field
       data.forEach((product) => {
         if (Array.isArray(product.sales) && product.sales.length > 0) {
-          product.sales.dateSold = product.date;
+          product.sales.forEach((sale) => {
+            sale.dateSold = product.date;
+          });
         }
       });
 
@@ -59,6 +61,7 @@ export function useProducts() {
 
   useEffect(() => {
     fetchAndSetProducts();
+    // eslint-disable-next-line
   }, [customerId, error, isAuthenticated, navigate, user, email, handleSignOut, setCustomerId, setError, setUser]);
 
   return {

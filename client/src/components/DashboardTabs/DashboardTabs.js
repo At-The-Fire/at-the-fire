@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
-import { CssBaseline, Typography } from '@mui/material';
+import { Button, CssBaseline, Typography } from '@mui/material';
 import PropTypes from 'prop-types';
 import Dashboard from '../Dashboard/Dashboard.js';
 import Products from '../Products/Products.js';
@@ -18,6 +18,17 @@ import 'react-toastify/dist/ReactToastify.css';
 import usePostStore from '../../stores/usePostStore.js';
 import useSnapshotStore from '../../stores/useSnapshotStore.js';
 import { useAuthStore } from '../../stores/useAuthStore.js';
+import { useAuctionEventsStore } from '../../stores/useAuctionEventsStore.js';
+import Badge from '@mui/material/Badge';
+import { useMediaQuery, useTheme } from '@mui/material';
+import ordersExDt from '../../assets/orders-example.png';
+import ordersExM from '../../assets/orders-example-m.png';
+import productsExDt from '../../assets/products-ex-dt.png';
+import productsExM from '../../assets/products-ex-m.png';
+import calendarExDt from '../../assets/calendar-ex-dt.png';
+import calendarExM from '../../assets/calendar-ex-m-1.png';
+import analysisExDt from '../../assets/analysis-ex-dt.png';
+import analysisExM from '../../assets/analysis-ex-m-1.png';
 
 // TabPanel component
 function TabPanel(props) {
@@ -65,6 +76,11 @@ function createTabs(index) {
     'aria-controls': `simple-tabpanel-${index}`,
   };
 }
+
+const premiumTabSx = {
+  borderTop: '1px solid #f59e0b',
+  '&.Mui-selected': { borderTop: '3px solid #d97706' },
+};
 export default function BasicTabs() {
   // Initial state now tries to get from localStorage, falling back to 0
   const [value, setValue] = useState(() => {
@@ -77,7 +93,10 @@ export default function BasicTabs() {
 
   const { products, setProducts, loadingProducts, setLoadingProducts, fetchProducts } = useProducts();
 
-  const { error, customerId, loadingCustomerId, verifyAuth, isConfirmed } = useAuthStore();
+  const { error, customerId, loadingCustomerId, verifyAuth, isAuthenticated, hasPremiumAccess } = useAuthStore();
+  const pendingShipmentsCount = useAuctionEventsStore((s) => s.pendingShipmentsCount);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const handleChange = async (event, newValue) => {
     const isValid = await verifyAuth('tabs');
@@ -96,10 +115,10 @@ export default function BasicTabs() {
   // state/ functions for inventory tracking
 
   useEffect(() => {
-    if (!customerId && !loadingCustomerId) {
+    if (!isAuthenticated && !loadingCustomerId) {
       navigate('/auth/sign-in');
     }
-  }, [customerId, navigate, loadingCustomerId]);
+  }, [isAuthenticated, navigate, loadingCustomerId]);
 
   let postCategoryCounts = {};
   let postPriceCounts = {};
@@ -108,6 +127,7 @@ export default function BasicTabs() {
     // Calculate fresh counts here, before creating the snapshot
     const freshCategoryCounts = {};
     const freshPriceCounts = {};
+
     for (let post of posts) {
       if (freshCategoryCounts[post.category]) {
         freshCategoryCounts[post.category]++;
@@ -170,28 +190,30 @@ export default function BasicTabs() {
   //   handleSaveSnapshot();
   // });
   const [tableData, setTableData] = useState({});
-  return !isConfirmed || error === 403 ? (
-    <Box sx={{ paddingTop: '200px', width: '350px', margin: 'auto', textAlign: 'left' }}>
-      <Typography sx={{ marginBottom: '20px', fontWeight: '700' }}>
-        You do not have permission to view this page.
-      </Typography>
-      {customerId && (
-        <Typography marginBottom={'20px'}>{`You seem to have a customer ID ${isConfirmed ? 'and' : 'but'} your customer 
-        status in our database is ${isConfirmed ? 'confirmed so something went wrong.' : 'unconfirmed.'}`}</Typography>
-      )}
 
-      <Typography>
-        {`${
-          isConfirmed
-            ? 'Please reach out to our support on our contact page and let us know.'
-            : 'This indicates a problem with the transaction, please reach out to let us know.'
-        }`}
+  const makeUpgradePrompt = (desktopImg, mobileImg) => (
+    <Box sx={{ paddingTop: '0px', maxWidth: '700px', margin: 'auto', textAlign: 'center' }}>
+      <Typography sx={{ marginBottom: '12px', fontWeight: '700', fontSize: '1.1rem' }}>Premium Feature</Typography>
+      <Typography sx={{ marginBottom: '20px', opacity: 0.8 }}>
+        Upgrade to a Premium subscription to unlock this feature.
       </Typography>
+      <Button variant="outlined" onClick={() => navigate('/subscription')} sx={{ marginBottom: '30px' }}>
+        View Plans
+      </Button>
+      <Box>
+        <img
+          src={isMobile ? mobileImg : desktopImg}
+          alt="feature preview"
+          style={{ width: isMobile ? '90%' : '100%', borderRadius: '4px', border: '1px solid black' }}
+        />
+      </Box>
     </Box>
-  ) : (
+  );
+
+  return (
     <Box sx={{ margin: '80px auto 0 auto', width: '100%' }}>
       <CssBaseline />
-      <Box sx={{ borderBottom: 0, borderColor: 'divider', height: '55px', margin: '0px' }}>
+      <Box sx={{ borderBottom: 0, borderColor: 'divider', height: '55px', margin: '0px', position: 'relative' }}>
         <Tabs
           variant="scrollable"
           scrollButtons
@@ -203,14 +225,51 @@ export default function BasicTabs() {
             transform: 'translate(0%, -8%)',
           }}
         >
-          <Tab label="Dashboard" {...createTabs(0)} />
+          <Tab
+            label={
+              <Badge
+                badgeContent={pendingShipmentsCount || null}
+                color="warning"
+                sx={{ '& .MuiBadge-badge': { right: -10, top: 2 } }}
+              >
+                Dashboard
+              </Badge>
+            }
+            {...createTabs(0)}
+          />
           <Tab label="Post Tracking" {...createTabs(1)} />
-          <Tab label="Orders" {...createTabs(2)} />
-          <Tab label="Products" {...createTabs(3)} />
-          <Tab label="Calendar" {...createTabs(4)} />
-          <Tab label="Analysis" {...createTabs(5)} />
+          <Tab label="Orders" sx={premiumTabSx} {...createTabs(2)} />
+          <Tab label="Products" sx={premiumTabSx} {...createTabs(3)} />
+          <Tab label="Calendar" sx={premiumTabSx} {...createTabs(4)} />
+          <Tab label="Analysis" sx={premiumTabSx} {...createTabs(5)} />
         </Tabs>
       </Box>
+      <Typography
+        variant="caption"
+        sx={{
+          display: 'block',
+          textAlign: 'right',
+          pr: 1,
+          pb: 0.5,
+          opacity: 0.55,
+          fontSize: '0.68rem',
+          margin: '0 1rem .25rem 0',
+        }}
+      >
+        <Box
+          component="span"
+          sx={{
+            display: 'inline-block',
+            width: 22,
+            height: 3,
+            bgcolor: '#f59e0b',
+            borderRadius: 1,
+            mr: 0.5,
+            verticalAlign: 'middle',
+          }}
+        />
+        Premium features — free during beta
+      </Typography>
 
       <TabPanel value={value} index={0}>
         <Dashboard
@@ -241,30 +300,42 @@ export default function BasicTabs() {
       </TabPanel>
 
       <TabPanel value={value} index={2}>
-        <Orders error={error} />
+        {hasPremiumAccess ? <Orders error={error} /> : makeUpgradePrompt(ordersExDt, ordersExM)}
       </TabPanel>
       <TabPanel value={value} index={3}>
-        <Products
-          products={products}
-          setProducts={setProducts}
-          fetchProducts={fetchProducts}
-          error={error}
-          postError={postError}
-          loadingProducts={loadingProducts}
-          setLoadingProducts={setLoadingProducts}
-        />
+        {hasPremiumAccess ? (
+          <Products
+            products={products}
+            setProducts={setProducts}
+            fetchProducts={fetchProducts}
+            error={error}
+            postError={postError}
+            loadingProducts={loadingProducts}
+            setLoadingProducts={setLoadingProducts}
+          />
+        ) : (
+          makeUpgradePrompt(productsExDt, productsExM)
+        )}
       </TabPanel>
       <TabPanel value={value} index={4}>
-        <Calendar products={products} error={error} />
+        {hasPremiumAccess ? (
+          <Calendar products={products} error={error} />
+        ) : (
+          makeUpgradePrompt(calendarExDt, calendarExM)
+        )}
       </TabPanel>
       <TabPanel value={value} index={5}>
-        <Analysis
-          products={products}
-          error={error}
-          postError={postError}
-          loading={loading}
-          sx={{ width: '100%', height: '100%' }}
-        />
+        {hasPremiumAccess ? (
+          <Analysis
+            products={products}
+            error={error}
+            postError={postError}
+            loading={loading}
+            sx={{ width: '100%', height: '100%' }}
+          />
+        ) : (
+          makeUpgradePrompt(analysisExDt, analysisExM)
+        )}
       </TabPanel>
     </Box>
   );

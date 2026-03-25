@@ -29,20 +29,10 @@ module.exports = Router()
       if (!Array.isArray(postIds)) {
         return res.status(400).json({ error: 'postIds must be an array' });
       }
-      const results = {};
-      for (const postId of postIds) {
-        const count = await Likes.getLikeCount(postId);
-        let liked = false;
-
-        if (req.userAWSSub) {
-          liked = await Likes.getPostLikeStatus({
-            sub: req.userAWSSub,
-            post_id: postId,
-          });
-        }
-        results[postId] = { liked, count };
+      if (postIds.length > 100) {
+        return res.status(400).json({ error: 'Too many postIds (max 100)' });
       }
-
+      const results = await Likes.getBatchLikes({ postIds, sub: req.userAWSSub });
       res.json(results);
     } catch (err) {
       res.status(500).json({ error: err.message });

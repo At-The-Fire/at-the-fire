@@ -1,33 +1,37 @@
 const pool = require('../../../../lib/utils/pool.js');
 const setup = require('../../../../data/setup.js');
 const request = require('supertest');
-const app = require('../../../../lib/app.js');
+const crypto = require('crypto');
 
-const yourAuthMiddleware = require('../../../../lib/middleware/authenticateAWS.js');
+// IMPORTANT: mock jwt BEFORE requiring the Express app (controllers import jwt at load time)
 jest.mock('jsonwebtoken', () => ({
   ...jest.requireActual('jsonwebtoken'),
   verify: jest.fn((token, secretOrPublicKey, options, callback) => {
-    if (token === 'validToken') {
-      // Simulate a successful verification by calling the callback with no error
-      callback(null, { sub: 'sampleSub' }); // The `sub` here is mock data representing the decoded payload
-    } else {
-      // Simulate a failed verification by calling the callback with an error
-      callback(new Error('Token verification failed!'));
+    // Tokens used in this test file
+    const validTokens = new Set(['validToken', 'validIdToken', 'mockAccessToken', 'mockIdToken']);
+
+    if (validTokens.has(token)) {
+      callback(null, { sub: process.env.TEST_SUB });
+      return;
     }
+
+    callback(new Error('Token verification failed!'));
   }),
 
   decode: jest.fn((token) => {
-    if (token === 'validToken' || token === 'validIdToken') {
-      return { sub: 'sampleSub' }; // Simulating a decoded payload with a `sub` field
-    } else {
-      return null;
+    if (token === 'validToken' || token === 'validIdToken' || token === 'mockIdToken') {
+      return { sub: process.env.TEST_SUB };
     }
+    return null;
   }),
 }));
 
+const app = require('../../../../lib/app.js');
+const yourAuthMiddleware = require('../../../../lib/middleware/authenticateAWS.js');
+
 describe('AWS Cognito User tests', () => {
   beforeEach(() => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
     return setup(pool);
   });
   afterAll(() => {
@@ -37,53 +41,107 @@ describe('AWS Cognito User tests', () => {
 
   // User creation tests
   it('should create a new user successfully', async () => {
-    const mockUserData = { email: 'test2@example.com', sub: 'sub_2' };
-    const response = await request(app)
-      .post('/api/v1/auth/new-user')
-      .send(mockUserData);
+    const mockUserData = {
+      email: 'test-email@email.com',
+      sub: process.env.TEST_SUB,
+      tosVersion: '2026-03-09',
+    };
+    const response = await request(app).post('/api/v1/auth/new-user').send(mockUserData);
 
     expect(response.status).toBe(200);
     expect(response.body.message).toBe(
-      'Account created successfully, check email for verification!'
+      'Account created successfully, check email for verification!',
     );
+  });
+
+  it('should return 400 when tosVersion is missing', async () => {
+    const mockUserData = { email: 'test-email@email.com', sub: process.env.TEST_SUB };
+    const response = await request(app).post('/api/v1/auth/new-user').send(mockUserData);
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe('tosVersion is required.');
+  });
+
+  it('should return 400 when tosVersion is an empty string', async () => {
+    const response = await request(app)
+      .post('/api/v1/auth/new-user')
+      .send({ email: 'test-email@email.com', sub: process.env.TEST_SUB, tosVersion: '' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe('tosVersion is required.');
+  });
+
+  it('should accept Cognito sub format regardless of UUID variant bits', async () => {
+    // AWS Cognito does not always emit RFC 4122-compliant variant bits,
+    // so validator.isUUID() rejects real subs. We validate structure only (8-4-4-4-12 hex).
+    const cognitoSub = '186153d0-20f1-70ec-5c8a-2782624547a2';
+    const response = await request(app)
+      .post('/api/v1/auth/new-user')
+      .send({ email: 'v7-sub-test@example.com', sub: cognitoSub, tosVersion: '2026-03-09' });
+
+    expect(response.status).toBe(200);
+  });
+
+  it('should return 400 for a completely invalid sub format', async () => {
+    const response = await request(app)
+      .post('/api/v1/auth/new-user')
+      .send({ email: 'test-email@email.com', sub: 'not-a-uuid-at-all', tosVersion: '2026-03-09' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe('Invalid sub format.');
+  });
+
+  it('should persist accepted_tos_at and tos_version in the database', async () => {
+    const email = 'tos-check@example.com';
+    const tosVersion = '2026-03-09';
+    await request(app)
+      .post('/api/v1/auth/new-user')
+      .send({ email, sub: process.env.TEST_SUB, tosVersion });
+
+    const emailHash = crypto.createHash('sha256').update(email).digest('hex');
+    const { rows } = await pool.query(
+      'SELECT accepted_tos_at, tos_version FROM cognito_users WHERE email_hash = $1',
+      [emailHash],
+    );
+    expect(rows.length).toBe(1);
+    expect(rows[0].tos_version).toBe(tosVersion);
+    expect(rows[0].accepted_tos_at).not.toBeNull();
   });
 
   it('should throw error if cookies are not present', async () => {
     const response = await request(app).post('/api/v1/create-checkout-session');
     expect(response.status).toBe(401);
     expect(response.body.message).toBe(
-      'You must be signed in to continue: missing or invalid token'
+      'You must be signed in to continue: missing or invalid token',
     );
   });
 
   it('should return error for an existing email', async () => {
     const mockUserData = {
-      email: 'noProfile@example.com',
-      sub: 'new-sub',
-      // sub: 'sub_noProfile',
+      sub: process.env.TEST_SUB_FULL_CUSTOMER,
+      email: process.env.TEST_EMAIL_FULL_CUSTOMER,
+      tosVersion: '2026-03-09',
     };
-    const response = await request(app)
-      .post('/api/v1/auth/new-user')
-      .send(mockUserData);
+    const response = await request(app).post('/api/v1/auth/new-user').send(mockUserData);
 
-    // expect(response.body).toBe(409);
+    expect(response.status).toBe(409);
     expect(response.body).toBe('Email already exists.');
   });
 
   it('should not overwrite existing user data with same sub', async () => {
     const initialUserData = {
       email: 'initial@example.com',
-      sub: 'duplicate-sub',
+      sub: process.env.TEST_SUB,
+      tosVersion: '2026-03-09',
     };
     const overwriteAttemptData = {
       email: 'overwrite@example.com',
-      sub: 'duplicate-sub',
+      sub: process.env.TEST_SUB,
+      tosVersion: '2026-03-09',
     };
     await request(app).post('/api/v1/auth/new-user').send(initialUserData);
 
-    const response = await request(app)
-      .post('/api/v1/auth/new-user')
-      .send(overwriteAttemptData);
+    const response = await request(app).post('/api/v1/auth/new-user').send(overwriteAttemptData);
 
     expect(response.status).toBe(409);
     expect(response.body).toBe('Sub already exists.');
@@ -91,26 +149,20 @@ describe('AWS Cognito User tests', () => {
 
   it('should return error for missing data', async () => {
     const mockUserData = { email: 'test@example.com' }; // Missing 'sub' intentionally
-    const response = await request(app)
-      .post('/api/v1/auth/new-user')
-      .send(mockUserData);
+    const response = await request(app).post('/api/v1/auth/new-user').send(mockUserData);
 
     expect(response.status).toBe(400);
     expect(response.body).toBe('Sub is required.');
 
     const mockUserData2 = { sub: 'sub_3' }; // Missing 'email' intentionally
-    const response2 = await request(app)
-      .post('/api/v1/auth/new-user')
-      .send(mockUserData2);
+    const response2 = await request(app).post('/api/v1/auth/new-user').send(mockUserData2);
 
     expect(response2.status).toBe(400);
     expect(response2.body).toBe('Email is required.');
   });
   it('should handle incorrect email format', async () => {
-    const mockUserData = { email: 'testexample', sub: 'test-sub' }; // Invalid email format
-    const response = await request(app)
-      .post('/api/v1/auth/new-user')
-      .send(mockUserData);
+    const mockUserData = { email: 'testexample', sub: process.env.TEST_SUB }; // Invalid email format
+    const response = await request(app).post('/api/v1/auth/new-user').send(mockUserData);
 
     expect(response.status).toBe(400);
     expect(response.body.error).toBe('Invalid email format.');
@@ -161,9 +213,7 @@ describe('AWS Cognito User tests', () => {
       refreshToken: { token: 'mockRefreshToken' },
     };
 
-    const response = await request(app)
-      .post('/api/v1/auth/create-cookies')
-      .send(mockSession);
+    const response = await request(app).post('/api/v1/auth/create-cookies').send(mockSession);
 
     expect(response.statusCode).toBe(200);
     expect(response.body.message).toBe('Cookies created successfully!');
@@ -172,15 +222,11 @@ describe('AWS Cognito User tests', () => {
     expect(response.headers['set-cookie'].length).toBe(3);
 
     // check for the access token cookie
-    expect(response.headers['set-cookie'][0]).toContain(
-      'accessToken=mockAccessToken'
-    );
+    expect(response.headers['set-cookie'][0]).toContain('accessToken=mockAccessToken');
     // check for the id token cookie
     expect(response.headers['set-cookie'][1]).toContain('idToken=mockIdToken');
     // check for the refresh token cookie
-    expect(response.headers['set-cookie'][2]).toContain(
-      'refreshToken=mockRefreshToken'
-    );
+    expect(response.headers['set-cookie'][2]).toContain('refreshToken=mockRefreshToken');
   });
 
   it('should handle missing tokens gracefully', async () => {
@@ -190,14 +236,12 @@ describe('AWS Cognito User tests', () => {
       // refreshToken intentionally left out
     };
 
-    const response = await request(app)
-      .post('/api/v1/auth/create-cookies')
-      .send(mockSession);
+    const response = await request(app).post('/api/v1/auth/create-cookies').send(mockSession);
 
     expect(response.statusCode).toBe(400);
     expect(response.body.error).toMatchInlineSnapshot(
       // eslint-disable-next-line quotes
-      `"One or more tokens are missing."`
+      `"One or more tokens are missing."`,
     );
   });
 
@@ -231,15 +275,9 @@ describe('AWS Cognito User tests', () => {
 
     const mockNext = jest.fn();
 
-    try {
-      await yourAuthMiddleware(mockReq, mockRes, mockNext);
-      throw new Error('Expected middleware to throw an error, but it did not.');
-    } catch (error) {
-      expect(mockRes.statusCode).toBe(401);
-      expect(mockRes.payload.message).toContain(
-        'Invalid token structure: sub is missing'
-      );
-    }
+    await yourAuthMiddleware(mockReq, mockRes, mockNext);
+    expect(mockRes.statusCode).toBe(401);
+    expect(mockRes.payload.message).toBe('Token verification failed!');
   });
 
   it('should set cookie configuration based on environment variable', async () => {
@@ -251,18 +289,14 @@ describe('AWS Cognito User tests', () => {
       refreshToken: { token: 'mockRefreshToken' },
     };
 
-    const response = await request(app)
-      .post('/api/v1/auth/create-cookies')
-      .send(mockSession);
+    const response = await request(app).post('/api/v1/auth/create-cookies').send(mockSession);
 
     expect(response.headers['set-cookie'][0]).toContain('SameSite=None'); // Or other configurations you expect
   });
   it('should handle an empty session object gracefully', async () => {
     const mockSession = {}; // Sending an empty session object
 
-    const response = await request(app)
-      .post('/api/v1/auth/create-cookies')
-      .send(mockSession);
+    const response = await request(app).post('/api/v1/auth/create-cookies').send(mockSession);
 
     expect(response.statusCode).toBe(400);
     expect(response.body.error).toContain('Session data is missing.');
@@ -280,9 +314,7 @@ describe('AWS Cognito User tests', () => {
     ]);
   });
   it('should handle attempts to clear cookies that do not exist gracefully', async () => {
-    const response = await request(app)
-      .delete('/api/v1/auth/clear-cookies')
-      .send();
+    const response = await request(app).delete('/api/v1/auth/clear-cookies').send();
     expect(response.status).toBe(204); // It should still return a 204 No Content
   });
 });

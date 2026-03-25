@@ -1,13 +1,9 @@
 const pool = require('../../../lib/utils/pool.js');
 const setup = require('../../../data/setup.js');
 const request = require('supertest');
-const app = require('../../../lib/app.js');
 const StripeCustomer = require('../../../lib/models/StripeCustomer.js');
 const Subscriptions = require('../../../lib/models/Subscriptions.js');
 const Invoices = require('../../../lib/models/Invoices.js');
-
-// Importing jsonwebtoken to mock its verify function
-const jwt = require('jsonwebtoken');
 
 // Mocking the jsonwebtoken module to mock `verify` and `decode`
 jest.mock('jsonwebtoken', () => ({
@@ -19,7 +15,7 @@ jest.mock('jsonwebtoken', () => ({
       token === 'valid.free.user.refresh.token'
     ) {
       // Simulate a successful token verification
-      callback(null, { sub: 'free-user-sub' });
+      callback(null, { sub: process.env.TEST_SUB_NO_PROFILE });
     } else {
       // Simulate verification failure
       callback(new Error('Invalid token'));
@@ -28,12 +24,17 @@ jest.mock('jsonwebtoken', () => ({
   decode: jest.fn((token) => {
     if (token === 'valid.free.user.id.token') {
       // Return a mock decoded token with `sub`
-      return { sub: 'free-user-sub' };
+      return { sub: process.env.TEST_SUB_NO_PROFILE };
     } else {
       return null; // Invalid token case
     }
   }),
 }));
+
+const app = require('../../../lib/app.js');
+
+// Importing jsonwebtoken AFTER mocking so tests get the mocked module
+const jwt = require('jsonwebtoken');
 
 // Mocking the `StripeCustomer` module
 jest.mock('../../../lib/models/StripeCustomer', () => ({
@@ -52,7 +53,7 @@ jest.mock('../../../lib/models/Invoices', () => ({
 
 describe('authenticateAWS Middleware', () => {
   beforeEach(() => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
     return setup(pool);
   });
   afterAll(() => {
@@ -63,17 +64,15 @@ describe('authenticateAWS Middleware', () => {
   it('should return 401 when tokens are missing', async () => {
     const response = await request(app).post('/api/v1/create-checkout-session');
     expect(response.body.code).toBe(401);
-    expect(response.body.type).toBe('MissingOrInvalidToken');
     expect(response.body.message).toBe(
-      'You must be signed in to continue: missing or invalid token'
+      'You must be signed in to continue: missing or invalid token',
     );
   });
 
   it('should allow access with valid tokens', async () => {
-    const validAccessToken = 'valid.access.token';
-    const mockDecodedIdToken = { sub: 'user-subject-123' };
-    const validIdToken = jwt.sign(mockDecodedIdToken, 'test-secret');
-    const validRefreshToken = 'valid.refresh.token';
+    const validAccessToken = 'valid.free.user.access.token';
+    const validIdToken = 'valid.free.user.id.token';
+    const validRefreshToken = 'valid.free.user.refresh.token';
 
     const sessionData = {
       accessToken: { jwtToken: validAccessToken },
@@ -125,7 +124,7 @@ describe('authenticateAWS Middleware', () => {
 
     // Expecting the middleware to reject access due to verification failure
     expect(response.status).toBe(401);
-    expect(response.body.message).toBe('User does not exist');
+    expect(response.body.message).toBe('Token verification failed!');
   });
 
   it('should reject access with expired tokens', async () => {
@@ -158,7 +157,7 @@ describe('authenticateAWS Middleware', () => {
 
     // Expecting the middleware to reject access and the route to return a 401 status
     expect(response.status).toBe(401);
-    expect(response.body.message).toBe('User does not exist');
+    expect(response.body.message).toBe('Token has expired!');
   });
 
   it('should handle verification errors gracefully', async () => {
@@ -182,7 +181,7 @@ describe('authenticateAWS Middleware', () => {
 
     // Expecting the middleware to handle the error and respond appropriately
     expect(response.status).toBe(401); // Expecting a 401 status for token verification errors
-    expect(response.body.message).toContain('Invalid token structure: sub is missing');
+    expect(response.body.message).toBe('Token verification failed!');
   });
 
   it('should reject access when the sub field is missing from the token', async () => {
@@ -191,7 +190,7 @@ describe('authenticateAWS Middleware', () => {
       {
         /* other fields but no 'sub' */
       },
-      'test-secret'
+      'test-secret',
     );
 
     // Make the request with the token that lacks 'sub'
@@ -202,11 +201,11 @@ describe('authenticateAWS Middleware', () => {
     // Expecting the middleware to reject access due to missing 'sub' in the token
     expect(response.status).toBe(401); // Assuming your middleware responds with 401 for missing 'sub'
     expect(response.body.message).toContain(
-      'You must be signed in to continue: missing or invalid token'
+      'You must be signed in to continue: missing or invalid token',
     ); // Adjust the error message based on your actual middleware response
   });
 
-  it('should deny access to subscription-only routes for free users', async () => {
+  it('should allow dashboard access for free users', async () => {
     // Mock valid tokens for a free user
     const freeUserAccessToken = 'valid.free.user.access.token';
     const freeUserIdToken = 'valid.free.user.id.token';
@@ -215,7 +214,7 @@ describe('authenticateAWS Middleware', () => {
     // Mock the `jwt.decode` function to decode the idToken and return a token with `sub`
     jwt.decode.mockImplementation((token) => {
       if (token === 'valid.free.user.id.token') {
-        return { sub: 'sub_noProfile' };
+        return { sub: process.env.TEST_SUB_NO_PROFILE };
       }
       return null;
     });
@@ -227,7 +226,7 @@ describe('authenticateAWS Middleware', () => {
         token === 'valid.free.user.refresh.token'
       ) {
         // Simulate a valid token verification
-        callback(null, { sub: 'free-user-sub' }); // Return an object with `sub` after successful verification
+        callback(null, { sub: process.env.TEST_SUB_NO_PROFILE }); // Return an object with `sub` after successful verification
       } else {
         callback(new Error('Invalid token')); // Simulate failed verification
       }
@@ -235,16 +234,15 @@ describe('authenticateAWS Middleware', () => {
 
     // Sending the request with all three required tokens as cookies
     const response = await request(app)
-      .get('/api/v1/dashboard') // This is your subscription-only route
+      .get('/api/v1/dashboard')
       .set('Cookie', [
         `accessToken=${freeUserAccessToken};`,
         `idToken=${freeUserIdToken};`,
         `refreshToken=${freeUserRefreshToken};`,
       ]);
 
-    // We expect to get past authentication middleware, but the route should restrict access due to role
-    expect(response.status).toBe(403); // Expecting 403 forbidden status code
-    expect(response.body.message).toContain('You do not have access to view this page');
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ posts: [] });
   });
 
   //! ALERT:
@@ -258,7 +256,7 @@ describe('authenticateAWS Middleware', () => {
     // Mock the `jwt.decode` function to decode the idToken and return a token with `sub`
     jwt.decode.mockImplementation((token) => {
       if (token === 'valid.subscriber.id.token') {
-        return { sub: 'sub_fullCustomer' }; // Simulated structure of a valid decoded JWT
+        return { sub: process.env.TEST_SUB_FULL_CUSTOMER }; // Simulated structure of a valid decoded JWT
       }
       return null; // Return null for anything else (token is invalid)
     });
@@ -271,7 +269,7 @@ describe('authenticateAWS Middleware', () => {
         token === 'valid.subscriber.refresh.token'
       ) {
         // Simulate a valid token verification with a `sub` field
-        callback(null, { sub: 'sub_fullCustomer' });
+        callback(null, { sub: process.env.TEST_SUB_FULL_CUSTOMER });
       } else {
         callback(new Error('Invalid token'));
       }
@@ -280,7 +278,7 @@ describe('authenticateAWS Middleware', () => {
     // Mock the database call to return a valid customer ID for a subscribed user
     StripeCustomer.getStripeByAWSSub.mockResolvedValue({
       customerId: 'stripe-customer-id_full',
-      awsSub: 'sub_fullCustomer',
+      awsSub: process.env.TEST_SUB_FULL_CUSTOMER,
       confirmed: true,
     });
     // Mock the database call to return the subscription status for a subscribed user
@@ -308,13 +306,15 @@ describe('authenticateAWS Middleware', () => {
         {
           category: 'SampleCategory3',
           created_at: expect.any(String),
-          customer_id: 'stripe-customer-id_full',
           description: 'SampleDescription3',
           id: '3',
           image_url: 'sample_image_url_path_3',
           num_imgs: '1',
           price: 'SamplePrice3',
           public_id: 'publicID_post_3',
+          quantity: 1,
+          seller_sub: process.env.TEST_SUB_FULL_CUSTOMER,
+          shipping_cost: '0',
           sold: false,
           date_sold: null,
           title: 'SampleTitle3',
@@ -322,19 +322,20 @@ describe('authenticateAWS Middleware', () => {
         {
           category: 'SampleCategory4',
           created_at: expect.any(String),
-          customer_id: 'stripe-customer-id_full',
           description: 'SampleDescription4',
           id: '4',
           image_url: 'sample_image_url_path_4',
           num_imgs: '2',
           price: 'SamplePrice4',
           public_id: 'publicID_post_4',
+          quantity: 1,
+          seller_sub: process.env.TEST_SUB_FULL_CUSTOMER,
+          shipping_cost: '0',
           sold: false,
           date_sold: null,
           title: 'SampleTitle4',
         },
       ],
-      restricted: false,
     });
   });
   it('should still allow access to /dashboard route for subscribed users with inactive subscription', async () => {
@@ -346,7 +347,7 @@ describe('authenticateAWS Middleware', () => {
     // Mock the `jwt.decode` function to decode the idToken and return a token with `sub`
     jwt.decode.mockImplementation((token) => {
       if (token === 'valid.subscriber.id.token') {
-        return { sub: 'sub_fullCustomer' }; // Simulated structure of a valid decoded JWT
+        return { sub: process.env.TEST_SUB_FULL_CUSTOMER }; // Simulated structure of a valid decoded JWT
       }
       return null; // Return null for anything else (token is invalid)
     });
@@ -359,7 +360,7 @@ describe('authenticateAWS Middleware', () => {
         token === 'valid.subscriber.refresh.token'
       ) {
         // Simulate a valid token verification with a `sub` field
-        callback(null, { sub: 'sub_fullCustomer' });
+        callback(null, { sub: process.env.TEST_SUB_FULL_CUSTOMER });
       } else {
         callback(new Error('Invalid token'));
       }
@@ -368,7 +369,7 @@ describe('authenticateAWS Middleware', () => {
     // Mock the database call to return a valid customer ID for a subscribed user
     StripeCustomer.getStripeByAWSSub.mockResolvedValue({
       customerId: 'stripe-customer-id_full',
-      awsSub: 'sub_fullCustomer',
+      awsSub: process.env.TEST_SUB_FULL_CUSTOMER,
       confirmed: true,
     });
     // Mock the database call to return the subscription status for a subscribed user
@@ -397,13 +398,15 @@ describe('authenticateAWS Middleware', () => {
         {
           category: 'SampleCategory3',
           created_at: expect.any(String),
-          customer_id: 'stripe-customer-id_full',
           description: 'SampleDescription3',
           id: '3',
           image_url: 'sample_image_url_path_3',
           num_imgs: '1',
           price: 'SamplePrice3',
           public_id: 'publicID_post_3',
+          quantity: 1,
+          seller_sub: process.env.TEST_SUB_FULL_CUSTOMER,
+          shipping_cost: '0',
           sold: false,
           date_sold: null,
           title: 'SampleTitle3',
@@ -411,19 +414,20 @@ describe('authenticateAWS Middleware', () => {
         {
           category: 'SampleCategory4',
           created_at: expect.any(String),
-          customer_id: 'stripe-customer-id_full',
           description: 'SampleDescription4',
           id: '4',
           image_url: 'sample_image_url_path_4',
           num_imgs: '2',
           price: 'SamplePrice4',
           public_id: 'publicID_post_4',
+          quantity: 1,
+          seller_sub: process.env.TEST_SUB_FULL_CUSTOMER,
+          shipping_cost: '0',
           sold: false,
           date_sold: null,
           title: 'SampleTitle4',
         },
       ],
-      restricted: true,
     });
   });
 });

@@ -21,10 +21,14 @@ router.post('/', async (req, res, next) => {
     const { productId } = req.params;
     const { quantitySold, dateSold } = req.body;
 
-    //Product check
     const product = await QuotaProduct.getQuotaProductById(productId);
     if (!product) {
       return res.status(404).json({ error: 'Product not found' });
+    }
+
+    // Ownership check
+    if (product.customer_id !== req.customerId) {
+      return res.status(403).json({ error: 'Forbidden' });
     }
 
     // Oversell check
@@ -33,7 +37,6 @@ router.post('/', async (req, res, next) => {
       return res.status(400).json({ error: 'Sale exceeds available stock' });
     }
 
-    // Calculate if this sale completes the product
     const newTotal = Number(total) + Number(quantitySold);
     const isSold = newTotal >= Number(product.qty);
 
@@ -53,8 +56,16 @@ router.post('/', async (req, res, next) => {
 // PUT a sale for a product
 router.put('/:saleId', async (req, res, next) => {
   try {
-    const { saleId } = req.params;
+    const { productId, saleId } = req.params;
     const { quantitySold, dateSold } = req.body;
+
+    const product = await QuotaProduct.getQuotaProductById(productId);
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    if (product.customer_id !== req.customerId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
 
     const sale = await Sales.updateSale(saleId, { quantitySold, dateSold });
     res.json(sale);
@@ -66,7 +77,16 @@ router.put('/:saleId', async (req, res, next) => {
 // DELETE a sale by saleId
 router.delete('/:saleId', async (req, res, next) => {
   try {
-    const { saleId } = req.params;
+    const { productId, saleId } = req.params;
+
+    const product = await QuotaProduct.getQuotaProductById(productId);
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    if (product.customer_id !== req.customerId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
     const deleted = await Sales.deleteSale(saleId);
     if (!deleted) {
       return res.status(404).json({ error: 'Sale not found' });

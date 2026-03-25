@@ -299,13 +299,13 @@
   overflow-x: auto;
 }
 
-table {
+.admin-dashboard table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
 }
 
-th {
+.admin-dashboard th {
   padding: 0.75rem 1rem;
   text-align: left;
   font-size: 0.875rem;
@@ -313,7 +313,7 @@ th {
   border-bottom: 1px solid #e2e8f0;
 }
 
-td {
+.admin-dashboard td {
   padding: 0.5rem;
   border-bottom: 1px solid #e2e8f0;
   font-size: 0.875rem;
@@ -321,7 +321,7 @@ td {
   text-align: left;
 }
 
-tr:hover td {
+.admin-dashboard tr:hover td {
   background: #0099ff;
 }
 

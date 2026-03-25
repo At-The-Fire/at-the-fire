@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-At The Fire — a Node.js/Express REST API backend for a subscription-based artist gallery platform. CommonJS modules, no TypeScript. Serves a compiled React frontend from `lib/clientBuild/build/`.
+At The Fire — a Node.js/Express REST API backend for a subscription-based artist gallery and e-commerce platform (auctions, cart, purchases). CommonJS modules, no TypeScript. Serves a compiled React frontend from `lib/clientBuild/build/`.
 
 ## Commands
 
@@ -32,8 +32,10 @@ stripe listen --forward-to localhost:4242/api/v1/webhook
 
 - **`server.js`** — Entry point. Creates HTTP server, attaches Socket.IO.
 - **`lib/app.js`** — Express app factory. All middleware registration and route mounting.
-- **`lib/controllers/`** — Express routers, one per feature domain (18 files). Call models directly and handle Redis caching.
+- **`lib/controllers/`** — Express routers, one per feature domain. Call models directly and handle Redis caching.
 - **`lib/models/`** — Static-method classes wrapping parameterized SQL queries via `pg.Pool`.
+- **`lib/jobs/auctionTimers.js`** — Per-auction `setTimeout` + daily 5 PM PT cron sweep. `completeAuction()` is transaction-safe and idempotent; records `auction_results`, emits WebSocket events, creates `won` notifications.
+- **`lib/services/paymentService.js`** — Adapter-pattern payment abstraction. `MockAdapter` for dev (full end-to-end), `NullAdapter` for prod (returns 503 until a real processor is wired). Stripe is only used for subscriptions.
 - **`lib/middleware/`** — `authenticateAWS` (JWT/Cognito verification), `authorizeSubscription` (paid-tier gating), `adminIdCheck`, ownership checks, validation.
 - **`lib/services/encryption.js`** — AES-256 encrypt/decrypt (CryptoJS) for PII at rest (emails, phones, messages). SHA-256 hashes stored alongside for lookups without decryption.
 - **`lib/utils/pool.js`** — Single `pg.Pool` instance, configured via `DATABASE_URL`.
@@ -43,11 +45,17 @@ stripe listen --forward-to localhost:4242/api/v1/webhook
 ## Route Structure
 
 All API routes are prefixed `/api/v1/`. Middleware chains are applied at the mount level in `lib/app.js`:
-- Public: `/auth`, `/gallery-posts`, `/profile`, `/followers`, `/likes`
-- Authenticated: `/users`, `/conversations`, `/stripe`, `/create-checkout-session`
+- Public: `/auth`, `/gallery-posts`, `/profile`, `/followers`, `/likes`, `/auctions` (browse/results), `/bids/:id`
+- Authenticated: `/users`, `/conversations`, `/stripe`, `/create-checkout-session`, `/auctions` (create/edit/cancel/bid), `/bids`, `/auction-notifications`, `/cart`, `/purchases`
 - Authenticated + Subscription: `/dashboard`, `/goals`, `/quota-tracking`, `/quota-tracking/:productId/sales`, `/inventory-snapshot`, `/orders`, `/create-customer-portal-session`
+- Seller-only (ownership check): `PUT /auctions/:id/paid`, `PUT /auctions/:id/tracking`, `PUT /purchases/:id/tracking`
 - Admin: `/atf-operations`
 - Webhook (Stripe signature verified): `/webhook`
+
+**Auction-specific routes:**
+- `POST /bids` — enforces strictly higher bid; triggers 5-min extension if placed within 1 min of end; notifies outbid user
+- `POST /bids/buy-it-now` — immediately closes auction, records `auction_results`
+- `POST /purchases/intent` → `POST /purchases/confirm` — payment intent then atomic capture + inventory decrement; refunds on rollback
 
 ## Auth System
 
@@ -57,9 +65,37 @@ AWS Cognito issues JWTs → stored in HTTP-only cookies (`accessToken`, `idToken
 
 PostgreSQL via `pg`. No migration framework — schema managed by `sql/setup.sql` (destructive DROP+CREATE). All queries use parameterized `$1, $2` syntax.
 
+## Key E-Commerce Tables
+
+- **`auctions`** — seller_sub, title, image_urls (S3), start_price, buy_now_price, current_bid, start_time, end_time, is_active
+- **`bids`** — auction_id, bidder_sub, bid_amount (immutable once recorded)
+- **`auction_results`** — one row per closed auction; winner_sub, final_bid, closed_reason (`expired`|`buy_now`), is_paid, tracking_number
+- **`auction_notifications`** — user_sub, auction_id, type (`outbid`|`won`), is_read
+- **`purchases`** — buyer_sub, item_type (`gallery_post`|`auction`), item_id, quantity, amount_paid, processor_transaction_id, status, tracking_number
+
 ## Testing
 
 Tests live in `__tests__/` with `Unit/` and `Integration/` subdirectories, further organized by layer (`Models/`, `_controllers/`, `_middleware/`). Integration tests use `supertest`. Test templates in `__tests__/_templates/`.
+
+### Test Fixture Data — Use `.env` Variables, Never Hardcode
+
+All test fixture identifiers (Cognito subs, emails, Stripe customer IDs) **must** come from `process.env.*`. Never hardcode literal strings for these values in test files — a single `.env` change must be sufficient to update all tests.
+
+**Available test env variables:**
+
+| Variable | Purpose |
+|---|---|
+| `TEST_SUB` | Generic authenticated test user Cognito sub |
+| `TEST_SUB_FULL_CUSTOMER` | Full/paid subscriber Cognito sub |
+| `TEST_SUB_NO_PROFILE` | User with no profile (used for 403/ownership tests) |
+| `TEST_EMAIL_FULL_CUSTOMER` | Email for the full customer seed user |
+| `TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER` | Stripe customer ID for the full customer |
+
+**Rules:**
+- Never use hardcoded sub strings (e.g., `'other_sub_456'`) or email literals in test files.
+- If a test requires a second/non-owner user, use an existing env var for a distinct seed user rather than inventing a literal string.
+- If a genuinely new test identity is needed, add it to `.env` (and `.env.example` / CI secrets) and seed it in `sql/setup.sql` — then reference it via `process.env.*` in tests.
+- The seed data in `sql/setup.sql` must always match the values defined in `.env`.
 
 ## Code Style
 

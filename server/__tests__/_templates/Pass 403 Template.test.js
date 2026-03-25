@@ -26,7 +26,7 @@ jest.mock('jsonwebtoken', () => ({
       token === 'valid.free.user.refresh.token'
     ) {
       // Simulate a successful token verification
-      callback(null, { sub: 'sub_noProfile' });
+      callback(null, { sub: process.env.TEST_SUB_NO_PROFILE });
     } else {
       // Simulate verification failure
       callback(new Error('Invalid token'));
@@ -35,7 +35,7 @@ jest.mock('jsonwebtoken', () => ({
   decode: jest.fn((token) => {
     if (token === 'valid.free.user.id.token') {
       // Return a mock decoded token with `sub`
-      return { sub: 'sub_noProfile' };
+      return { sub: process.env.TEST_SUB_NO_PROFILE };
     } else {
       return null; // Invalid token case
     }
@@ -68,7 +68,7 @@ const setupSubscribedUserMocks = () => {
   // Mock the `jwt.decode` function to decode the idToken and return a token with `sub`
   jwt.decode.mockImplementation((token) => {
     if (token === 'valid.subscriber.id.token') {
-      return { sub: 'sub_noProfile' }; // Simulated structure of a valid decoded JWT
+      return { sub: process.env.TEST_SUB_NO_PROFILE }; // Simulated structure of a valid decoded JWT
     }
     return null; // Return null for anything else (token is invalid)
   });
@@ -81,7 +81,7 @@ const setupSubscribedUserMocks = () => {
       token === 'valid.subscriber.refresh.token'
     ) {
       // Simulate a valid token verification with a `sub` field
-      callback(null, { sub: 'sub_noProfile' });
+      callback(null, { sub: process.env.TEST_SUB_NO_PROFILE });
     } else {
       callback(new Error('Invalid token'));
     }
@@ -91,7 +91,7 @@ const setupSubscribedUserMocks = () => {
   StripeCustomer.getStripeByAWSSub.mockResolvedValue(undefined);
 
   StripeCustomer.updateByCustomerId.mockRejectedValue(
-    new Error('You are not authorized to update this profile')
+    new Error('You are not authorized to update this profile'),
   );
 
   // Mock the database call to return the subscription status for a subscribed user
@@ -124,11 +124,8 @@ describe('authenticateAWS Middleware', () => {
 
   //! WORKS: SELECT ALL COPY/ PASTE & USE FOR TEMPLATES
   it.skip('should allow access to subscription-only routes for subscribed users', async () => {
-    const {
-      subscribedUserAccessToken,
-      subscribedUserIdToken,
-      subscribedUserRefreshToken,
-    } = setupSubscribedUserMocks();
+    const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+      setupSubscribedUserMocks();
 
     // Sending the request with all three required tokens as cookies
     const response = await request(app)
@@ -141,6 +138,6 @@ describe('authenticateAWS Middleware', () => {
 
     // We expect the authentication and authorization middleware to pass
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ posts: [], restricted: false });
+    expect(response.body).toEqual({ posts: [] });
   });
 });

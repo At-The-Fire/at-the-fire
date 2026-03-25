@@ -8,6 +8,7 @@ const { parse } = require('json2csv');
 const getRedisClient = require('../../redisClient.js');
 const multer = require('multer');
 const Gallery = require('../models/Gallery.js');
+const QuotaProduct = require('../models/QuotaProduct.js');
 
 //# Configure S3 client
 const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
@@ -21,11 +22,17 @@ const s3Client = new S3Client({
 
 // Configure multer to store files in memory
 const storage = multer.memoryStorage();
-const upload = multer({ storage }); // Memory storage to handle form-data
-
-module.exports = {
-  upload: multer({ storage }),
-};
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    cb(
+      ALLOWED_MIME_TYPES.includes(file.mimetype) ? null : new Error('Invalid file type'),
+      ALLOWED_MIME_TYPES.includes(file.mimetype),
+    );
+  },
+});
 const isValidUrl = (url) => {
   try {
     new URL(url);
@@ -38,7 +45,7 @@ module.exports = Router()
   // inventory CSV download route
   .get('/download-inventory-csv', async (req, res, next) => {
     try {
-      const data = await AWSUser.getGalleryPosts(req.customerId);
+      const data = await AWSUser.getGalleryPosts(req.userAWSSub);
 
       // Format the created_at dates in the data
       const formattedData = data.map((item) => ({
@@ -65,16 +72,10 @@ module.exports = Router()
   //# image routes begin ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // POST upload image files to S3
   .post('/upload', upload.array('imageFiles'), async (req, res) => {
-    if (req.restricted) {
-      return res.status(403).json({
-        message: 'Your subscription is inactive. You cannot create new posts.',
-      });
-    }
-
     const uploadedKeys = [];
     try {
       try {
-        await AWSUser.checkAndRecordImageUploads(req.customerId, req.files.length);
+        await AWSUser.checkAndRecordImageUploads(req.userAWSSub, req.files.length);
       } catch (e) {
         if (e.message.includes('upload limit')) {
           return res.status(400).json({ code: 400, message: e.message });
@@ -108,11 +109,11 @@ module.exports = Router()
 
               await s3Client.send(command);
 
-              // Use S3 URL in dev, CloudFront in prod
+              // Use CloudFront if configured, otherwise fall back to direct S3 URL
               const secure_url =
-                process.env.APP_ENV === 'development'
-                  ? `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`
-                  : `https://${process.env.CLOUDFRONT_DOMAIN}/${key}`;
+                process.env.APP_ENV !== 'development' && process.env.CLOUDFRONT_DOMAIN
+                  ? `https://${process.env.CLOUDFRONT_DOMAIN}/${key}`
+                  : `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
 
               const result = {
                 public_id: uniqueId,
@@ -151,7 +152,7 @@ module.exports = Router()
             } catch (cleanupErr) {
               console.error('Failed to clean up orphaned S3 image:', cleanupErr);
             }
-          })
+          }),
         );
       }
       console.error('S3 upload error:', error);
@@ -161,25 +162,28 @@ module.exports = Router()
 
   // POST store image urls and public ids in db /////////////////////////////////
   .post('/images', upload.none(), async (req, res, next) => {
-    if (req.restricted) {
-      return res.status(403).json({
-        message: 'Your subscription is inactive. You cannot create new posts.',
-      });
-    }
-
     try {
       const post_id = req.body.id;
       const image_urls = JSON.parse(req.body.image_urls);
       const image_public_ids = JSON.parse(req.body.image_public_ids);
       const resource_types = JSON.parse(req.body.resource_types);
-      const sub = req.body.sub;
+      const sub = req.userAWSSub;
+
+      // Ownership check
+      const existingPost = await Post.getById(post_id);
+      if (!existingPost) {
+        return res.status(404).json({ error: 'Post not found' });
+      }
+      if (existingPost.seller_sub !== req.userAWSSub) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
 
       const post = await Post.addGalleryImages(
         post_id,
         image_urls,
         image_public_ids,
         resource_types,
-        sub
+        sub,
       );
       res.json(post);
     } catch (e) {
@@ -190,14 +194,21 @@ module.exports = Router()
   // POST transfer main image from gallery_posts to post_imgs for edit product => post creation
   .post('/transfer', async (req, res) => {
     try {
-      // Extract postId from the request body
       const postId = req.body.postId;
 
       if (!postId) {
         return res.status(400).json({ error: 'postId is required' });
       }
 
-      // Call the static method to transfer images
+      // Ownership check
+      const post = await Post.getById(postId);
+      if (!post) {
+        return res.status(404).json({ error: 'Post not found' });
+      }
+      if (post.seller_sub !== req.userAWSSub) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+
       const result = await Post.transferImagesToPostImgs(postId);
 
       res.status(200).json(result);
@@ -250,10 +261,9 @@ module.exports = Router()
   // GET all gallery posts for user
   .get('/', async (req, res, next) => {
     try {
-      const posts = await AWSUser.getGalleryPosts(req.customerId);
+      const posts = await AWSUser.getGalleryPosts(req.userAWSSub);
 
-      // Respond with the restricted flag and the posts data
-      res.json({ restricted: req.restricted || false, posts });
+      res.json({ posts });
     } catch (e) {
       next(e);
     }
@@ -261,11 +271,6 @@ module.exports = Router()
 
   //  POST new gallery post /////////////////////////////////
   .post('/', validatePost, async (req, res, next) => {
-    if (req.restricted) {
-      return res.status(403).json({
-        message: 'Your subscription is inactive. You cannot create new posts.',
-      });
-    }
     const sub = req.userAWSSub;
 
     try {
@@ -275,11 +280,13 @@ module.exports = Router()
         req.body.image_url,
         req.body.category,
         req.body.price,
-        req.customerId,
+        sub,
         req.body.public_id,
         req.body.num_imgs,
         req.body.sold,
-        req.body.date_sold
+        req.body.date_sold,
+        req.body.quantity,
+        req.body.shippingCost || 0,
       );
 
       const redisClient = await getRedisClient();
@@ -294,13 +301,7 @@ module.exports = Router()
 
   // PUT update gallery post /////////////////////////////////
   .put('/:id', [authDelUp, validatePost], async (req, res, next) => {
-    if (req.restricted) {
-      return res.status(403).json({
-        message: 'Your subscription is inactive. You cannot edit posts.',
-      });
-    }
     const sub = req.userAWSSub;
-    const customerId = req.customerId;
 
     try {
       const post = await Gallery.getGalleryPostById(req.params.id);
@@ -309,6 +310,7 @@ module.exports = Router()
         return res.status(404).json({ message: 'Post not found' });
       }
 
+      const quantity = req.body.post.quantity;
       const data = await Post.updateById(
         req.body.id,
         req.body.post.title,
@@ -316,12 +318,17 @@ module.exports = Router()
         req.body.post.image_url,
         req.body.post.category,
         req.body.post.price,
-        customerId,
         req.body.post.public_id,
         req.body.post.num_imgs,
         req.body.post.sold,
-        req.body.post.date_sold
+        req.body.post.date_sold,
+        quantity,
+        req.body.post.shippingCost || 0,
       );
+
+      if (quantity) {
+        await QuotaProduct.updateQtyByPostId(data.id, quantity);
+      }
 
       const redisClient = await getRedisClient();
       await redisClient.del('gallery:main');
@@ -348,6 +355,16 @@ module.exports = Router()
       if (!isValidUrl(image_url)) {
         return res.status(400).json({ error: 'Invalid URL format' });
       }
+
+      // Ownership check
+      const post = await Post.getById(id);
+      if (!post) {
+        return res.status(404).json({ error: 'Post not found' });
+      }
+      if (post.seller_sub !== req.userAWSSub) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+
       const updatedPost = await Post.updateMainImage(id, image_url, public_id);
 
       const redisClient = await getRedisClient();
@@ -364,10 +381,16 @@ module.exports = Router()
   .delete('/:id', [authDelUp], async (req, res, next) => {
     try {
       const sub = req.userAWSSub;
-      const data = await Post.deleteById(req.params.id);
+      const post = await Post.getById(req.params.id);
 
-      if (!data) {
+      if (!post) {
         return res.status(404).json({ message: 'Post not found' });
+      }
+
+      if (post.sold) {
+        await Post.softDeleteById(post.id);
+      } else {
+        await Post.deleteById(req.params.id);
       }
 
       const redisClient = await getRedisClient();

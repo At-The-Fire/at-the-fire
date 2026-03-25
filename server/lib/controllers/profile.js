@@ -7,6 +7,7 @@ const profileOwnership = require('../middleware/profileOwnership.js');
 const validateUserUpdate = require('../middleware/validateUserUpdate.js');
 const validateCustomerUpdate = require('../middleware/validateCustomerUpdate.js');
 const multer = require('multer');
+const { validateImageBuffer } = require('../utils/validateImageBuffer');
 const Gallery = require('../models/Gallery.js');
 const getRedisClient = require('../../redisClient.js');
 
@@ -22,11 +23,17 @@ const s3Client = new S3Client({
 
 // Configure multer to store files in memory
 const storage = multer.memoryStorage();
-const upload = multer({ storage }); // Memory storage to handle form-data
-
-module.exports = {
-  upload: multer({ storage }),
-};
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    cb(
+      ALLOWED_MIME_TYPES.includes(file.mimetype) ? null : new Error('Invalid file type'),
+      ALLOWED_MIME_TYPES.includes(file.mimetype),
+    );
+  },
+});
 
 const s3UploadHelper = async (file, folder) => {
   const timestamp = Date.now();
@@ -50,11 +57,10 @@ const s3UploadHelper = async (file, folder) => {
 
     await s3Client.send(command);
 
-    // Use S3 URL in dev, CloudFront in prod
     const secureUrl =
-      process.env.APP_ENV === 'development'
-        ? `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`
-        : `https://${process.env.CLOUDFRONT_DOMAIN}/${key}`;
+      process.env.APP_ENV !== 'development' && process.env.CLOUDFRONT_DOMAIN
+        ? `https://${process.env.CLOUDFRONT_DOMAIN}/${key}`
+        : `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
     return {
       publicId: key,
       secureUrl,
@@ -141,9 +147,9 @@ module.exports = Router()
       }
 
       // Fetch missing posts
-      if (!posts.length && bizProfile?.customerId) {
+      if (!posts.length) {
         console.info('Fetching posts from Postgres');
-        posts = await Gallery.getGalleryPostsByStripeId(bizProfile.customerId);
+        posts = await Gallery.getGalleryPostsBySub(sub);
         await redisClient.set(cacheKey3, JSON.stringify(posts), { EX: 300 });
       }
 
@@ -154,7 +160,7 @@ module.exports = Router()
       return res.json({ profile, bizProfile, posts });
     } catch (err) {
       console.error(err);
-      return res.status(500).json(err.message);
+      return res.status(500).json({ error: 'Internal server error' });
     }
   })
 
@@ -174,7 +180,7 @@ module.exports = Router()
           socialMediaLinks,
           imageUrl,
           publicId,
-        }
+        },
       );
 
       const redisClient = await getRedisClient();
@@ -218,7 +224,7 @@ module.exports = Router()
       } catch (err) {
         next(err);
       }
-    }
+    },
   )
 
   //* Upload user avatar image to S3 ---------------------------------
@@ -226,6 +232,10 @@ module.exports = Router()
     let uploadedKey = null;
     try {
       const file = req.file;
+      if (!validateImageBuffer(file.buffer)) {
+        return res.status(400).json({ error: 'Invalid file type' });
+      }
+
       const s3Folder = 'user-avatars';
       const { publicId, secureUrl } = await s3UploadHelper(file, s3Folder);
       uploadedKey = publicId;
@@ -261,6 +271,19 @@ module.exports = Router()
       return;
     }
 
+    // Validate prefix and ownership
+    if (!public_id.startsWith('user-avatars')) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    try {
+      const user = await AWSUser.getCognitoUserBySub({ sub });
+      if (!user || user.publicId !== public_id) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+    } catch {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
     try {
       const key = public_id;
 
@@ -286,7 +309,8 @@ module.exports = Router()
       const redisClient = await getRedisClient();
       await redisClient.del(`profile:${sub}`);
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      console.error(error);
+      res.status(500).json({ error: 'Internal server error' });
     }
   })
 
@@ -299,6 +323,9 @@ module.exports = Router()
       let uploadedKey = null;
       try {
         const file = req.file;
+        if (!validateImageBuffer(file.buffer)) {
+          return res.status(400).json({ error: 'Invalid file type' });
+        }
         const s3Folder = 'subscriber-logos';
         const { publicId, secureUrl } = await s3UploadHelper(file, s3Folder);
         uploadedKey = publicId;
@@ -322,7 +349,7 @@ module.exports = Router()
         }
         res.status(500).json('An error occurred while uploading the images');
       }
-    }
+    },
   )
 
   // DELETE user logo image from S3 /////////////////////////////////
@@ -337,6 +364,19 @@ module.exports = Router()
       if (!public_id) {
         res.status(400).json({ error: 'Public ID is required' });
         return;
+      }
+
+      // Validate prefix and ownership
+      if (!public_id.startsWith('subscriber-logos')) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+      try {
+        const bizProfile = await StripeCustomer.getStripeByAWSSub(sub);
+        if (!bizProfile || bizProfile.logoPublicId !== public_id) {
+          return res.status(403).json({ error: 'Forbidden' });
+        }
+      } catch {
+        return res.status(403).json({ error: 'Forbidden' });
       }
 
       try {
@@ -364,7 +404,8 @@ module.exports = Router()
         const redisClient = await getRedisClient();
         await redisClient.del(`profile:${sub}`);
       } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
       }
-    }
+    },
   );

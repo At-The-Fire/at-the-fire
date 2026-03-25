@@ -36,7 +36,7 @@ module.exports = class StripeCustomer {
       VALUES ($1, $2, $3, $4, $5)
       RETURNING *
       `,
-      [customerId, awsSub, name, email, encrypt(phone)]
+      [customerId, awsSub, name, email, encrypt(phone)],
     );
 
     return new StripeCustomer(rows[0]);
@@ -55,7 +55,7 @@ module.exports = class StripeCustomer {
         VALUES ($1, $2, $3, $4, $5)
         RETURNING *
       `,
-        [customerId, awsSub, name, encrypt(email), encrypt(phone)]
+        [customerId, awsSub, name, encrypt(email), encrypt(phone)],
       );
 
       // Update the Users table (assuming there's a field isActive in users table)
@@ -65,9 +65,77 @@ module.exports = class StripeCustomer {
         SET customer_id = $1
         WHERE sub = $2
       `,
-        [customerId, awsSub]
+        [customerId, awsSub],
       );
 
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
+  }
+
+  static async insertBetaPlaceholder(awsSub) {
+    const customerId = `beta_${awsSub}`;
+    const subscriptionId = `beta_sub_${awsSub}`;
+    const invoiceId = `beta_inv_${awsSub}`;
+    const now = Math.floor(Date.now() / 1000);
+    const oneYearFromNow = now + 365 * 24 * 60 * 60;
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(
+        'INSERT INTO stripe_customers (customer_id, aws_sub, confirmed) VALUES ($1, $2, true)',
+        [customerId, awsSub],
+      );
+      await client.query('UPDATE cognito_users SET customer_id = $1 WHERE sub = $2', [
+        customerId,
+        awsSub,
+      ]);
+      await client.query(
+        `INSERT INTO subscriptions
+          (customer_id, subscription_id, is_active, interval, subscription_start_date, subscription_end_date, trial_start_date, trial_end_date, status)
+         VALUES ($1, $2, true, 'month', $3, $4, null, null, 'active')`,
+        [customerId, subscriptionId, now, oneYearFromNow],
+      );
+      await client.query(
+        `INSERT INTO invoices (invoice_id, subscription_id, customer_id, start_date, end_date)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [invoiceId, subscriptionId, customerId, now, oneYearFromNow],
+      );
+      await client.query('COMMIT');
+      return { customerId, awsSub };
+    } catch (e) {
+      await client.query('ROLLBACK');
+      throw e;
+    } finally {
+      client.release();
+    }
+  }
+
+  static async replaceBetaPlaceholder(betaCustomerId, realCustomerId, awsSub) {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(
+        'UPDATE stripe_customers SET customer_id = $1 WHERE customer_id = $2',
+        [realCustomerId, betaCustomerId],
+      );
+      await client.query(
+        'UPDATE cognito_users SET customer_id = $1 WHERE sub = $2',
+        [realCustomerId, awsSub],
+      );
+      await client.query(
+        'UPDATE subscriptions SET customer_id = $1 WHERE customer_id = $2',
+        [realCustomerId, betaCustomerId],
+      );
+      await client.query(
+        'UPDATE invoices SET customer_id = $1 WHERE customer_id = $2',
+        [realCustomerId, betaCustomerId],
+      );
       await client.query('COMMIT');
     } catch (e) {
       await client.query('ROLLBACK');
@@ -83,7 +151,7 @@ module.exports = class StripeCustomer {
       SELECT * FROM stripe_customers
       WHERE customer_id = $1
       `,
-      [customerId]
+      [customerId],
     );
     if (!rows[0]) return null;
     return new StripeCustomer(rows[0]);
@@ -95,7 +163,7 @@ module.exports = class StripeCustomer {
       SELECT * FROM stripe_customers
       WHERE aws_sub = $1
       `,
-      [awsSub]
+      [awsSub],
     );
 
     if (!rows[0]) return null;
@@ -126,7 +194,7 @@ module.exports = class StripeCustomer {
         websiteUrl,
         logoImageUrl ? logoImageUrl : null,
         logoPublicId,
-      ]
+      ],
     );
 
     return new StripeCustomer(rows[0]);
@@ -140,7 +208,7 @@ module.exports = class StripeCustomer {
       WHERE customer_id = $1
       RETURNING *
       `,
-      [customerId, confirmed]
+      [customerId, confirmed],
     );
 
     if (!rows[0]) return null;
@@ -154,7 +222,7 @@ module.exports = class StripeCustomer {
     WHERE aws_sub = $1
     RETURNING *
     `,
-      [sub]
+      [sub],
     );
     return new StripeCustomer(rows[0]);
   }
@@ -163,7 +231,7 @@ module.exports = class StripeCustomer {
     const { rows } = await pool.query(
       `
       SELECT * FROM stripe_customers
-      `
+      `,
     );
 
     if (!rows) {
@@ -171,10 +239,6 @@ module.exports = class StripeCustomer {
     }
     return rows.map((row) => new StripeCustomer(row));
   }
-
-  // TODO
-  //! Need to add "ON DELETE CASCADE" for schema-> customer_id foreign keys, this is good for now
-  //! ultimately needs to detect posts-> images-> delete from S3 before database...
 
   static async deleteSubscriber(sub) {
     const data = await StripeCustomer.getStripeByAWSSub(sub);
@@ -190,21 +254,17 @@ module.exports = class StripeCustomer {
     try {
       await client.query('BEGIN');
 
-      await client.query('DELETE FROM image_uploads WHERE customer_id = $1', [customerId]);
+      await client.query('DELETE FROM image_uploads WHERE user_sub = $1', [sub]);
       await client.query('DELETE FROM quota_tracking WHERE customer_id = $1', [customerId]);
       await client.query('DELETE FROM quota_goals WHERE customer_id = $1', [customerId]);
       await client.query('DELETE FROM orders WHERE customer_id = $1', [customerId]);
       await client.query('DELETE FROM inventory_snapshot WHERE customer_id = $1', [customerId]);
       await client.query('DELETE FROM subscriptions WHERE customer_id = $1', [customerId]);
       await client.query('DELETE FROM invoices WHERE customer_id = $1', [customerId]);
-      //^ need to add these to the schema- from autocomplete, need full investigation and testing (as above still), image deletion...
-      // await client.query('DELETE FROM followers WHERE customer_id = $1', [customerId]);
-      // await client.query('DELETE FROM posts WHERE customer_id = $1', [customerId]);
-      // await client.query('DELETE FROM comments WHERE customer_id = $1', [customerId]);
-      // await client.query('DELETE FROM likes WHERE customer_id = $1', [customerId]);
+      await client.query('DELETE FROM gallery_posts WHERE seller_sub = $1', [sub]);
       const result = await client.query(
         'DELETE FROM stripe_customers WHERE customer_id = $1 RETURNING *',
-        [customerId]
+        [customerId],
       );
 
       await client.query('COMMIT');

@@ -1,6 +1,20 @@
 const request = require('supertest');
 const app = require('../../../../lib/app'); // Ensure this is the correct path to your Express app
-const jwt = require('jsonwebtoken');
+
+jest.mock('jsonwebtoken', () => {
+  const actualJwt = jest.requireActual('jsonwebtoken');
+  return {
+    ...actualJwt,
+    verify: jest.fn((token, getKey, options, callback) => {
+      if (token === 'invalidIdToken') {
+        callback(null, {});
+        return;
+      }
+
+      callback(null, { sub: 'user123' });
+    }),
+  };
+});
 
 // Mock user data retrieval
 jest.mock('../../../../lib/models/AWSUser.js', () => ({
@@ -58,7 +72,7 @@ jest.mock('amazon-cognito-identity-js', () => {
 });
 
 // Define a valid idToken for test
-const simulatedIdToken = jwt.sign({ sub: 'user123' }, 'test-secret-key');
+const simulatedIdToken = 'validIdToken';
 
 // Helper to set up cookies for tests
 const setAuthCookies = (refreshToken, idToken = simulatedIdToken) => [

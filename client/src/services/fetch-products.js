@@ -26,6 +26,7 @@ export async function fetchProducts() {
     return data;
   } catch (error) {
     if (process.env.REACT_APP_APP_ENV === 'development') {
+      // eslint-disable-next-line
       console.error('Error fetching products:', error);
     }
     throw error;

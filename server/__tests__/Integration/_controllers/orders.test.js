@@ -5,44 +5,39 @@ const app = require('../../../lib/app');
 
 // Mock user data
 const mockUser = {
-  email: process.env.TEST_EMAIL,
-  sub: process.env.TEST_SUB,
-  customer_id: process.env.TEST_CUSTOMER_ID,
+  email: process.env.TEST_EMAIL_FULL_CUSTOMER,
+  sub: process.env.TEST_SUB_FULL_CUSTOMER,
+  customer_id: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
 };
 
 // Mock customer data
 const mockCustomer = {
-  customerId: process.env.TEST_CUSTOMER_ID,
+  customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
   isActive: true,
   subscriptionEndDate: 1630435200,
 };
 
-// Mock authenticate middleware to attach mock user to req.user object before each test case runs (req.user is used in the route handler)
+// Mutable flag for restricted-user tests
+let mockRestricted = false;
+
+// Mock authenticate middleware to attach mock sub to req.userAWSSub before each test case runs
 // this is assuming that the user is logged in and authenticated (tested elsewhere)
-jest.mock(
-  '../../../lib/middleware/authenticateAWS.js',
-  () => (req, res, next) => {
-    req.user = mockUser;
-    next();
-  }
-);
+jest.mock('../../../lib/middleware/authenticateAWS.js', () => (req, res, next) => {
+  req.userAWSSub = mockUser.sub;
+  next();
+});
 
 // Mock authorizeSubscription middleware to attach mock subscription to req.subscription object before each test case runs (req.subscription is used in the route handler)
 // this is assuming that the user is logged in and authenticated (tested elsewhere)
-jest.mock(
-  '../../../lib/middleware/authorizeSubscription.js',
-  () => (req, res, next) => {
-    // if (mockUser.sub !== null) {
-    req.customerId = mockCustomer.customerId;
-    // }
-
-    next();
-  }
-);
+jest.mock('../../../lib/middleware/authorizeSubscription.js', () => (req, res, next) => {
+  req.customerId = mockCustomer.customerId;
+  req.restricted = mockRestricted;
+  next();
+});
 
 describe('orders routes', () => {
   beforeEach(() => {
-    // jest.resetAllMocks();
+    mockRestricted = false;
     return setup(pool);
   });
 
@@ -59,7 +54,7 @@ describe('orders routes', () => {
       {
         client_name: 'Robert (collector)',
         created_at: expect.any(String),
-        customerId: 'cus_OVLKmXa6lrzktm',
+        customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
         date: expect.any(String),
         id: '4',
         is_fulfilled: false,
@@ -85,7 +80,7 @@ describe('orders routes', () => {
       {
         client_name: 'Pipes Galore',
         created_at: expect.any(String),
-        customerId: 'cus_OVLKmXa6lrzktm',
+        customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
         date: expect.any(String),
         id: '3',
         is_fulfilled: false,
@@ -111,7 +106,7 @@ describe('orders routes', () => {
       {
         client_name: 'Puff Puff Pass',
         created_at: expect.any(String),
-        customerId: 'cus_OVLKmXa6lrzktm',
+        customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
         date: expect.any(String),
         id: '2',
         is_fulfilled: true,
@@ -137,7 +132,7 @@ describe('orders routes', () => {
       {
         client_name: 'Up In Smoke',
         created_at: expect.any(String),
-        customerId: 'cus_OVLKmXa6lrzktm',
+        customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
         date: expect.any(String),
         id: '1',
         is_fulfilled: true,
@@ -202,7 +197,7 @@ describe('orders routes', () => {
     expect(resp.body).toEqual({
       client_name: 'John Collectorson',
       created_at: expect.any(String),
-      customerId: 'cus_OVLKmXa6lrzktm',
+      customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
       date: expect.any(String),
       id: '5',
       is_fulfilled: false,
@@ -321,8 +316,7 @@ describe('orders routes', () => {
 
     expect(response2.status).toBe(500);
     expect(response2.body).toEqual({
-      message:
-        'duplicate key value violates unique constraint "unique_user_order"',
+      message: 'duplicate key value violates unique constraint "unique_user_order"',
       status: 500,
     });
   });
@@ -477,14 +471,12 @@ describe('orders routes', () => {
       order_number: 21, // manually corresponding to db, GET done on front end to find this
     };
 
-    const response = await request(app)
-      .put('/api/v1/orders/1')
-      .send({ orderData });
+    const response = await request(app).put('/api/v1/orders/1').send({ orderData });
 
     expect(response.body).toEqual({
       client_name: 'John Collectorson Johnson',
       created_at: expect.any(String),
-      customerId: 'cus_OVLKmXa6lrzktm',
+      customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
       date: expect.any(String),
       id: '1',
       is_fulfilled: true,
@@ -519,14 +511,12 @@ describe('orders routes', () => {
       order_number: 21, // manually corresponding to db, GET done on front end to find this
     };
 
-    const response = await request(app)
-      .put('/api/v1/orders/1')
-      .send({ orderData });
+    const response = await request(app).put('/api/v1/orders/1').send({ orderData });
 
     expect(response.body).toEqual({
       client_name: 'John Collectorson Johnson',
       created_at: expect.any(String),
-      customerId: 'cus_OVLKmXa6lrzktm',
+      customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
       date: expect.any(String),
       id: '1',
       is_fulfilled: true,
@@ -544,14 +534,12 @@ describe('orders routes', () => {
     });
 
     const isFulfilled = true;
-    const response2 = await request(app)
-      .put('/api/v1/orders/1/fulfillment')
-      .send({ isFulfilled });
+    const response2 = await request(app).put('/api/v1/orders/1/fulfillment').send({ isFulfilled });
 
     expect(response2.status).toBe(200);
     expect(response2.body).toEqual({
       id: '1',
-      customerId: 'cus_OVLKmXa6lrzktm',
+      customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
       created_at: expect.any(String),
       order_number: '21',
       date: expect.any(String),
@@ -586,14 +574,12 @@ describe('orders routes', () => {
       order_number: 21, // manually corresponding to db, GET done on front end to find this
     };
 
-    const response = await request(app)
-      .put('/api/v1/orders/1')
-      .send({ orderData });
+    const response = await request(app).put('/api/v1/orders/1').send({ orderData });
 
     expect(response.body).toEqual({
       client_name: 'John Collectorson Johnson',
       created_at: expect.any(String),
-      customerId: 'cus_OVLKmXa6lrzktm',
+      customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
       date: expect.any(String),
       id: '1',
       is_fulfilled: true,
@@ -611,9 +597,7 @@ describe('orders routes', () => {
     });
 
     const isFulfilled = undefined;
-    const response2 = await request(app)
-      .put('/api/v1/orders/1/fulfillment')
-      .send({ isFulfilled });
+    const response2 = await request(app).put('/api/v1/orders/1/fulfillment').send({ isFulfilled });
 
     expect(response2.status).toBe(400);
   });
@@ -646,9 +630,7 @@ describe('orders routes', () => {
   it('PUT /orders/:orderId should reject invalid fulfillment values', async () => {
     const isFulfilled = 'not a boolean';
     const body = { isFulfilled };
-    const response = await request(app)
-      .put('/api/v1/orders/1/fulfillment')
-      .send({ body });
+    const response = await request(app).put('/api/v1/orders/1/fulfillment').send({ body });
 
     expect(response.status).toBe(400);
     expect(response.body).toEqual({ error: 'Missing data' });
@@ -663,7 +645,7 @@ describe('orders routes', () => {
       {
         client_name: 'Robert (collector)',
         created_at: expect.any(String),
-        customerId: 'cus_OVLKmXa6lrzktm',
+        customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
         date: expect.any(String),
         id: '4',
         is_fulfilled: false,
@@ -689,7 +671,7 @@ describe('orders routes', () => {
       {
         client_name: 'Pipes Galore',
         created_at: expect.any(String),
-        customerId: 'cus_OVLKmXa6lrzktm',
+        customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
         date: expect.any(String),
         id: '3',
         is_fulfilled: false,
@@ -715,7 +697,7 @@ describe('orders routes', () => {
       {
         client_name: 'Puff Puff Pass',
         created_at: expect.any(String),
-        customerId: 'cus_OVLKmXa6lrzktm',
+        customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
         date: expect.any(String),
         id: '2',
         is_fulfilled: true,
@@ -741,7 +723,7 @@ describe('orders routes', () => {
       {
         client_name: 'Up In Smoke',
         created_at: expect.any(String),
-        customerId: 'cus_OVLKmXa6lrzktm',
+        customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
         date: expect.any(String),
         id: '1',
         is_fulfilled: true,
@@ -778,7 +760,7 @@ describe('orders routes', () => {
       {
         client_name: 'Robert (collector)',
         created_at: expect.any(String),
-        customerId: 'cus_OVLKmXa6lrzktm',
+        customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
         date: expect.any(String),
         id: '4',
         is_fulfilled: false,
@@ -804,7 +786,7 @@ describe('orders routes', () => {
       {
         client_name: 'Pipes Galore',
         created_at: expect.any(String),
-        customerId: 'cus_OVLKmXa6lrzktm',
+        customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
         date: expect.any(String),
         id: '3',
         is_fulfilled: false,
@@ -830,7 +812,7 @@ describe('orders routes', () => {
       {
         client_name: 'Puff Puff Pass',
         created_at: expect.any(String),
-        customerId: 'cus_OVLKmXa6lrzktm',
+        customerId: process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER,
         date: expect.any(String),
         id: '2',
         is_fulfilled: true,

@@ -76,6 +76,7 @@ export async function getUniqueFollowersAndFollowing(userId) {
     );
   } catch (e) {
     if (process.env.REACT_APP_APP_ENV === 'development') {
+      // eslint-disable-next-line
       console.error('Error getting unique followers and following:', e);
     }
     throw e;
@@ -96,6 +97,7 @@ export async function fetchFollowStatus(userId) {
     return data;
   } catch (e) {
     if (process.env.REACT_APP_APP_ENV === 'development') {
+      // eslint-disable-next-line
       console.error('Error fetching follow status:', e);
     }
   }
@@ -111,6 +113,7 @@ export async function followUser(userId) {
     });
   } catch (error) {
     if (process.env.REACT_APP_APP_ENV === 'development') {
+      // eslint-disable-next-line
       console.error('Follow user error:', error);
     }
     throw error;
@@ -125,6 +128,7 @@ export async function unfollowUser(userId) {
       credentials: 'include',
     });
   } catch (error) {
+    // eslint-disable-next-line
     console.error('Unfollow user error:', error);
     throw error;
   }
@@ -141,6 +145,7 @@ export async function fetchAllFollowers(userId) {
     return data.followers;
   } catch (e) {
     if (process.env.REACT_APP_APP_ENV === 'development') {
+      // eslint-disable-next-line
       console.error('Error fetching followers:', e);
     }
     throw e;
@@ -158,6 +163,7 @@ export async function fetchAllFollowing(userId) {
     return data.following;
   } catch (e) {
     if (process.env.REACT_APP_APP_ENV === 'development') {
+      // eslint-disable-next-line
       console.error('Error fetching following list');
     }
   }

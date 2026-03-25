@@ -158,6 +158,7 @@ export default function EditPost() {
           public_id: post.public_id,
           sold: post.sold,
           date_sold: post.date_sold,
+          qty: post.quantity ?? matchedProduct.qty,
         };
         await handleEditProduct(matchedProduct);
       }

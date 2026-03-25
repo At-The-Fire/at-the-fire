@@ -14,23 +14,26 @@ export default function NewPost() {
   const navigate = useNavigate();
 
   const { setNewPostCreated } = useQuery();
-  const { authenticateUser, isAuthenticated, error, signingOut, checkTokenExpiry } = useAuthStore();
+  const { authenticateUser, isAuthenticated, error, signingOut, checkTokenExpiry, loadingAuth, hasAuthChecked, hasPremiumAccess } =
+    useAuthStore();
 
   // authenticate and check tokens
   useEffect(() => {
-    if (!isAuthenticated && !error && !signingOut) {
+    if (!isAuthenticated && !error && !signingOut && !loadingAuth) {
       authenticateUser();
     } else if (isAuthenticated) {
       // If we are authenticated, check token expiry
       checkTokenExpiry();
     }
-  }, [isAuthenticated, error, authenticateUser, signingOut, checkTokenExpiry]);
+  }, [isAuthenticated, error, authenticateUser, signingOut, checkTokenExpiry, loadingAuth]);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    // Only redirect after we've actually checked whether the user has a session.
+    // This prevents a full-refresh bounce through /auth/sign-in (which then routes to /dashboard).
+    if (hasAuthChecked && !loadingAuth && !isAuthenticated) {
       navigate('/auth/sign-in');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, hasAuthChecked, loadingAuth]);
 
   const handleAddProduct = async (productData) => {
     try {
@@ -69,35 +72,32 @@ export default function NewPost() {
 
   const submitHandler = async (newPost) => {
     try {
-      const { title, description, image_url, category, price, public_id, num_imgs, sold, date_sold } = newPost;
-
-      // create new post with fetch call to db
-      // TODO refactor to just use object- change function definition in fetch-utils
-      const post = await postPost(title, description, image_url, category, price, public_id, num_imgs, sold, date_sold);
+      const post = await postPost(newPost);
 
       // send image urls and public ids to db
       await postAddImages(newPost.additionalImages, post.id);
 
       // make fetch call to new controller for inserting new quota tracking entry
       const quotaEntry = {
-        // customer_id: customerId,
-        title,
-        description,
-        image_url,
-        category,
-        price,
-        public_id,
-        num_days: 1, // hard coded for now
+        title: newPost.title,
+        description: newPost.description,
+        image_url: newPost.image_url,
+        category: newPost.category,
+        price: newPost.price,
+        public_id: newPost.public_id,
+        num_days: 1,
         type: 'inventory',
-        date: new Date().setHours(0, 0, 0, 0), // This sets the time to midnight
-        qty: 1,
-        sold,
-        date_sold,
+        date: new Date().setHours(0, 0, 0, 0),
+        qty: newPost.quantity || 1,
+        sold: newPost.sold,
+        date_sold: newPost.date_sold,
         sales: [],
         post_id: post.id,
       };
 
-      handleAddProduct(quotaEntry);
+      if (hasPremiumAccess) {
+        handleAddProduct(quotaEntry);
+      }
 
       setNewPostCreated((prevState) => !prevState);
       navigate('/dashboard');

@@ -1,20 +1,18 @@
-//
-//
-//*  This middleware is for making sure the customerId matches the Admin customerId
-// * for accessing the master dashboard
-//
-// if (process.env.NODE_ENV === 'test') {
-//
+const pool = require('../utils/pool');
+
 module.exports = async (req, res, next) => {
   try {
-    const customerId = req.customerId;
-    let admin;
-    if (process.env.NODE_ENV === 'test') {
-      admin = process.env.TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER;
-    } else {
-      admin = process.env.ADMIN_ID;
+    const sub = req.userAWSSub;
+    if (!sub) {
+      return res.status(403).json({
+        message: 'You do not have permission: access denied',
+        code: 403,
+      });
     }
-    if (!customerId || customerId !== admin) {
+
+    const { rows } = await pool.query('SELECT is_admin FROM cognito_users WHERE sub = $1', [sub]);
+
+    if (!rows.length || !rows[0].is_admin) {
       return res.status(403).json({
         message: 'You do not have permission: access denied',
         code: 403,
@@ -24,7 +22,6 @@ module.exports = async (req, res, next) => {
     next();
   } catch (e) {
     console.error('Unexpected Middleware Error:', e);
-
     return res.status(500).json({
       message: 'Internal Server Error',
       code: 500,

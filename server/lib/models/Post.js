@@ -8,13 +8,14 @@ module.exports = class Post {
   image_url;
   category;
   price;
-  customer_id;
+  seller_sub;
   public_id;
   num_imgs;
   resource_type;
   sold;
   logo_image_url;
   date_sold;
+  quantity;
 
   constructor(row) {
     this.id = row.id;
@@ -24,13 +25,15 @@ module.exports = class Post {
     this.image_url = row.image_url;
     this.category = row.category;
     this.price = row.price;
-    this.customer_id = row.customer_id;
+    this.seller_sub = row.seller_sub;
     this.public_id = row.public_id;
     this.num_imgs = row.num_imgs;
     this.resource_type = row.resource_type;
     this.sold = row.sold;
     this.logo_image_url = row.logo_image_url;
     this.date_sold = row.date_sold;
+    this.quantity = row.quantity;
+    this.shipping_cost = row.shipping_cost ?? 0;
   }
 
   // post a new post
@@ -40,26 +43,30 @@ module.exports = class Post {
     image_url,
     category,
     price,
-    customerId,
+    sellerSub,
     public_id,
     num_imgs,
     sold,
-    date_sold
+    date_sold,
+    quantity,
+    shippingCost = 0,
   ) {
     const { rows } = await pool.query(
-      'INSERT INTO gallery_posts (title, description, image_url, category, price, customer_id, public_id, num_imgs,sold, date_sold) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
+      'INSERT INTO gallery_posts (title, description, image_url, category, price, seller_sub, public_id, num_imgs, sold, date_sold, quantity, shipping_cost) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *',
       [
         title,
         description,
         image_url,
         category,
         price,
-        customerId,
+        sellerSub,
         public_id,
         num_imgs,
         sold,
         date_sold,
-      ]
+        quantity || null,
+        shippingCost || 0,
+      ],
     );
 
     const data = new Post(rows[0]);
@@ -69,23 +76,13 @@ module.exports = class Post {
 
   // add additional image urls/ public_id's beyond the first one
   static async addGalleryImages(post_id, image_urls, image_public_ids, resource_types) {
-    const insertQuery = `
-      INSERT INTO posts_imgs (post_id, image_url, public_id, resource_type)
-      VALUES ($1, $2, $3,$4)
-      RETURNING *;
-    `;
-
-    const addedImages = [];
-    for (let i = 0; i < image_urls.length; i++) {
-      const { rows } = await pool.query(insertQuery, [
-        post_id,
-        image_urls[i],
-        image_public_ids[i],
-        resource_types[i],
-      ]);
-      addedImages.push(new Post(rows[0]));
-    }
-    return addedImages;
+    const { rows } = await pool.query(
+      `INSERT INTO posts_imgs (post_id, image_url, public_id, resource_type)
+       SELECT $1, unnest($2::text[]), unnest($3::text[]), unnest($4::text[])
+       RETURNING *`,
+      [post_id, image_urls, image_public_ids, resource_types]
+    );
+    return rows.map((row) => new Post(row));
   }
 
   // update a post
@@ -96,11 +93,12 @@ module.exports = class Post {
     image_url,
     category,
     price,
-    customerId,
     public_id,
     num_imgs,
     sold,
-    date_sold
+    date_sold,
+    quantity,
+    shippingCost = 0,
   ) {
     const { rows } = await pool.query(
       `
@@ -110,11 +108,12 @@ module.exports = class Post {
           image_url = $4,
           category = $5,
           price = $6,
-          customer_id = $7,
-          public_id = $8,
-          num_imgs = $9,
-          sold = $10,
-          date_sold = $11
+          public_id = $7,
+          num_imgs = $8,
+          sold = $9,
+          date_sold = $10,
+          quantity = CASE WHEN $9 = true THEN 0 ELSE $11 END,
+          shipping_cost = $12
       WHERE id = $1
       RETURNING *;
       `,
@@ -125,12 +124,13 @@ module.exports = class Post {
         image_url,
         category,
         price,
-        customerId,
         public_id,
         num_imgs,
         sold,
         date_sold,
-      ]
+        quantity || null,
+        shippingCost || 0,
+      ],
     );
 
     if (!rows[0]) {
@@ -145,11 +145,11 @@ module.exports = class Post {
   // update thumbnail
   static async updateMainImage(id, imageUrl, publicId) {
     const { rows } = await pool.query(
-      `UPDATE gallery_posts 
+      `UPDATE gallery_posts
      SET image_url = $2, public_id = $3
-     WHERE id = $1 
+     WHERE id = $1
      RETURNING *`,
-      [id, imageUrl, publicId]
+      [id, imageUrl, publicId],
     );
 
     if (!rows[0]) {
@@ -165,17 +165,25 @@ module.exports = class Post {
   static async getById(post_id) {
     const { rows } = await pool.query(
       `
-      SELECT * 
-      FROM gallery_posts 
-      WHERE id=$1 
+      SELECT *
+      FROM gallery_posts
+      WHERE id=$1
       `,
-      [post_id]
+      [post_id],
     );
     if (!rows[0]) {
       return null;
     }
 
     return new Post(rows[0]);
+  }
+
+  static async softDeleteById(id) {
+    const { rows } = await pool.query(
+      'UPDATE gallery_posts SET deleted_at = NOW() WHERE id = $1 RETURNING *',
+      [id],
+    );
+    return rows[0] ? new Post(rows[0]) : null;
   }
 
   static async deleteById(post) {
@@ -189,7 +197,7 @@ module.exports = class Post {
     WHERE id = $1
     RETURNING *
     `,
-      [post]
+      [post],
     );
 
     return new Post(rows[0]);
@@ -202,7 +210,7 @@ module.exports = class Post {
     WHERE post_id = $1 AND public_id = $2
     RETURNING *
     `,
-      [post_id, public_id]
+      [post_id, public_id],
     );
 
     if (!rows[0]) {
@@ -217,11 +225,11 @@ module.exports = class Post {
   static async getAdditionalImages(post_id) {
     const { rows } = await pool.query(
       `
-      SELECT * 
-      FROM posts_imgs 
-      WHERE post_id=$1 
+      SELECT *
+      FROM posts_imgs
+      WHERE post_id=$1
       `,
-      [post_id]
+      [post_id],
     );
     if (!rows[0]) {
       return [];
@@ -235,11 +243,11 @@ module.exports = class Post {
       // Step 1: Retrieve the image_url and public_id from gallery_posts for the given post_id
       const { rows: galleryRows } = await pool.query(
         `
-      SELECT image_url, public_id 
-      FROM gallery_posts 
+      SELECT image_url, public_id
+      FROM gallery_posts
       WHERE id=$1
       `,
-        [post_id]
+        [post_id],
       );
 
       if (!galleryRows[0]) {
@@ -255,7 +263,7 @@ module.exports = class Post {
       VALUES ($1, $2, $3, 'image')
       RETURNING *
       `,
-        [post_id, image_url, public_id]
+        [post_id, image_url, public_id],
       );
 
       return postImgsRows[0];
@@ -265,11 +273,38 @@ module.exports = class Post {
     }
   }
 
+  static async updateQuantityById(postId, qty) {
+    await pool.query('UPDATE gallery_posts SET quantity = $2 WHERE id = $1', [postId, qty]);
+  }
+
+  // Fetch only the fields needed to validate and price a purchase
+  static async getForPurchase(id) {
+    const { rows } = await pool.query(
+      `SELECT id, seller_sub, price, quantity AS available_quantity, sold, shipping_cost
+       FROM gallery_posts WHERE id = $1`,
+      [id]
+    );
+    return rows[0] || null;
+  }
+
+  // Atomically decrement quantity and mark sold if needed.
+  // Returns the updated row id, or null if the update was blocked (race condition / oversell).
+  static async decrementQuantity(postId, newQuantity, isSold, minQuantity, client) {
+    const { rows } = await client.query(
+      `UPDATE gallery_posts
+       SET quantity = $2, sold = $3
+       WHERE id = $1 AND sold = false AND quantity >= $4
+       RETURNING id`,
+      [postId, newQuantity, isSold, minQuantity]
+    );
+    return rows[0] || null;
+  }
+
   static async getAllPosts() {
     const { rows } = await pool.query(
       `
-    SELECT * FROM gallery_posts
-    `
+    SELECT * FROM gallery_posts WHERE deleted_at IS NULL
+    `,
     );
 
     if (!rows) {
@@ -281,10 +316,10 @@ module.exports = class Post {
   static async getFeedPosts(sub) {
     const { rows } = await pool.query(
       `
-SELECT 
+SELECT
     posts.category,
     posts.created_at,
-    posts.customer_id,
+    posts.seller_sub,
     posts.description,
     posts.id,
     posts.image_url,
@@ -296,14 +331,15 @@ SELECT
     sc.display_name,
     sc.logo_image_url
 FROM gallery_posts posts
-JOIN stripe_customers sc ON posts.customer_id = sc.customer_id
-JOIN followers f ON sc.aws_sub = f.followed_id
-WHERE f.follower_id = $1
+JOIN cognito_users cu ON posts.seller_sub = cu.sub
+LEFT JOIN stripe_customers sc ON cu.sub = sc.aws_sub
+JOIN followers f ON cu.sub = f.followed_id
+WHERE f.follower_id = $1 AND posts.deleted_at IS NULL
 ORDER BY posts.created_at DESC
 LIMIT 50;
 
       `,
-      [sub]
+      [sub],
     );
 
     if (!rows) {

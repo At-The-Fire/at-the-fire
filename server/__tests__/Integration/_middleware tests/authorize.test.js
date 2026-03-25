@@ -23,7 +23,7 @@ jest.mock('jsonwebtoken', () => ({
     }
   }),
   decode: jest.fn((token) =>
-    token === 'valid.free.user.id.token' ? { sub: process.env.TEST_SUB_FULL_CUSTOMER } : null
+    token === 'valid.free.user.id.token' ? { sub: process.env.TEST_SUB_FULL_CUSTOMER } : null,
   ),
 }));
 
@@ -43,18 +43,18 @@ jest.mock('../../../lib/models/Invoices', () => ({
 describe('authorize Middleware', () => {
   const setupTokensAndMocks = (accessToken, idToken, refreshToken, isActive) => {
     jwt.decode.mockImplementation((token) =>
-      token === idToken ? { sub: 'sub_fullCustomer' } : null
+      token === idToken ? { sub: process.env.TEST_SUB_FULL_CUSTOMER } : null,
     );
     jwt.verify.mockImplementation((token, getKey, options, callback) => {
       if ([accessToken, idToken, refreshToken].includes(token)) {
-        callback(null, { sub: 'sub_fullCustomer' });
+        callback(null, { sub: process.env.TEST_SUB_FULL_CUSTOMER });
       } else {
         callback(new Error('Invalid token'));
       }
     });
     StripeCustomer.getStripeByAWSSub.mockResolvedValue({
       customerId: 'stripe-customer-id_full',
-      awsSub: 'sub_fullCustomer',
+      awsSub: process.env.TEST_SUB_FULL_CUSTOMER,
       confirmed: true,
     });
 
@@ -83,7 +83,7 @@ describe('authorize Middleware', () => {
       'valid.subscriber.access.token',
       'valid.subscriber.id.token',
       'valid.subscriber.refresh.token',
-      true
+      true,
     );
     const response = await request(app)
       .get('/api/v1/dashboard')
@@ -99,13 +99,15 @@ describe('authorize Middleware', () => {
         {
           category: 'SampleCategory3',
           created_at: expect.any(String),
-          customer_id: 'stripe-customer-id_full',
           description: 'SampleDescription3',
           id: '3',
           image_url: 'sample_image_url_path_3',
           num_imgs: '1',
           price: 'SamplePrice3',
           public_id: 'publicID_post_3',
+          quantity: 1,
+          seller_sub: process.env.TEST_SUB_FULL_CUSTOMER,
+          shipping_cost: '0',
           sold: false,
           date_sold: null,
           title: 'SampleTitle3',
@@ -113,20 +115,20 @@ describe('authorize Middleware', () => {
         {
           category: 'SampleCategory4',
           created_at: expect.any(String),
-          customer_id: 'stripe-customer-id_full',
           description: 'SampleDescription4',
           id: '4',
           image_url: 'sample_image_url_path_4',
           num_imgs: '2',
           price: 'SamplePrice4',
           public_id: 'publicID_post_4',
+          quantity: 1,
+          seller_sub: process.env.TEST_SUB_FULL_CUSTOMER,
+          shipping_cost: '0',
           sold: false,
           date_sold: null,
           title: 'SampleTitle4',
         },
       ],
-
-      restricted: false,
     });
   });
 
@@ -135,7 +137,7 @@ describe('authorize Middleware', () => {
       'valid.subscriber.access.token',
       'valid.subscriber.id.token',
       'valid.subscriber.refresh.token',
-      false
+      false,
     );
     const response = await request(app)
       .get('/api/v1/dashboard')
@@ -151,13 +153,15 @@ describe('authorize Middleware', () => {
         {
           category: 'SampleCategory3',
           created_at: expect.any(String),
-          customer_id: 'stripe-customer-id_full',
           description: 'SampleDescription3',
           id: '3',
           image_url: 'sample_image_url_path_3',
           num_imgs: '1',
           price: 'SamplePrice3',
           public_id: 'publicID_post_3',
+          quantity: 1,
+          seller_sub: process.env.TEST_SUB_FULL_CUSTOMER,
+          shipping_cost: '0',
           sold: false,
           date_sold: null,
           title: 'SampleTitle3',
@@ -165,37 +169,59 @@ describe('authorize Middleware', () => {
         {
           category: 'SampleCategory4',
           created_at: expect.any(String),
-          customer_id: 'stripe-customer-id_full',
           description: 'SampleDescription4',
           id: '4',
           image_url: 'sample_image_url_path_4',
           num_imgs: '2',
           price: 'SamplePrice4',
           public_id: 'publicID_post_4',
+          quantity: 1,
+          seller_sub: process.env.TEST_SUB_FULL_CUSTOMER,
+          shipping_cost: '0',
           sold: false,
           date_sold: null,
           title: 'SampleTitle4',
         },
       ],
-
-      restricted: true,
     });
+  });
+
+  it('GET /dashboard should bypass subscription checks when BETA_MODE is true', async () => {
+    process.env.BETA_MODE = 'true';
+    setupTokensAndMocks(
+      'valid.beta.access.token',
+      'valid.beta.id.token',
+      'valid.beta.refresh.token',
+      false, // inactive subscription — should still pass due to BETA_MODE bypass
+    );
+
+    const response = await request(app)
+      .get('/api/v1/dashboard')
+      .set('Cookie', [
+        'accessToken=valid.beta.access.token;',
+        'idToken=valid.beta.id.token;',
+        'refreshToken=valid.beta.refresh.token;',
+      ]);
+
+    delete process.env.BETA_MODE;
+    expect(response.status).toBe(200);
+    expect(response.body.posts).toEqual(expect.any(Array));
   });
 
   //
   it('PUT /profile/customer-update should return a 403 if user is not authorized to update profile due to incorrect customerId ', async () => {
     // Setup the mocks with one customerId
     setupTokensAndMocks(
-      'sub_fullCustomer.access.token',
-      'sub_fullCustomer.id.token',
-      'sub_fullCustomer.refresh.token',
-      false
+      `${process.env.TEST_SUB_FULL_CUSTOMER}.access.token`,
+      `${process.env.TEST_SUB_FULL_CUSTOMER}.id.token`,
+      `${process.env.TEST_SUB_FULL_CUSTOMER}.refresh.token`,
+      false,
     );
 
     // Mock StripeCustomer to return a different customerId than what setupTokensAndMocks uses
     StripeCustomer.getStripeByAWSSub.mockResolvedValue({
       customerId: 'different-customer-id', // This is the key change
-      awsSub: 'sub_fullCustomer',
+      awsSub: process.env.TEST_SUB_FULL_CUSTOMER,
       confirmed: true,
     });
 
@@ -209,14 +235,14 @@ describe('authorize Middleware', () => {
         publicId: 'publicID_profile',
       })
       .set('Cookie', [
-        'accessToken=sub_fullCustomer.access.token;',
-        'idToken=sub_fullCustomer.id.token;',
-        'refreshToken=sub_fullCustomer.refresh.token;',
+        `accessToken=${process.env.TEST_SUB_FULL_CUSTOMER}.access.token;`,
+        `idToken=${process.env.TEST_SUB_FULL_CUSTOMER}.id.token;`,
+        `refreshToken=${process.env.TEST_SUB_FULL_CUSTOMER}.refresh.token;`,
       ]);
 
     expect(resp.status).toBe(403);
     expect(resp.body.message).toBe(
-      'You are not a current customer or your subscription is not active'
+      'You are not a current customer or your subscription is not active',
     );
   });
 });

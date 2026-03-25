@@ -4,8 +4,9 @@ const validator = require('validator');
 const authenticateAWS = require('../middleware/authenticateAWS.js');
 const AmazonCognitoIdentity = require('amazon-cognito-identity-js');
 const jwt = require('jsonwebtoken');
+const { getSigningKey } = require('../utils/jwks');
 
-const { getStripeByAWSSub } = require('../models/StripeCustomer.js');
+const { getStripeByAWSSub, insertBetaPlaceholder } = require('../models/StripeCustomer.js');
 const { getSubscriptionByCustomerId } = require('../models/Subscriptions');
 
 const poolData = {
@@ -23,7 +24,7 @@ if (process.env.NODE_ENV !== 'test') {
 module.exports = Router()
   .post('/new-user', async (req, res, next) => {
     try {
-      const { email, sub } = req.body;
+      const { email, sub, tosVersion } = req.body;
 
       // Check for missing data
       if (!email) throw new Error('Missing email error.');
@@ -35,6 +36,12 @@ module.exports = Router()
         return;
       }
 
+      // Validate sub looks like a UUID (8-4-4-4-12 hex).
+      // AWS Cognito generates non-standard variant bits so validator.isUUID() rejects them.
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sub)) {
+        return res.status(400).json({ error: 'Invalid sub format.' });
+      }
+
       // Validate email format
       // there is an optional "options" object that can be passed to the validator
       // to specify a list of allowed formats... not sure if we need it
@@ -42,7 +49,11 @@ module.exports = Router()
         return res.status(400).json({ error: 'Invalid email format.' });
       }
 
-      await AWSUser.insertAWS({ email, sub });
+      if (!tosVersion || typeof tosVersion !== 'string') {
+        return res.status(400).json({ error: 'tosVersion is required.' });
+      }
+
+      await AWSUser.insertAWS({ email, sub, tosVersion });
 
       res.json({
         message: 'Account created successfully, check email for verification!',
@@ -52,22 +63,17 @@ module.exports = Router()
         e.message.includes('duplicate key value violates unique constraint "cognito_users_sub_key"')
       ) {
         res.status(409).json('Sub already exists.');
-        next(e);
       } else if (
         e.message.includes(
-          'duplicate key value violates unique constraint "cognito_users_email_key"'
+          'duplicate key value violates unique constraint "cognito_users_email_key"',
         )
       ) {
         res.status(409).json('Email already exists.');
-        next(e);
       } else if (e.message.includes('Missing sub error.')) {
         res.status(400).json('Sub is required.');
-        next(e);
       } else if (e.message.includes('Missing email error.')) {
         res.status(400).json('Email is required.');
-        next(e);
       } else {
-        // Handle other errors or default case
         res.status(500).json('Something went wrong.');
         console.error(e);
         next(e);
@@ -82,7 +88,6 @@ module.exports = Router()
       Expires: '0',
     });
     try {
-      // Check if session data is provided
       if (!req.body || Object.keys(req.body).length === 0) {
         return res.status(400).json({ error: 'Session data is missing.' });
       }
@@ -95,47 +100,64 @@ module.exports = Router()
       const accessToken = session.accessToken.jwtToken;
       const refreshToken = session.refreshToken.token;
 
+      // Verify both tokens before setting cookies (H6)
+      const verifyToken = (token, isAccessToken = false) => {
+        return new Promise((resolve, reject) => {
+          const options = {
+            algorithms: ['RS256'],
+            issuer: `https://cognito-idp.us-west-2.amazonaws.com/${process.env.COGNITO_USER_POOL_ID}`,
+          };
+          if (!isAccessToken) options.audience = process.env.APP_CLIENT_ID;
+          jwt.verify(token, getSigningKey, options, (err) => {
+            if (err) reject(err);
+            else resolve(true);
+          });
+        });
+      };
+
+      try {
+        await Promise.all([verifyToken(accessToken, true), verifyToken(idToken, false)]);
+      } catch {
+        return res.status(401).json({ error: 'Invalid tokens' });
+      }
+
+      const isSecure = process.env.SECURE_COOKIES === 'true';
+      const cookieOpts = {
+        httpOnly: true,
+        secure: isSecure,
+        sameSite: isSecure ? 'None' : 'Lax',
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+      };
+
       // bake the cookies with the tokens received from the session
-      res.cookie('accessToken', accessToken, {
-        httpOnly: true,
-        secure: process.env.SECURE_COOKIES === 'true' ? 'true' : 'false',
-        sameSite: 'None',
-      });
-
-      res.cookie('idToken', idToken, {
-        httpOnly: true,
-        secure: process.env.SECURE_COOKIES === 'true' ? 'true' : 'false',
-        sameSite: 'None',
-      });
-
-      res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: process.env.SECURE_COOKIES === 'true' ? 'true' : 'false',
-        sameSite: 'None',
-      });
+      res.cookie('accessToken', accessToken, cookieOpts);
+      res.cookie('idToken', idToken, cookieOpts);
+      res.cookie('refreshToken', refreshToken, cookieOpts);
 
       res.json({ message: 'Cookies created successfully!' });
     } catch (e) {
       if (e.message.includes('Cannot read properties')) {
         res.status(400).json({ error: 'One or more tokens are missing.' });
       } else {
-        res.status(500).json({ error: e.message });
+        res.status(500).json({ error: 'Internal server error' });
+        console.error(e);
+        next(e);
       }
-      next(e);
     }
   })
 
-  .delete('/clear-cookies', async (req, res, next) => {
+  .delete('/clear-cookies', async (req, res) => {
     res.set({
       'Cache-Control': 'no-store, no-cache, must-revalidate, private',
       Pragma: 'no-cache',
       Expires: '0',
     });
     try {
+      const isSecure = process.env.SECURE_COOKIES === 'true';
       const cookieOptions = {
         httpOnly: true,
-        secure: process.env.SECURE_COOKIES === 'true' ? 'true' : 'false', // String values to match exactly
-        sameSite: 'None',
+        secure: isSecure,
+        sameSite: isSecure ? 'None' : 'Lax',
       };
 
       res.clearCookie('accessToken', cookieOptions);
@@ -144,8 +166,8 @@ module.exports = Router()
 
       res.status(204).send();
     } catch (e) {
-      res.status(500).json({ error: e.message });
-      next(e);
+      res.status(500).json({ error: 'Internal server error' });
+      console.error(e);
     }
   })
 
@@ -162,6 +184,16 @@ module.exports = Router()
       const stripeCustomer = await getStripeByAWSSub(sub);
       let subscription = null;
       if (!stripeCustomer) {
+        if (process.env.BETA_MODE === 'true') {
+          const placeholder = await insertBetaPlaceholder(sub);
+          return res.status(200).json({
+            hasSubscription: false,
+            betaAccess: true,
+            customerId: placeholder.customerId,
+            confirmed: true,
+            subscription: null,
+          });
+        }
         return res.status(200).json({
           hasSubscription: false,
           message: 'User is not subscribed',
@@ -169,9 +201,14 @@ module.exports = Router()
       }
 
       const { customerId, email, name, confirmed } = stripeCustomer;
+
+      const betaModeActive = process.env.BETA_MODE === 'true';
+
       if (stripeCustomer.customerId) {
         subscription = await getSubscriptionByCustomerId({ customerId });
       }
+
+      const cognitoUser = await AWSUser.getCognitoUserBySub({ sub });
 
       res.json({
         hasSubscription: true,
@@ -179,14 +216,16 @@ module.exports = Router()
         subscription,
         email,
         name,
-        admin: customerId === process.env.ADMIN_ID,
+        admin: cognitoUser?.isAdmin || false,
         confirmed,
+        betaAccess: betaModeActive,
       });
     } catch (e) {
       if (e.message.includes('User not found')) {
         res.status(404).json({ error: e.message });
       } else {
-        res.status(500).json({ error: e.message });
+        res.status(500).json({ error: 'Internal server error' });
+        console.error(e);
         next(e);
       }
     }
@@ -203,36 +242,37 @@ module.exports = Router()
       const idToken = req.cookies['idToken'];
 
       if (!refreshTokenFromCookie) {
-        // eslint-disable-next-line no-console
-        console.log('No refresh token provided apparently???  ', refreshTokenFromCookie);
-
         return res.status(400).send('No refresh token provided');
       }
 
       if (!idToken) {
-        // eslint-disable-next-line no-console
-        console.log('No ID token provided apparently???  ', idToken);
-
         return res.status(400).send('No ID token provided');
       }
 
       let sub;
       try {
-        const decodedToken = jwt.decode(idToken);
-        if (!decodedToken || !decodedToken.sub) {
-          // eslint-disable-next-line no-console
-          console.log('Invalid ID token  =======================');
-
-          // If the decoded token is null or doesn't have a 'sub' field, it's invalid
+        const verifiedToken = await new Promise((resolve, reject) => {
+          jwt.verify(
+            idToken,
+            getSigningKey,
+            {
+              algorithms: ['RS256'],
+              issuer: `https://cognito-idp.us-west-2.amazonaws.com/${process.env.COGNITO_USER_POOL_ID}`,
+              audience: process.env.APP_CLIENT_ID,
+              ignoreExpiration: true, // token may be expired — that's why we're refreshing
+            },
+            (err, decoded) => {
+              if (err) reject(err);
+              else resolve(decoded);
+            },
+          );
+        });
+        if (!verifiedToken || !verifiedToken.sub) {
           return res.status(400).send('Invalid ID token');
         }
-        sub = decodedToken.sub;
-      } catch (error) {
-        // Handle decoding errors (malformed tokens, etc.)
-        // eslint-disable-next-line no-console
-        console.log('Error decoding ID token  =======================', error);
-
-        return res.status(400).send('Error decoding ID token: ' + error.message);
+        sub = verifiedToken.sub;
+      } catch {
+        return res.status(400).send('Error verifying ID token');
       }
 
       const awsSub = sub;
@@ -254,12 +294,7 @@ module.exports = Router()
 
       cognitoUser.refreshSession(refreshToken, (err, session) => {
         if (err) {
-          //TODO need to make sure all error codes match real AWS errors so leaving logs in for now
           console.error('Refresh token error:', err);
-          // eslint-disable-next-line no-console
-          console.log('err.code', err.code);
-          // eslint-disable-next-line no-console
-          console.log('err.message', err.message);
 
           // Error handling for expired tokens
           if (err.code === 'TokenExpiredException') {
@@ -291,23 +326,18 @@ module.exports = Router()
         // You might not get a new refreshToken every time. But if you do:
         const newRefreshToken = session.refreshToken ? session.refreshToken.token : null;
 
-        res.cookie('accessToken', newAccessToken, {
+        const isSecure = process.env.SECURE_COOKIES === 'true';
+        const refreshCookieOpts = {
           httpOnly: true,
-          secure: process.env.SECURE_COOKIES === 'true' ? 'true' : 'false',
-          sameSite: 'None',
-        });
-        res.cookie('idToken', newIdToken, {
-          httpOnly: true,
-          secure: process.env.SECURE_COOKIES === 'true' ? 'true' : 'false',
-          sameSite: 'None',
-        });
+          secure: isSecure,
+          sameSite: isSecure ? 'None' : 'Lax',
+          maxAge: 30 * 24 * 60 * 60 * 1000,
+        };
+        res.cookie('accessToken', newAccessToken, refreshCookieOpts);
+        res.cookie('idToken', newIdToken, refreshCookieOpts);
         if (newRefreshToken) {
           // Only set this if you've received a new one.
-          res.cookie('refreshToken', newRefreshToken, {
-            httpOnly: true,
-            secure: process.env.SECURE_COOKIES === 'true' ? 'true' : 'false',
-            sameSite: 'None',
-          });
+          res.cookie('refreshToken', newRefreshToken, refreshCookieOpts);
         }
 
         // Example: Adding expiration time to the response
@@ -317,7 +347,7 @@ module.exports = Router()
         });
       });
     } catch (e) {
-      res.status(500).json({ error: e.message });
-      console.error('error message:', e.message);
+      console.error('Refresh token error:', e);
+      res.status(500).json({ error: 'Internal server error' });
     }
   });

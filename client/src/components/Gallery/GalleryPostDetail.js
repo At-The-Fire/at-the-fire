@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Avatar, Box, Button, Typography, Modal, IconButton, useMediaQuery } from '@mui/material';
+import { Avatar, Box, Button, MenuItem, Select, Typography, Modal, IconButton, useMediaQuery } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
@@ -19,6 +19,7 @@ export default function GalleryPostDetail() {
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [modalIsOpen, setModalIsOpen] = useState(false);
+  const [qty, setQty] = useState(1);
 
   const navigate = useNavigate();
 
@@ -38,6 +39,22 @@ export default function GalleryPostDetail() {
       checkTokenExpiry();
     }
   }, [isAuthenticated, error, authenticateUser, signingOut, checkTokenExpiry]);
+
+  const handleBuyNow = () => {
+    navigate('/checkout', {
+      state: {
+        item: {
+          postId: postDetail.id,
+          title: postDetail.title,
+          price: Number(postDetail.price),
+          quantity: qty,
+          imageUrl: imageUrls[0],
+          sellerCustomerId: postDetail.customer_id,
+          shippingCost: Number(postDetail.shipping_cost) || 0,
+        },
+      },
+    });
+  };
 
   // functions
 
@@ -175,8 +192,7 @@ export default function GalleryPostDetail() {
                         width: 10,
                         height: 10,
                         borderRadius: '50%',
-                        backgroundColor:
-                          index === currentIndex ? theme.palette.primary.main : 'grey',
+                        backgroundColor: index === currentIndex ? theme.palette.primary.main : 'grey',
                         mx: 0.5,
                         cursor: 'pointer',
                         marginBottom: '1rem',
@@ -208,9 +224,7 @@ export default function GalleryPostDetail() {
                     onClick={() => setCurrentIndex(index)}
                     sx={{
                       border:
-                        index === currentIndex
-                          ? `2px solid ${theme.palette.primary.main}`
-                          : '2px solid transparent',
+                        index === currentIndex ? `2px solid ${theme.palette.primary.main}` : '2px solid transparent',
                       '&:hover': { cursor: 'pointer' },
                     }}
                   >
@@ -253,11 +267,7 @@ export default function GalleryPostDetail() {
                   },
                 }}
               >
-                <img
-                  src={imageUrls[currentIndex]}
-                  alt={`modal-post-${currentIndex}`}
-                  style={{ width: '100%' }}
-                />
+                <img src={imageUrls[currentIndex]} alt={`modal-post-${currentIndex}`} style={{ width: '100%' }} />
                 <IconButton
                   onClick={() => setModalIsOpen(false)}
                   sx={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'red' }}
@@ -370,13 +380,28 @@ export default function GalleryPostDetail() {
                 textDecoration: postDetail.sold ? 'line-through' : '',
               }}
             >
-              ${Number(postDetail.price).toLocaleString()}
+              ${Number(postDetail.price || 0).toLocaleString()}
             </Typography>
           </Box>
         </Box>
-        <Typography sx={{ marginLeft: '1.5rem', textAlign: 'left' }}>
-          {postDetail.description}
-        </Typography>
+        {!postDetail.sold && postDetail.price > 0 && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, ml: '1.5rem', mt: 1, mb: 1 }}>
+            <Select size="small" value={qty} onChange={(e) => setQty(e.target.value)} sx={{ minWidth: 70 }}>
+              {Array.from({ length: postDetail.quantity ?? 1 }, (_, i) => i + 1).map((n) => (
+                <MenuItem key={n} value={n}>
+                  {n}
+                </MenuItem>
+              ))}
+            </Select>
+            <Button variant="contained" size="small" onClick={handleBuyNow}>
+              Buy Now
+            </Button>
+          </Box>
+        )}
+        {postDetail.quantity !== null && postDetail.quantity !== undefined && (
+          <Typography sx={{ marginLeft: '1.5rem', textAlign: 'left' }}>{postDetail.quantity} in stock</Typography>
+        )}
+        <Typography sx={{ marginLeft: '1.5rem', textAlign: 'left' }}>{postDetail.description}</Typography>
       </Box>
     </Box>
   );

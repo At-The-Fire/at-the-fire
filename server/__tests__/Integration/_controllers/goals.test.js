@@ -6,6 +6,8 @@ const StripeCustomer = require('../../../lib/models/StripeCustomer.js');
 const Subscriptions = require('../../../lib/models/Subscriptions.js');
 const Invoices = require('../../../lib/models/Invoices.js');
 
+const originalBetaMode = process.env.BETA_MODE;
+
 // Importing jsonwebtoken to mock its verify function
 const jwt = require('jsonwebtoken');
 
@@ -19,7 +21,7 @@ jest.mock('jsonwebtoken', () => ({
       token === 'valid.free.user.refresh.token'
     ) {
       // Simulate a successful token verification
-      callback(null, { sub: 'sub_fullCustomer' });
+      callback(null, { sub: process.env.TEST_SUB_FULL_CUSTOMER });
     } else {
       // Simulate verification failure
       callback(new Error('Invalid token'));
@@ -28,7 +30,7 @@ jest.mock('jsonwebtoken', () => ({
   decode: jest.fn((token) => {
     if (token === 'valid.free.user.id.token') {
       // Return a mock decoded token with `sub`
-      return { sub: 'sub_fullCustomer' };
+      return { sub: process.env.TEST_SUB_FULL_CUSTOMER };
     } else {
       return null; // Invalid token case
     }
@@ -119,19 +121,22 @@ const setupSuccessSubscribedUserMocks = () => {
 describe('authenticateAWS Middleware', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    process.env.BETA_MODE = 'false';
     return setup(pool);
   });
   afterAll(() => {
+    if (typeof originalBetaMode === 'undefined') {
+      delete process.env.BETA_MODE;
+    } else {
+      process.env.BETA_MODE = originalBetaMode;
+    }
     delete process.env.SECURE_COOKIES;
     pool.end();
   });
 
   it('GET /goals should get goals for subscribed users', async () => {
-    const {
-      subscribedUserAccessToken,
-      subscribedUserIdToken,
-      subscribedUserRefreshToken,
-    } = setupSuccessSubscribedUserMocks();
+    const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+      setupSuccessSubscribedUserMocks();
 
     // Sending the request with all three required tokens as cookies
     const response = await request(app)
@@ -161,11 +166,8 @@ describe('authenticateAWS Middleware', () => {
   });
 
   it('PUT /goals should update goals for subscribed users', async () => {
-    const {
-      subscribedUserAccessToken,
-      subscribedUserIdToken,
-      subscribedUserRefreshToken,
-    } = setupSuccessSubscribedUserMocks();
+    const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+      setupSuccessSubscribedUserMocks();
 
     const updatedGoals = { quotaData: { monthly_quota: 6000, work_days: 22 } };
 
@@ -191,11 +193,8 @@ describe('authenticateAWS Middleware', () => {
   });
 
   it('PUT /goals should return 403 for inactive subscriptions', async () => {
-    const {
-      subscribedUserAccessToken,
-      subscribedUserIdToken,
-      subscribedUserRefreshToken,
-    } = setupSuccessSubscribedUserMocks();
+    const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+      setupSuccessSubscribedUserMocks();
 
     // Override the subscription mock to return inactive
     Subscriptions.getSubscriptionByCustomerId.mockResolvedValue({
@@ -218,7 +217,6 @@ describe('authenticateAWS Middleware', () => {
         `refreshToken=${subscribedUserRefreshToken};`,
       ])
       .send(updatedGoals);
-
     expect(response.status).toBe(403);
     expect(response.body).toEqual({
       message: 'Your subscription is inactive. You cannot edit goals.',
@@ -237,11 +235,8 @@ describe('authenticateAWS Middleware', () => {
   });
 
   it('PUT /goals should return 400 when quotaData is an empty object', async () => {
-    const {
-      subscribedUserAccessToken,
-      subscribedUserIdToken,
-      subscribedUserRefreshToken,
-    } = setupSuccessSubscribedUserMocks();
+    const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+      setupSuccessSubscribedUserMocks();
 
     const response = await request(app)
       .put('/api/v1/goals')
@@ -253,17 +248,12 @@ describe('authenticateAWS Middleware', () => {
       .send({ quotaData: {} });
 
     expect(response.status).toBe(400);
-    expect(response.body.message).toBe(
-      'Monthly quota and work days are required fields'
-    );
+    expect(response.body.message).toBe('Monthly quota and work days are required fields');
   });
 
   it('PUT /goals should return 400 when request body is empty', async () => {
-    const {
-      subscribedUserAccessToken,
-      subscribedUserIdToken,
-      subscribedUserRefreshToken,
-    } = setupSuccessSubscribedUserMocks();
+    const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+      setupSuccessSubscribedUserMocks();
 
     const response = await request(app)
       .put('/api/v1/goals')
@@ -279,11 +269,8 @@ describe('authenticateAWS Middleware', () => {
   });
 
   it('PUT /goals should return 400 when request is missing quotaData wrapper', async () => {
-    const {
-      subscribedUserAccessToken,
-      subscribedUserIdToken,
-      subscribedUserRefreshToken,
-    } = setupSuccessSubscribedUserMocks();
+    const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+      setupSuccessSubscribedUserMocks();
 
     const response = await request(app)
       .put('/api/v1/goals')
@@ -299,11 +286,8 @@ describe('authenticateAWS Middleware', () => {
   });
 
   it('PUT /goals should return 400 when work_days is invalid', async () => {
-    const {
-      subscribedUserAccessToken,
-      subscribedUserIdToken,
-      subscribedUserRefreshToken,
-    } = setupSuccessSubscribedUserMocks();
+    const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+      setupSuccessSubscribedUserMocks();
 
     const response = await request(app)
       .put('/api/v1/goals')
@@ -315,17 +299,12 @@ describe('authenticateAWS Middleware', () => {
       .send({ quotaData: { monthly_quota: 5000, work_days: 32 } });
 
     expect(response.status).toBe(400);
-    expect(response.body.message).toBe(
-      'work_days must be a number between 1 and 31'
-    );
+    expect(response.body.message).toBe('work_days must be a number between 1 and 31');
   });
 
   it('PUT /goals should return 400 when monthly_quota is not a positive number', async () => {
-    const {
-      subscribedUserAccessToken,
-      subscribedUserIdToken,
-      subscribedUserRefreshToken,
-    } = setupSuccessSubscribedUserMocks();
+    const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+      setupSuccessSubscribedUserMocks();
 
     const response = await request(app)
       .put('/api/v1/goals')
@@ -337,16 +316,11 @@ describe('authenticateAWS Middleware', () => {
       .send({ quotaData: { monthly_quota: -5000, work_days: 22 } });
 
     expect(response.status).toBe(400);
-    expect(response.body.message).toBe(
-      'Monthly quota must be a positive number'
-    );
+    expect(response.body.message).toBe('Monthly quota must be a positive number');
   });
   it('PUT /goals should return 400 when monthly_quota is not a number', async () => {
-    const {
-      subscribedUserAccessToken,
-      subscribedUserIdToken,
-      subscribedUserRefreshToken,
-    } = setupSuccessSubscribedUserMocks();
+    const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
+      setupSuccessSubscribedUserMocks();
 
     const response = await request(app)
       .put('/api/v1/goals')
@@ -358,8 +332,6 @@ describe('authenticateAWS Middleware', () => {
       .send({ quotaData: { monthly_quota: 'not-a-number', work_days: 22 } });
 
     expect(response.status).toBe(400);
-    expect(response.body.message).toBe(
-      'Monthly quota must be a positive number'
-    );
+    expect(response.body.message).toBe('Monthly quota must be a positive number');
   });
 });

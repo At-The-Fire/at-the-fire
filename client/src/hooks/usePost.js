@@ -9,15 +9,15 @@ export function usePost(id) {
   const [loading, setLoading] = useState(true);
   const [isDeleted, setIsDeleted] = useState(false);
   const [additionalImages, setAdditionalImages] = useState([]);
-  const { customerId, isAuthenticated, setError, error, user } = useAuthStore();
+  const { isAuthenticated, setError, error, user } = useAuthStore();
 
   useEffect(() => {
+    if (!user || !isAuthenticated || error === 401 || error === 403) {
+      return;
+    }
     setLoading(true);
     const fetchData = async () => {
       try {
-        if (!user || !isAuthenticated || !customerId || error === 401 || error === 403) {
-          return;
-        }
         const postDetail = await getPostDetail(id);
         const additionalImages = await getAdditionalImageUrlsPublicIds(id);
         const additionalImageUrlsPublicIds = additionalImages.map((image) => image.image_url);
@@ -48,7 +48,7 @@ export function usePost(id) {
       }
     };
     fetchData();
-  }, []);
+  }, [id, isAuthenticated, user]);
 
   return {
     postDetail,

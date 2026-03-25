@@ -33,17 +33,20 @@ jest.mock('@aws-sdk/client-s3', () => {
 
 // Mock user data
 const mockUser = {
-  email: process.env.TEST_EMAIL,
-  sub: process.env.TEST_SUB,
-  customer_id: process.env.TEST_CUSTOMER_ID,
+  email: process.env.TEST_EMAIL_NO_PROFILE,
+  sub: process.env.TEST_SUB_CUSTOMER_NO_PROFILE,
+  customer_id: process.env.TEST_STRIPE_CUSTOMER_ID_NO_PROFILE,
 };
 
-// Mock customer data
+// Mock customer data retained for any middleware that still reads customer context.
 const mockCustomer = {
   customerId: process.env.TEST_STRIPE_CUSTOMER_ID_NO_PROFILE,
   isActive: true,
   subscriptionEndDate: 1630435200,
 };
+
+// Retained for compatibility with unrelated middleware mocks.
+let mockRestricted = false;
 
 // Mocking the `AWSUser` module
 jest.mock('../../../lib/models/AWSUser', () => {
@@ -56,10 +59,10 @@ jest.mock('../../../lib/models/AWSUser', () => {
   };
 });
 
-// Mock authenticate middleware to attach mock user to req.user object before each test case runs (req.user is used in the route handler)
+// Mock authenticate middleware to attach mock sub to req.userAWSSub before each test case runs
 // this is assuming that the user is logged in and authenticated (tested elsewhere)
 jest.mock('../../../lib/middleware/authenticateAWS.js', () => (req, res, next) => {
-  req.user = mockUser;
+  req.userAWSSub = mockUser.sub;
   next();
 });
 
@@ -67,6 +70,7 @@ jest.mock('../../../lib/middleware/authenticateAWS.js', () => (req, res, next) =
 // this is assuming that the user is logged in and authenticated (tested elsewhere)
 jest.mock('../../../lib/middleware/authorizeSubscription.js', () => (req, res, next) => {
   req.customerId = mockCustomer.customerId;
+  req.restricted = mockRestricted;
   next();
 });
 
@@ -88,8 +92,10 @@ jest.mock('../../../redisClient', () => {
 
 describe('posts/ post details/ S3 routes', () => {
   beforeEach(() => {
+    mockRestricted = false;
     process.env.AWS_BUCKET_NAME = 'test-bucket';
     process.env.AWS_REGION = 'us-west-2';
+    process.env.CLOUDFRONT_DOMAIN = 'd5fmwpj8iaraa.cloudfront.net';
     return setup(pool);
   });
 
@@ -215,9 +221,11 @@ describe('posts/ post details/ S3 routes', () => {
       image_url: expect.any(String),
       category: expect.any(String),
       price: expect.any(String),
-      customer_id: expect.any(String),
+      seller_sub: expect.any(String),
       num_imgs: expect.any(String),
       public_id: expect.any(String),
+      quantity: 1,
+      shipping_cost: '0',
       sold: expect.any(Boolean),
       date_sold: null,
     });
@@ -247,15 +255,17 @@ describe('posts/ post details/ S3 routes', () => {
         'https://res.cloudinary.com/dzodr2cdk/image/upload/v1731739453/at-the-fire/IMG_1770.jpg',
       category: 'test category',
       price: '40',
-      customer_id: 'stripe-customer-id_noProfile',
+      seller_sub: process.env.TEST_SUB_CUSTOMER_NO_PROFILE,
       num_imgs: expect.any(String),
       public_id: expect.any(String),
+      quantity: null,
+      shipping_cost: '0',
       sold: true,
       date_sold: '1720594800000',
     });
   });
 
-  it('PUT/dashboard/:id updates a post and checks for the updated values', async () => {
+  it('PUT/dashboard/:id sets quantity to 0 when sold is true', async () => {
     const resp = await request(app)
       .put('/api/v1/dashboard/1')
       .send({ id: 1 })
@@ -269,6 +279,8 @@ describe('posts/ post details/ S3 routes', () => {
           price: 'test price is updated',
           num_imgs: 1,
           public_id: 'test public id',
+          quantity: 1,
+          shipping_cost: 0,
           sold: true,
           date_sold: '1720594800000',
         },
@@ -284,11 +296,54 @@ describe('posts/ post details/ S3 routes', () => {
         'https://res.cloudinary.com/dzodr2cdk/image/upload/v1731739453/at-the-fire/UPDATED_IMAGE.jpg',
       category: 'test category is updated',
       price: 'test price is updated',
-      customer_id: expect.any(String),
+      seller_sub: expect.any(String),
       num_imgs: expect.any(String),
       public_id: expect.any(String),
+      quantity: 0,
+      shipping_cost: '0',
       sold: true,
       date_sold: '1720594800000',
+    });
+  });
+
+  it('PUT/dashboard/:id preserves quantity when sold is false', async () => {
+    const resp = await request(app)
+      .put('/api/v1/dashboard/1')
+      .send({ id: 1 })
+      .send({
+        post: {
+          title: 'Test title is updated again',
+          description: 'test description is updated again',
+          image_url:
+            'https://res.cloudinary.com/dzodr2cdk/image/upload/v1731739453/at-the-fire/UPDATED_IMAGE.jpg',
+          category: 'test category is updated again',
+          price: 'test price is updated again',
+          num_imgs: 1,
+          public_id: 'test public id',
+          quantity: 3,
+          sold: false,
+          date_sold: null,
+          shipping_cost: '0',
+        },
+      });
+
+    expect(resp.status).toBe(200);
+    expect(resp.body).toEqual({
+      id: expect.any(String),
+      created_at: expect.any(String),
+      title: 'Test title is updated again',
+      description: 'test description is updated again',
+      image_url:
+        'https://res.cloudinary.com/dzodr2cdk/image/upload/v1731739453/at-the-fire/UPDATED_IMAGE.jpg',
+      category: 'test category is updated again',
+      price: 'test price is updated again',
+      seller_sub: expect.any(String),
+      num_imgs: expect.any(String),
+      public_id: expect.any(String),
+      shipping_cost: '0',
+      quantity: 3,
+      sold: false,
+      date_sold: null,
     });
   });
 
@@ -356,7 +411,11 @@ describe('posts/ post details/ S3 routes', () => {
     expect(response.body.files).toBeDefined();
     expect(Array.isArray(response.body.files)).toBe(true);
     expect(response.body.files.length).toBe(2);
-    expect(response.body.files[0].secure_url).toContain('d5fmwpj8iaraa.cloudfront.net');
+    const expectedDomain =
+      process.env.APP_ENV !== 'development' && process.env.CLOUDFRONT_DOMAIN
+        ? process.env.CLOUDFRONT_DOMAIN
+        : 'amazonaws.com';
+    expect(response.body.files[0].secure_url).toContain(expectedDomain);
   });
 
   it('POST /dashboard/images should store public_id and url in the database', async () => {
@@ -376,12 +435,14 @@ describe('posts/ post details/ S3 routes', () => {
         image_url: expect.any(String),
         public_id: expect.any(String),
         resource_type: expect.any(String),
+        shipping_cost: 0,
       },
       {
         id: expect.any(Number),
         image_url: expect.any(String),
         public_id: expect.any(String),
         resource_type: expect.any(String),
+        shipping_cost: 0,
       },
     ]);
   });
@@ -402,12 +463,14 @@ describe('posts/ post details/ S3 routes', () => {
           "image_url": "test-url",
           "public_id": "test-public-id",
           "resource_type": "image",
+          "shipping_cost": 0,
         },
         {
           "id": 2,
           "image_url": "test-url-2",
           "public_id": "test-public-id-2",
           "resource_type": "image",
+          "shipping_cost": 0,
         },
       ]
     `);
@@ -422,6 +485,7 @@ describe('posts/ post details/ S3 routes', () => {
         "image_url": "test-url",
         "public_id": "test-public-id",
         "resource_type": "image",
+        "shipping_cost": 0,
       }
     `);
 
@@ -462,22 +526,11 @@ describe('posts/ post details/ S3 routes', () => {
     expect(resp.status).toBe(404);
   });
 
-  //! Can't get the checkAndRecordImageUploads function to actual fire, the mock is overriding it- route works, test fails
-  it.skip('POST/upload with 51 images should return 400 status', async () => {
-    // Use the real AWSUser class
-    const RealAWSUser = jest.requireActual('../../../lib/models/AWSUser');
+  it('POST/upload with 51 images should return 400 status', async () => {
+    AWSUser.checkAndRecordImageUploads.mockRejectedValueOnce(
+      new Error('Daily upload limit of 50 images exceeded'),
+    );
 
-    // Spy on the real static method
-    const checkAndRecordSpy = jest
-      .spyOn(RealAWSUser, 'checkAndRecordImageUploads')
-      .mockImplementation(async (customerId, imageCount) => {
-        if (imageCount > 50) {
-          throw new Error('Daily upload limit of 50 images exceeded');
-        }
-        return true;
-      });
-
-    // Prepare a test request with 51 images
     const imageBuffer = Buffer.from([
       0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x0a, 0x00, 0x0a, 0x00, 0x91, 0x00, 0x00, 0xff, 0xff,
       0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0xff, 0x21, 0xf9, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -496,14 +549,8 @@ describe('posts/ post details/ S3 routes', () => {
 
     const resp = await req;
 
-    // Verify the static method was called
-    expect(checkAndRecordSpy).toHaveBeenCalledWith('stripe-customer-id_noProfile', 51);
-
-    // Verify the response
+    expect(AWSUser.checkAndRecordImageUploads).toHaveBeenCalled();
     expect(resp.status).toBe(400);
-
-    // Restore the static method after the test
-    checkAndRecordSpy.mockRestore();
   });
 
   // it.todo('upload invalid file types');
