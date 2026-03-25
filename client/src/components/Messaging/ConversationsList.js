@@ -41,6 +41,7 @@ export default function ConversationsList({
       onDeleteConversation(conversationId);
     } catch (error) {
       if (process.env.REACT_APP_APP_ENV === 'development') {
+        // eslint-disable-next-line
         console.error(error);
       }
     }

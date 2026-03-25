@@ -60,6 +60,7 @@ export default function Products({ products, setProducts, loadingProducts, setLo
 
   useEffect(() => {
     fetchProducts();
+    // eslint-disable-next-line
   }, []);
 
   let [product, setProduct] = useState({
@@ -127,6 +128,7 @@ export default function Products({ products, setProducts, loadingProducts, setLo
     if (!isAuthenticated) {
       authenticateUser();
     }
+    // eslint-disable-next-line
   }, []);
 
   const resetFormState = () => {

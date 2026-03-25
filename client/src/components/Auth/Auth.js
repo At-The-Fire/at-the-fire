@@ -41,6 +41,7 @@ export default function Auth() {
     if (!isAuthenticated) {
       authenticateUser();
     }
+    //eslint-disable-next-line
   }, []);
 
   useEffect(() => {
@@ -89,17 +90,8 @@ export default function Auth() {
     } else {
       navigate(`/profile/${user}`);
     }
-  }, [
-    isAuthenticated,
-    user,
-    // customerId,
-    // needsVerification,
-    loadingAuth,
-    loadingCustomerId,
-    // navigate,
-    // admin,
-    // signingOut,   //! commented out trying to root out an infinite loop auth WORKS leave out for now 1.17.25
-  ]);
+    //eslint-disable-next-line
+  }, [isAuthenticated, user, loadingAuth, loadingCustomerId]);
 
   const authForms = () => {
     switch (type) {

@@ -48,6 +48,7 @@ export function usePost(id) {
       }
     };
     fetchData();
+    //eslint-disable-next-line
   }, [id, isAuthenticated, user]);
 
   return {

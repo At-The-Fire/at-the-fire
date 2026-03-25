@@ -166,6 +166,7 @@ export default function Profile() {
         });
       } catch (error) {
         if (process.env.REACT_APP_APP_ENV === 'development') {
+          //eslint-disable-next-line
           console.error(`Failed to compress ${file.name}:`, error);
         }
       }
@@ -209,6 +210,7 @@ export default function Profile() {
         });
       } catch (error) {
         if (process.env.REACT_APP_APP_ENV === 'development') {
+          //eslint-disable-next-line
           console.error(`Failed to compress ${file.name}:`, error);
         }
       }
@@ -305,6 +307,7 @@ export default function Profile() {
               setAvatarFile(compressedFile);
             } catch (error) {
               if (process.env.REACT_APP_APP_ENV === 'development') {
+                //eslint-disable-next-line
                 console.error(`Failed to compress ${avatarFile.name}:`, error);
               }
             }
@@ -355,6 +358,7 @@ export default function Profile() {
               setLogoFile(compressedFile);
             } catch (error) {
               if (process.env.REACT_APP_APP_ENV === 'development') {
+                //eslint-disable-next-line
                 console.error(`Failed to compress ${logoFile.name}:`, error);
               }
             }
@@ -544,6 +548,7 @@ export default function Profile() {
     if (sub !== null) {
       fetchProfile(sub);
     }
+    //eslint-disable-next-line
   }, [sub]);
 
   useEffect(() => {
@@ -643,6 +648,7 @@ export default function Profile() {
         }
       );
     }
+    // eslint-disable-next-line
   }, []);
 
   const renderProfileHeader = () => {

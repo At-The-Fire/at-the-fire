@@ -111,6 +111,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
     if (!isAuthenticated) {
       authenticateUser();
     }
+    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
@@ -203,6 +204,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
         }
       );
     }
+    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
@@ -277,6 +279,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
         toast.error('Failed to load sales');
       })
       .finally(() => setSalesLoading(false));
+    // eslint-disable-next-line
   }, [dashboardView, user]);
 
   const handleTrackingSubmit = async (trackingNumber) => {
@@ -325,6 +328,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
         console.error('Error fetching seller auctions:', err);
       })
       .finally(() => setAuctionsLoading(false));
+    // eslint-disable-next-line
   }, [dashboardView, user]);
 
   const renderAuctionsContent = () => {

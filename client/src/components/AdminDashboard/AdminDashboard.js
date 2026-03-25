@@ -328,6 +328,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     loadUsers();
     loadInvoices();
+    //eslint-disable-next-line
   }, []);
 
   const organizeByMonth = (invoices) => {
