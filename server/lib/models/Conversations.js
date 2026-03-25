@@ -61,7 +61,11 @@ module.exports = class Conversations {
 
       // Bump updated_at so conversations sort by most recent activity
       await client.query(
-        `UPDATE conversations SET updated_at = NOW() WHERE id = $1`,
+        `
+        UPDATE conversations
+        SET updated_at = NOW()
+        WHERE id = $1
+        `,
         [conversation_id],
       );
 
@@ -114,7 +118,7 @@ module.exports = class Conversations {
   static async getConversationsForUser(userSub) {
     const { rows } = await pool.query(
       `
-      SELECT 
+      SELECT
   c.id,
   c.created_at,
   c.updated_at,
@@ -246,14 +250,14 @@ ORDER BY c.updated_at DESC;
       rows: [visibility],
     } = await pool.query(
       `SELECT hidden_at, is_visible
-       FROM conversation_visibility 
+       FROM conversation_visibility
        WHERE conversation_id = $1 AND user_sub = $2`,
       [conversationId, userSub],
     );
 
     // Get messages based on user's status
     const { rows } = await pool.query(
-      `SELECT m.*, 
+      `SELECT m.*,
               json_build_object(
                 'sub', cu.sub
                 ) as sender
@@ -275,7 +279,7 @@ ORDER BY c.updated_at DESC;
     await pool.query(
       `INSERT INTO conversation_visibility (conversation_id, user_sub, is_visible, hidden_at)
        VALUES ($1, $2, FALSE, CURRENT_TIMESTAMP)
-       ON CONFLICT (conversation_id, user_sub) 
+       ON CONFLICT (conversation_id, user_sub)
        DO UPDATE SET is_visible = FALSE, hidden_at = CURRENT_TIMESTAMP`,
       [conversationId, userSub],
     );
@@ -288,7 +292,7 @@ ORDER BY c.updated_at DESC;
       FROM messages m
       JOIN conversation_visibility cv ON m.conversation_id = cv.conversation_id
       WHERE m.is_read = FALSE
-       AND m.sender_sub <> $1 
+       AND m.sender_sub <> $1
        AND cv.user_sub = $1
        AND cv.is_visible = TRUE  -- Only count unread messages from visible conversations
       `,
@@ -318,7 +322,7 @@ ORDER BY c.updated_at DESC;
 
   static async isUserParticipant(conversationId, userSub) {
     const { rows } = await pool.query(
-      `SELECT 1 FROM conversation_participants 
+      `SELECT 1 FROM conversation_participants
        WHERE conversation_id = $1 AND user_sub = $2`,
       [conversationId, userSub],
     );
@@ -329,8 +333,8 @@ ORDER BY c.updated_at DESC;
   static async getConversationParticipants(conversationId) {
     const { rows } = await pool.query(
       `
-      SELECT user_sub 
-      FROM conversation_participants 
+      SELECT user_sub
+      FROM conversation_participants
       WHERE conversation_id = $1
       `,
       [conversationId],
@@ -369,9 +373,9 @@ LIMIT 1;
       `
       UPDATE conversation_visibility
       SET is_visible = TRUE
-      WHERE user_sub = $1 
+      WHERE user_sub = $1
       AND conversation_id = $2
-    
+
     `,
       [senderSub, conversationId],
     );

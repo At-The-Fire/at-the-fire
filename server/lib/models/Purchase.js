@@ -46,8 +46,20 @@ module.exports = class Purchase {
   // Insert a completed purchase within a transaction.
   // client must be provided (pool client mid-transaction).
   static async insertCompleted(
-    { buyerSub, sellerSub, itemType, itemId, quantity, amountPaid, shippingCost, platformFee, sellerNet, processorTransactionId, shippingAddress },
-    client
+    {
+      buyerSub,
+      sellerSub,
+      itemType,
+      itemId,
+      quantity,
+      amountPaid,
+      shippingCost,
+      platformFee,
+      sellerNet,
+      processorTransactionId,
+      shippingAddress,
+    },
+    client,
   ) {
     const encryptedAddress = shippingAddress ? encrypt(JSON.stringify(shippingAddress)) : null;
     const { rows } = await client.query(
@@ -56,8 +68,19 @@ module.exports = class Purchase {
           shipping_cost, platform_fee, seller_net, processor_transaction_id, shipping_address, status)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'completed')
        RETURNING id`,
-      [buyerSub, sellerSub, itemType, itemId, quantity, amountPaid,
-       shippingCost, platformFee, sellerNet, processorTransactionId, encryptedAddress]
+      [
+        buyerSub,
+        sellerSub,
+        itemType,
+        itemId,
+        quantity,
+        amountPaid,
+        shippingCost,
+        platformFee,
+        sellerNet,
+        processorTransactionId,
+        encryptedAddress,
+      ],
     );
     return rows[0];
   }

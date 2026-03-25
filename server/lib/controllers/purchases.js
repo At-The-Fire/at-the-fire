@@ -48,9 +48,17 @@ module.exports = Router()
         return res.status(400).json({ error: 'intentId and items are required' });
       }
 
-      if (!shippingAddress || !shippingAddress.fullName || !shippingAddress.line1 ||
-          !shippingAddress.city || !shippingAddress.state || !shippingAddress.zip) {
-        return res.status(400).json({ error: 'Shipping address is required (fullName, line1, city, state, zip)' });
+      if (
+        !shippingAddress ||
+        !shippingAddress.fullName ||
+        !shippingAddress.line1 ||
+        !shippingAddress.city ||
+        !shippingAddress.state ||
+        !shippingAddress.zip
+      ) {
+        return res
+          .status(400)
+          .json({ error: 'Shipping address is required (fullName, line1, city, state, zip)' });
       }
 
       const normalizedItems = items.map((item) => ({
@@ -69,7 +77,7 @@ module.exports = Router()
 
       // Fetch all posts in parallel — reads outside the transaction
       const posts = await Promise.all(
-        normalizedItems.map((item) => Post.getForPurchase(item.postId))
+        normalizedItems.map((item) => Post.getForPurchase(item.postId)),
       );
 
       const itemDetails = [];
@@ -121,19 +129,22 @@ module.exports = Router()
       const summary = [];
 
       for (const item of itemDetails) {
-        const purchase = await Purchase.insertCompleted({
-          buyerSub,
-          sellerSub: item.sellerSub,
-          itemType: 'gallery_post',
-          itemId: item.postId,
-          quantity: item.quantity,
-          amountPaid: item.amountPaid,
-          shippingCost: item.shippingCost,
-          platformFee: item.platformFee,
-          sellerNet: item.sellerNet,
-          processorTransactionId: capturedTransactionId,
-          shippingAddress,
-        }, client);
+        const purchase = await Purchase.insertCompleted(
+          {
+            buyerSub,
+            sellerSub: item.sellerSub,
+            itemType: 'gallery_post',
+            itemId: item.postId,
+            quantity: item.quantity,
+            amountPaid: item.amountPaid,
+            shippingCost: item.shippingCost,
+            platformFee: item.platformFee,
+            sellerNet: item.sellerNet,
+            processorTransactionId: capturedTransactionId,
+            shippingAddress,
+          },
+          client,
+        );
 
         purchaseIds.push(purchase.id);
 
@@ -141,7 +152,11 @@ module.exports = Router()
         const isSold = newQuantity === 0;
 
         const decremented = await Post.decrementQuantity(
-          item.postId, newQuantity, isSold, item.quantity, client
+          item.postId,
+          newQuantity,
+          isSold,
+          item.quantity,
+          client,
         );
 
         if (!decremented) {
@@ -168,10 +183,18 @@ module.exports = Router()
       res.json({ purchaseIds, summary });
     } catch (e) {
       if (transactionStarted) {
-        try { await client.query('ROLLBACK'); } catch (_) {}
+        try {
+          await client.query('ROLLBACK');
+        } catch (_) {
+          console.error('ROLLBACK');
+        }
       }
       if (capturedTransactionId) {
-        try { await paymentService.refundPayment(capturedTransactionId); } catch (_) {}
+        try {
+          await paymentService.refundPayment(capturedTransactionId);
+        } catch (_) {
+          console.error('Error with refund');
+        }
       }
       next(e);
     } finally {
@@ -229,9 +252,17 @@ module.exports = Router()
         return res.status(400).json({ error: 'intentId and auctionId are required' });
       }
 
-      if (!shippingAddress || !shippingAddress.fullName || !shippingAddress.line1 ||
-          !shippingAddress.city || !shippingAddress.state || !shippingAddress.zip) {
-        return res.status(400).json({ error: 'Shipping address is required (fullName, line1, city, state, zip)' });
+      if (
+        !shippingAddress ||
+        !shippingAddress.fullName ||
+        !shippingAddress.line1 ||
+        !shippingAddress.city ||
+        !shippingAddress.state ||
+        !shippingAddress.zip
+      ) {
+        return res
+          .status(400)
+          .json({ error: 'Shipping address is required (fullName, line1, city, state, zip)' });
       }
 
       const auctionData = await Auction.getResultForPayment(auctionId);
@@ -253,7 +284,10 @@ module.exports = Router()
       transactionStarted = true;
 
       const updated = await Auction.setIsPaidWithFees(
-        auctionId, buyerSub, { platformFee, sellerNet }, client
+        auctionId,
+        buyerSub,
+        { platformFee, sellerNet },
+        client,
       );
 
       if (!updated) {
@@ -262,19 +296,22 @@ module.exports = Router()
         throw err;
       }
 
-      const purchase = await Purchase.insertCompleted({
-        buyerSub,
-        sellerSub: auctionData.seller_sub,
-        itemType: 'auction',
-        itemId: auctionId,
-        quantity: 1,
-        amountPaid,
-        shippingCost,
-        platformFee,
-        sellerNet,
-        processorTransactionId: capturedTransactionId,
-        shippingAddress,
-      }, client);
+      const purchase = await Purchase.insertCompleted(
+        {
+          buyerSub,
+          sellerSub: auctionData.seller_sub,
+          itemType: 'auction',
+          itemId: auctionId,
+          quantity: 1,
+          amountPaid,
+          shippingCost,
+          platformFee,
+          sellerNet,
+          processorTransactionId: capturedTransactionId,
+          shippingAddress,
+        },
+        client,
+      );
 
       await client.query('COMMIT');
       transactionStarted = false;
@@ -290,10 +327,18 @@ module.exports = Router()
       res.json({ purchaseId: purchase.id });
     } catch (e) {
       if (transactionStarted) {
-        try { await client.query('ROLLBACK'); } catch (_) {}
+        try {
+          await client.query('ROLLBACK');
+        } catch (_) {
+          console.error('ROLLBACK');
+        }
       }
       if (capturedTransactionId) {
-        try { await paymentService.refundPayment(capturedTransactionId); } catch (_) {}
+        try {
+          await paymentService.refundPayment(capturedTransactionId);
+        } catch (_) {
+          console.error('Error with refund');
+        }
       }
       next(e);
     } finally {

@@ -146,7 +146,7 @@ module.exports = Router()
     }
   })
 
-  .delete('/clear-cookies', async (req, res, next) => {
+  .delete('/clear-cookies', async (req, res) => {
     res.set({
       'Cache-Control': 'no-store, no-cache, must-revalidate, private',
       Pragma: 'no-cache',

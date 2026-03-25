@@ -72,6 +72,7 @@ class MockAdapter {
     return { intentId, clientSecret };
   }
 
+  // eslint-disable-next-line
   async capturePayment(intentId, _payment = null) {
     const intent = this.#intents.get(intentId);
     if (!intent) {
