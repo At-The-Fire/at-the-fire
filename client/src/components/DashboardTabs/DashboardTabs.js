@@ -233,7 +233,7 @@ export default function BasicTabs() {
               <Badge
                 badgeContent={pendingShipmentsCount || null}
                 color="warning"
-                sx={{ '& .MuiBadge-badge': { right: -10, top: 2 } }}
+                sx={{ '& .MuiBadge-badge': { right: -6, top: 2 } }}
               >
                 Dashboard
               </Badge>
