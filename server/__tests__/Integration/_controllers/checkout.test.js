@@ -1,23 +1,27 @@
 const request = require('supertest');
 const app = require('../../../lib/app');
-const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY);
 const { getSubscriptionByCustomerId } = require('../../../lib/models/Subscriptions.js');
 
+// Define mock fns ONCE in the factory and attach to the constructor so all
+// instances (test file + controller module) share the same underlying mocks.
 jest.mock('stripe', () => {
-  return jest.fn().mockImplementation(() => ({
-    customers: {
-      create: jest.fn().mockResolvedValue({ id: 'cus_mockedId' }),
-      list: jest.fn().mockResolvedValue({ data: [] }), // Default success behavior
-    },
-    checkout: {
-      sessions: {
-        create: jest.fn().mockResolvedValue({ url: 'http://mock-session-url.com' }),
-      },
-    },
-    subscriptions: {
-      update: jest.fn().mockResolvedValue({ id: 'sub_mockedId' }),
-    },
+  const mockCustomersCreate = jest.fn().mockResolvedValue({ id: 'cus_mockedId' });
+  const mockCustomersList = jest.fn().mockResolvedValue({ data: [] });
+  const mockSessionsCreate = jest.fn().mockResolvedValue({ url: 'http://mock-session-url.com' });
+  const mockSubscriptionsUpdate = jest.fn().mockResolvedValue({ id: 'sub_mockedId' });
+
+  const MockStripe = jest.fn().mockImplementation(() => ({
+    customers: { create: mockCustomersCreate, list: mockCustomersList },
+    checkout: { sessions: { create: mockSessionsCreate } },
+    subscriptions: { update: mockSubscriptionsUpdate },
   }));
+
+  MockStripe._mockCustomersCreate = mockCustomersCreate;
+  MockStripe._mockCustomersList = mockCustomersList;
+  MockStripe._mockSessionsCreate = mockSessionsCreate;
+  MockStripe._mockSubscriptionsUpdate = mockSubscriptionsUpdate;
+
+  return MockStripe;
 });
 
 jest.mock('../../../lib/middleware/authenticateAWS', () => {
@@ -31,16 +35,28 @@ jest.mock('../../../lib/models/Subscriptions.js', () => ({
   getSubscriptionByCustomerId: jest.fn().mockResolvedValue(null),
 }));
 
+const StripeMock = require('stripe');
+const mockCustomersCreate = StripeMock._mockCustomersCreate;
+const mockCustomersList = StripeMock._mockCustomersList;
+const mockSessionsCreate = StripeMock._mockSessionsCreate;
+const mockSubscriptionsUpdate = StripeMock._mockSubscriptionsUpdate;
+
 beforeEach(() => {
-  stripe.customers.create.mockClear();
-  stripe.customers.list.mockClear();
-  stripe.subscriptions.update.mockClear();
-  stripe.checkout.sessions.create.mockClear();
+  mockCustomersCreate.mockClear();
+  mockCustomersList.mockClear();
+  mockSessionsCreate.mockClear();
+  mockSubscriptionsUpdate.mockClear();
   getSubscriptionByCustomerId.mockClear();
+  // Restore defaults after any per-test overrides
+  mockCustomersCreate.mockResolvedValue({ id: 'cus_mockedId' });
+  mockCustomersList.mockResolvedValue({ data: [] });
+  mockSessionsCreate.mockResolvedValue({ url: 'http://mock-session-url.com' });
+  mockSubscriptionsUpdate.mockResolvedValue({ id: 'sub_mockedId' });
+  getSubscriptionByCustomerId.mockResolvedValue(null);
 });
 
 describe('Stripe checkout session controller', () => {
-  it.skip('should NOT apply a trial when an existing customerId is provided (renew/repurchase)', async () => {
+  it('should NOT apply a trial when an existing customerId is provided (renew/repurchase)', async () => {
     getSubscriptionByCustomerId.mockResolvedValue({
       subscriptionId: 'sub_existing',
       isActive: false,
@@ -55,15 +71,15 @@ describe('Stripe checkout session controller', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(stripe.customers.create).not.toHaveBeenCalled();
+    expect(mockCustomersCreate).not.toHaveBeenCalled();
 
-    const sessionCreateArgs = stripe.checkout.sessions.create.mock.calls[0][0];
+    const sessionCreateArgs = mockSessionsCreate.mock.calls[0][0];
     expect(sessionCreateArgs.subscription_data).toBeUndefined();
   });
 
-  it.skip('should NOT apply a trial when customer exists in Stripe (found by email)', async () => {
+  it('should NOT apply a trial when customer exists in Stripe (found by email)', async () => {
     getSubscriptionByCustomerId.mockResolvedValue(null);
-    stripe.customers.list.mockResolvedValue({ data: [{ id: 'cus_foundByEmail' }] });
+    mockCustomersList.mockResolvedValue({ data: [{ id: 'cus_foundByEmail' }] });
 
     const response = await request(app).post('/api/v1/create-checkout-session').send({
       billingEmail: 'found@example.com',
@@ -73,16 +89,16 @@ describe('Stripe checkout session controller', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(stripe.customers.create).not.toHaveBeenCalled();
+    expect(mockCustomersCreate).not.toHaveBeenCalled();
 
-    const sessionCreateArgs = stripe.checkout.sessions.create.mock.calls[0][0];
+    const sessionCreateArgs = mockSessionsCreate.mock.calls[0][0];
     expect(sessionCreateArgs.customer).toBe('cus_foundByEmail');
     expect(sessionCreateArgs.subscription_data).toBeUndefined();
   });
 
-  it.skip('should apply a trial only when a brand-new Stripe customer is created', async () => {
+  it('should apply a trial only when a brand-new Stripe customer is created', async () => {
     getSubscriptionByCustomerId.mockResolvedValue(null);
-    stripe.customers.list.mockResolvedValue({ data: [] });
+    mockCustomersList.mockResolvedValue({ data: [] });
 
     const response = await request(app).post('/api/v1/create-checkout-session').send({
       billingEmail: 'new@example.com',
@@ -92,16 +108,13 @@ describe('Stripe checkout session controller', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(stripe.customers.create).toHaveBeenCalledTimes(1);
+    expect(mockCustomersCreate).toHaveBeenCalledTimes(1);
 
-    const sessionCreateArgs = stripe.checkout.sessions.create.mock.calls[0][0];
+    const sessionCreateArgs = mockSessionsCreate.mock.calls[0][0];
     expect(sessionCreateArgs.subscription_data).toEqual({ trial_period_days: 60 });
   });
 
-  it.skip('should create a session for a new customer', async () => {
-    const mockSession = { url: 'http://mock-session-url.com' };
-    stripe.checkout.sessions.create.mockResolvedValue(mockSession);
-
+  it('should create a session for a new customer', async () => {
     const response = await request(app).post('/api/v1/create-checkout-session').send({
       customerId: 'cus_dog',
       billingEmail: 'test@example.com',
@@ -110,16 +123,11 @@ describe('Stripe checkout session controller', () => {
       priceId: process.env.TEST_STRIPE_MONTHLY_PRICE_ID,
     });
 
-    // Fixed expectations
-    expect(response.statusCode).toBe(200); // Check status code instead of response.body
-    expect(response.body).toEqual({ url: mockSession.url }); // Check the entire response body
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toEqual({ url: 'http://mock-session-url.com' });
   });
 
-  it.skip('should create a session for an existing customer', async () => {
-    const mockSession = { url: 'http://mock-session-url.com' };
-
-    stripe.checkout.sessions.create.mockResolvedValue(mockSession);
-
+  it('should create a session for an existing customer', async () => {
     const response = await request(app).post('/api/v1/create-checkout-session').send({
       awsSub: 'existingSub',
       billingEmail: 'existing@example.com',
@@ -130,38 +138,18 @@ describe('Stripe checkout session controller', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.body.url).toBe(mockSession.url);
+    expect(response.body.url).toBe('http://mock-session-url.com');
   });
 
   it('should handle missing required fields', async () => {
     const response = await request(app).post('/api/v1/create-checkout-session').send({});
 
     expect(response.statusCode).toBe(400);
-    // Expect some error message or validation response
+    expect(response.body.error).toContain('Missing required fields');
   });
 
-  it.skip('should handle Stripe service failure', async () => {
-    jest.resetAllMocks();
-    jest.mock('stripe', () => {
-      const stripeError = new Error( // this error does not bubble up to try/ catch so expect below is for actual 500 error triggered
-        'Some error accessing Stripe- network or service failure, etc. that returns undefined data'
-      );
-
-      return jest.fn().mockImplementation(() => ({
-        customers: {
-          create: jest.fn().mockResolvedValue({ id: 'cus_mockedId' }),
-          list: jest.fn().mockRejectedValue(stripeError),
-        },
-        checkout: {
-          sessions: {
-            create: jest.fn().mockResolvedValue({ url: 'http://mock-session-url.com' }),
-          },
-        },
-        subscriptions: {
-          update: jest.fn().mockResolvedValue({ id: 'sub_mockedId' }),
-        },
-      }));
-    });
+  it('should handle Stripe service failure', async () => {
+    mockCustomersList.mockRejectedValueOnce(new Error('Stripe network error'));
 
     const response = await request(app).post('/api/v1/create-checkout-session').send({
       billingEmail: 'test@example.com',
@@ -171,9 +159,7 @@ describe('Stripe checkout session controller', () => {
     });
 
     expect(response.status).toBe(500);
-    expect(response.body).toEqual({
-      error: 'Failed to create Stripe customer',
-    });
+    expect(response.body.error).toBe('Internal server error');
   });
 
   it('should handle missing fields', async () => {
@@ -189,10 +175,8 @@ describe('Stripe checkout session controller', () => {
   });
 
   it('should throw error if cookies are not present', async () => {
-    // Clear any existing mocks
     jest.resetModules();
 
-    // Mock the AWS authentication middleware
     jest.mock('../../../lib/middleware/authenticateAWS.js', () => {
       return (req, res, next) => {
         const { accessToken, idToken, refreshToken } = req.cookies;
@@ -210,12 +194,10 @@ describe('Stripe checkout session controller', () => {
       };
     });
 
-    // Re-import the app to apply the new mock
     const app = require('../../../lib/app.js');
 
     const response = await request(app)
       .post('/api/v1/create-checkout-session')
-      // Don't set any cookies - this will make req.cookies an empty object
       .send({
         customerId: 'cus_dog',
         billingEmail: 'test@example.com',
@@ -238,7 +220,7 @@ describe('Stripe checkout session controller', () => {
       billingEmail: 'test@example.com',
       firstName: 'Test',
       lastName: 'User',
-      priceId: 'invalid_price_id', // This value should trigger the validation error
+      priceId: 'invalid_price_id',
     });
 
     expect(response.status).toBe(400);
