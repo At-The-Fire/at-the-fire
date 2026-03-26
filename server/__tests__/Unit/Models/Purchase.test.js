@@ -207,7 +207,7 @@ describe('Purchase Model', () => {
   });
 
   describe('getByBuyerSub', () => {
-    it('returns all purchases for a buyer ordered by created_at DESC', async () => {
+    it('returns only gallery_post purchases for a buyer ordered by created_at DESC', async () => {
       const mockRows = [
         {
           id: 2,
@@ -252,12 +252,113 @@ describe('Purchase Model', () => {
       expect(results[0].imageUrls).toEqual(['https://example.com/image-20.jpg']);
       expect(results[1].imageUrls).toEqual(['https://example.com/image-10.jpg']);
       expect(pool.query).toHaveBeenCalledTimes(2);
+      expect(pool.query).toHaveBeenCalledWith(
+        expect.stringContaining("item_type = 'gallery_post'"),
+        ['sub_123'],
+      );
     });
 
-    it('returns empty array when buyer has no purchases', async () => {
+    it('excludes auction-type purchases for a buyer', async () => {
+      // The query filters at the SQL level; the model receives only gallery_post rows back.
+      // Simulate the DB honouring the WHERE filter — only gallery_post row returned.
+      pool.query.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 1,
+            buyer_sub: 'sub_123',
+            seller_sub: 'seller_sub_123',
+            item_type: 'gallery_post',
+            item_id: 10,
+            quantity: 1,
+            amount_paid: '85.00',
+            processor_transaction_id: null,
+            status: 'completed',
+            created_at: '2024-01-01T00:00:00Z',
+          },
+        ],
+      });
+      pool.query.mockResolvedValueOnce({ rows: [{ post_id: 10, image_url: 'https://example.com/img.jpg' }] });
+
+      const results = await Purchase.getByBuyerSub('sub_123');
+
+      expect(results).toHaveLength(1);
+      expect(results[0].itemType).toBe('gallery_post');
+    });
+
+    it('returns empty array when buyer has no gallery purchases', async () => {
       pool.query.mockResolvedValueOnce({ rows: [] });
 
       const results = await Purchase.getByBuyerSub('sub_nopurchases');
+
+      expect(results).toEqual([]);
+    });
+  });
+
+  describe('getBySellerSub', () => {
+    it('returns only gallery_post purchases for a seller ordered by created_at DESC', async () => {
+      const mockRows = [
+        {
+          id: 3,
+          buyer_sub: 'buyer_sub_456',
+          seller_sub: 'seller_sub_123',
+          item_type: 'gallery_post',
+          item_id: 30,
+          quantity: 1,
+          amount_paid: '100.00',
+          processor_transaction_id: 'mock_tx_abc',
+          status: 'completed',
+          created_at: '2024-02-01T00:00:00Z',
+        },
+      ];
+
+      pool.query.mockResolvedValueOnce({ rows: mockRows });
+      pool.query.mockResolvedValueOnce({
+        rows: [{ post_id: 30, image_url: 'https://example.com/image-30.jpg' }],
+      });
+
+      const results = await Purchase.getBySellerSub('seller_sub_123');
+
+      expect(results).toHaveLength(1);
+      expect(results[0]).toBeInstanceOf(Purchase);
+      expect(results[0].id).toBe(3);
+      expect(results[0].itemType).toBe('gallery_post');
+      expect(results[0].imageUrls).toEqual(['https://example.com/image-30.jpg']);
+      expect(pool.query).toHaveBeenCalledWith(
+        expect.stringContaining("item_type = 'gallery_post'"),
+        ['seller_sub_123'],
+      );
+    });
+
+    it('excludes auction-type purchases for a seller', async () => {
+      // Simulate DB returning only the gallery_post row after the WHERE filter.
+      pool.query.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 5,
+            buyer_sub: 'buyer_sub_456',
+            seller_sub: 'seller_sub_123',
+            item_type: 'gallery_post',
+            item_id: 50,
+            quantity: 1,
+            amount_paid: '75.00',
+            processor_transaction_id: 'mock_tx_xyz',
+            status: 'completed',
+            created_at: '2024-02-02T00:00:00Z',
+          },
+        ],
+      });
+      pool.query.mockResolvedValueOnce({ rows: [{ post_id: 50, image_url: 'https://example.com/img50.jpg' }] });
+
+      const results = await Purchase.getBySellerSub('seller_sub_123');
+
+      expect(results).toHaveLength(1);
+      expect(results[0].itemType).toBe('gallery_post');
+    });
+
+    it('returns empty array when seller has no gallery purchases', async () => {
+      pool.query.mockResolvedValueOnce({ rows: [] });
+
+      const results = await Purchase.getBySellerSub('seller_sub_none');
 
       expect(results).toEqual([]);
     });

@@ -3,6 +3,7 @@ import { useAuthStore } from '../stores/useAuthStore.js';
 import { useQuery } from '../context/QueryContext.js';
 import { useNotificationStore } from '../stores/useNotificationStore.js';
 import { useAuctionEventsStore } from '../stores/useAuctionEventsStore.js';
+import { usePurchaseStore } from '../stores/usePurchaseStore.js';
 
 export default function useAppBar({ setAnchorElNav, setAnchorElUser }) {
   const {
@@ -22,7 +23,9 @@ export default function useAppBar({ setAnchorElNav, setAnchorElUser }) {
   const { unreadCount } = useNotificationStore();
   const mobileOpen = useNotificationStore((state) => state.mobileOpen);
   const setMobileOpen = useNotificationStore((state) => state.setMobileOpen);
-  const pendingShipmentsCount = useAuctionEventsStore((s) => s.pendingShipmentsCount);
+  const auctionPendingCount = useAuctionEventsStore((s) => s.pendingShipmentsCount);
+  const galleryPendingCount = usePurchaseStore((s) => s.pendingGalleryShipmentsCount);
+  const pendingShipmentsCount = auctionPendingCount + galleryPendingCount;
 
   const { toggleFeedView, isFeedView } = useQuery();
 

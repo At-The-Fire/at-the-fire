@@ -117,7 +117,7 @@ module.exports = class Purchase {
       SELECT p.*, gp.title
       FROM purchases p
       LEFT JOIN gallery_posts gp ON p.item_type = 'gallery_post' AND p.item_id = gp.id
-      WHERE p.buyer_sub = $1
+      WHERE p.buyer_sub = $1 AND p.item_type = 'gallery_post'
       ORDER BY p.created_at DESC
       `,
       [sub],
@@ -167,7 +167,7 @@ module.exports = class Purchase {
       SELECT p.*, gp.title
       FROM purchases p
       LEFT JOIN gallery_posts gp ON p.item_type = 'gallery_post' AND p.item_id = gp.id
-      WHERE p.seller_sub = $1
+      WHERE p.seller_sub = $1 AND p.item_type = 'gallery_post'
       ORDER BY p.created_at DESC
       `,
       [sub],

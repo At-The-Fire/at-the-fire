@@ -180,6 +180,14 @@ module.exports = Router()
       const redisClient = await getRedisClient();
       await redisClient.del('gallery:main');
 
+      const io = req.app.get('io');
+      if (io) {
+        const sellerSubs = [...new Set(itemDetails.map((item) => item.sellerSub))];
+        for (const sellerSub of sellerSubs) {
+          io.to(`user_${sellerSub}`).emit('gallery-sold');
+        }
+      }
+
       res.json({ purchaseIds, summary });
     } catch (e) {
       if (transactionStarted) {

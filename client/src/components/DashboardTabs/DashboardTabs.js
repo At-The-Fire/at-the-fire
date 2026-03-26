@@ -19,6 +19,7 @@ import usePostStore from '../../stores/usePostStore.js';
 import useSnapshotStore from '../../stores/useSnapshotStore.js';
 import { useAuthStore } from '../../stores/useAuthStore.js';
 import { useAuctionEventsStore } from '../../stores/useAuctionEventsStore.js';
+import { usePurchaseStore } from '../../stores/usePurchaseStore.js';
 import Badge from '@mui/material/Badge';
 import { useMediaQuery, useTheme } from '@mui/material';
 import ordersExDt from '../../assets/orders-example.png';
@@ -94,7 +95,9 @@ export default function BasicTabs() {
   const { products, setProducts, loadingProducts, setLoadingProducts, fetchProducts } = useProducts();
 
   const { error, customerId, loadingCustomerId, verifyAuth, isAuthenticated, hasPremiumAccess } = useAuthStore();
-  const pendingShipmentsCount = useAuctionEventsStore((s) => s.pendingShipmentsCount);
+  const auctionPendingCount = useAuctionEventsStore((s) => s.pendingShipmentsCount);
+  const galleryPendingCount = usePurchaseStore((s) => s.pendingGalleryShipmentsCount);
+  const pendingShipmentsCount = auctionPendingCount + galleryPendingCount;
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 

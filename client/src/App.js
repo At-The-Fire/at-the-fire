@@ -32,6 +32,7 @@ import MessagingContainer from './components/Messaging/MessagingContainer.js';
 import { useNotificationStore } from './stores/useNotificationStore.js';
 import { useAuctionNotificationStore } from './stores/useAuctionNotificationStore.js';
 import { useAuctionEventsStore } from './stores/useAuctionEventsStore.js';
+import { usePurchaseStore } from './stores/usePurchaseStore.js';
 import AuctionToastHandler from './components/Auctions/AuctionToastHandler.js';
 import PasswordChange from './components/Auth/AuthForms.js/PasswordChange.js';
 import AuctionList from './components/Auctions/AuctionList.js';
@@ -137,6 +138,7 @@ function App() {
   const fetchUnreadCount = useNotificationStore((state) => state.fetchUnreadCount);
   const fetchAuctionUnreadCount = useAuctionNotificationStore((state) => state.fetchUnreadCount);
   const fetchPendingShipments = useAuctionEventsStore((state) => state.fetchPendingShipments);
+  const fetchSellerPurchases = usePurchaseStore((state) => state.fetchSellerPurchases);
 
   // Hydrate auth state on full page refresh / initial load
   useEffect(() => {
@@ -151,8 +153,9 @@ function App() {
       fetchUnreadCount();
       fetchAuctionUnreadCount();
       fetchPendingShipments();
+      fetchSellerPurchases();
     }
-  }, [isAuthenticated, fetchUnreadCount, fetchAuctionUnreadCount, fetchPendingShipments]);
+  }, [isAuthenticated, fetchUnreadCount, fetchAuctionUnreadCount, fetchPendingShipments, fetchSellerPurchases]);
 
   const location = useLocation();
   const clearActiveConversationId = useNotificationStore((state) => state.clearActiveConversationId);

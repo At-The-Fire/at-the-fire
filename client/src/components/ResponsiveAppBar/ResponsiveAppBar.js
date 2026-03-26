@@ -23,6 +23,7 @@ import { useTheme } from '@emotion/react';
 import { useAuthStore } from '../../stores/useAuthStore.js';
 import { useNotificationStore } from '../../stores/useNotificationStore.js';
 import { useAuctionEventsStore } from '../../stores/useAuctionEventsStore.js';
+import { usePurchaseStore } from '../../stores/usePurchaseStore.js';
 import { Badge } from '@mui/material';
 import './ResponsiveAppBar.css';
 import { useMessagingSocket } from '../../hooks/useMessagingSocket.js'; //! often looks unused due to commenting out socket for local dev DO NOT DELETE
@@ -51,7 +52,9 @@ export default function ResponsiveAppBar() {
   const { query, setQuery } = useQuery();
   const navigate = useNavigate();
   const { unreadCount } = useNotificationStore();
-  const pendingShipmentsCount = useAuctionEventsStore((s) => s.pendingShipmentsCount);
+  const auctionPendingCount = useAuctionEventsStore((s) => s.pendingShipmentsCount);
+  const galleryPendingCount = usePurchaseStore((s) => s.pendingGalleryShipmentsCount);
+  const pendingShipmentsCount = auctionPendingCount + galleryPendingCount;
 
   useMessagingSocket();
 
