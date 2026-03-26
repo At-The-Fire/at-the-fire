@@ -14,14 +14,11 @@ module.exports = class Gallery {
 
   static async createFollower(followerId, followedId) {
     try {
-      const { rows } = await pool.query(
+      await pool.query(
         `INSERT INTO followers (follower_id, followed_id)
-         VALUES ($1, $2)
-         RETURNING *`,
+         VALUES ($1, $2)`,
         [followerId, followedId]
       );
-
-      return rows[0];
     } catch (error) {
       if (error.code === '23505') {
         // PostgreSQL unique constraint violation
@@ -33,18 +30,15 @@ module.exports = class Gallery {
 
   // Delete a follower relationship
   static async deleteFollower(followerId, followedId) {
-    const { rows } = await pool.query(
+    const { rowCount } = await pool.query(
       `DELETE FROM followers
-       WHERE follower_id = $1 AND followed_id = $2
-       RETURNING *`,
+       WHERE follower_id = $1 AND followed_id = $2`,
       [followerId, followedId]
     );
 
-    if (rows.length === 0) {
+    if (rowCount === 0) {
       throw new Error('Follower relationship not found.');
     }
-
-    return rows[0];
   }
 
   // Get all followers of a user

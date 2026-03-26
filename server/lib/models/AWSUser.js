@@ -131,21 +131,17 @@ module.exports = class AWSUser {
     } else {
       return new AWSUser(rows[0]);
     }
-    // return new AWSUser(rows[0]);
   }
 
   static async deleteCustomerId(sub) {
-    const { rows } = await pool.query(
+    await pool.query(
       `
     UPDATE cognito_users
     SET customer_id = null
-    WHERE sub = $1
-    RETURNING *;
+    WHERE sub = $1;
   `,
       [sub]
     );
-
-    return new AWSUser(rows[0]);
   }
 
   static async getEmailBySub({ sub }) {
