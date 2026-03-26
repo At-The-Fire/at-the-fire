@@ -217,11 +217,6 @@ export default function Profile() {
 
       const previewUrl = URL.createObjectURL(file);
       setLogoPreview(previewUrl);
-      setEditedProfile((prev) => ({
-        ...prev,
-        logoImageUrl: previewUrl,
-        logoFileName: file.name,
-      }));
       setLogoFile(file);
     } catch (e) {
       toast.warn('File size too large, must be less than 10mb.', {
