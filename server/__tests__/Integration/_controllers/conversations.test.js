@@ -324,10 +324,10 @@ describe('conversations tests', () => {
         .send({ participantSubs: [process.env.TEST_SUB_NO_PROFILE] });
 
       // Now send a message to conv1 — making it the most recently active conversation
-      await request(app)
-        .post('/api/v1/conversations/messages')
-        .set('Cookie', cookies)
-        .send({ conversationId: conv1.body.conversationId, content: 'Late message to older conversation' });
+      await request(app).post('/api/v1/conversations/messages').set('Cookie', cookies).send({
+        conversationId: conv1.body.conversationId,
+        content: 'Late message to older conversation',
+      });
 
       // conv1 should now be first since it has the most recent activity
       const response = await request(app).get('/api/v1/conversations').set('Cookie', cookies);
@@ -338,7 +338,7 @@ describe('conversations tests', () => {
     });
 
     // needs investigating,
-    it.skip('should return conversations in correct chronological order', async () => {
+    it('should return conversations in correct chronological order', async () => {
       const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
         setupSubscribedUserMocks();
 
@@ -696,7 +696,7 @@ describe('conversations tests', () => {
           `refreshToken=${subscribedUserRefreshToken};`,
         ]);
 
-      // Self messages shouldn't affect unread count
+      // Marking messages as read should decrease the unread count
       expect(afterMarkRead.body.unreadCount).toBeLessThan(beforeMarkRead.body.unreadCount);
     });
 
