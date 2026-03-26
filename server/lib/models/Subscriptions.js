@@ -113,7 +113,6 @@ module.exports = class Subscriptions {
       `,
       [subscription_id, canceled_at, comment, feedback, reason]
     );
-    return new Subscriptions(rows[0]);
   }
 
   static async setStatusInactive(subscriptionId) {
