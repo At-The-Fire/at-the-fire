@@ -369,19 +369,14 @@ LIMIT 1;
   }
 
   static async undeleteConversation(senderSub, conversationId) {
-    const { rows } = await pool.query(
+    await pool.query(
       `
       UPDATE conversation_visibility
       SET is_visible = TRUE
       WHERE user_sub = $1
       AND conversation_id = $2
-
     `,
       [senderSub, conversationId],
     );
-
-    if (!rows) return null;
-
-    return rows[0];
   }
 };

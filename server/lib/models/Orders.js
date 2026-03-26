@@ -123,7 +123,5 @@ WHERE id = $1
     if (rowCount === 0) {
       throw new Error('Order not found or access denied');
     }
-
-    return { message: 'Order successfully deleted' };
   }
 };

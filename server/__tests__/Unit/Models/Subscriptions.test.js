@@ -46,8 +46,15 @@ describe('Subscriptions Model', () => {
       pool.query.mockResolvedValueOnce({ rows: [mockRow] });
 
       const result = await Subscriptions.upsertSubscription(
-        'cus_123', 'sub_abc', true, 'month',
-        '2026-01-01', '2026-02-01', '2026-01-01', '2026-01-15', 'active'
+        'cus_123',
+        'sub_abc',
+        true,
+        'month',
+        '2026-01-01',
+        '2026-02-01',
+        '2026-01-01',
+        '2026-01-15',
+        'active',
       );
 
       expect(result).toBeInstanceOf(Subscriptions);
@@ -59,20 +66,37 @@ describe('Subscriptions Model', () => {
       pool.query.mockResolvedValueOnce({ rows: [mockRow] });
 
       await Subscriptions.upsertSubscription(
-        'cus_123', 'sub_abc', true, 'month',
-        '2026-01-01', '2026-02-01', null, null, 'active'
+        'cus_123',
+        'sub_abc',
+        true,
+        'month',
+        '2026-01-01',
+        '2026-02-01',
+        null,
+        null,
+        'active',
       );
 
       expect(pool.query).toHaveBeenCalledWith(
         expect.stringContaining('ON CONFLICT (customer_id) DO UPDATE'),
-        expect.any(Array)
+        expect.any(Array),
       );
     });
 
     it('propagates pool errors', async () => {
       pool.query.mockRejectedValueOnce(new Error('db error'));
       await expect(
-        Subscriptions.upsertSubscription('cus_123', 'sub_abc', true, 'month', null, null, null, null, 'active')
+        Subscriptions.upsertSubscription(
+          'cus_123',
+          'sub_abc',
+          true,
+          'month',
+          null,
+          null,
+          null,
+          null,
+          'active',
+        ),
       ).rejects.toThrow('db error');
     });
   });
@@ -89,29 +113,19 @@ describe('Subscriptions Model', () => {
       pool.query.mockResolvedValueOnce({ rows: [cancellationRow] });
 
       await Subscriptions.cancelSubscriptionData(
-        'sub_abc', 1700000000, 'Too expensive', 'too_expensive', 'cancellation_requested'
+        'sub_abc',
+        1700000000,
+        'Too expensive',
+        'too_expensive',
+        'cancellation_requested',
       );
 
       expect(pool.query).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO cancellation_data'),
-        ['sub_abc', 1700000000, 'Too expensive', 'too_expensive', 'cancellation_requested']
+        ['sub_abc', 1700000000, 'Too expensive', 'too_expensive', 'cancellation_requested'],
       );
     });
 
-    it('returns a Subscriptions instance (NOTE: all properties will be undefined — cancellation_data columns do not match Subscriptions constructor)', async () => {
-      // This documents a known type mismatch: cancelSubscriptionData inserts into
-      // cancellation_data but wraps the result in new Subscriptions(row). Since
-      // cancellation_data has no customer_id/is_active/etc columns, all mapped
-      // properties will be undefined. The return value is unused by all callers.
-      // This test serves as a regression signal if the behavior is ever corrected.
-      const cancellationRow = { subscription_id: 'sub_abc', canceled_at: 1700000000 };
-      pool.query.mockResolvedValueOnce({ rows: [cancellationRow] });
-
-      const result = await Subscriptions.cancelSubscriptionData('sub_abc', 1700000000, null, null, null);
-      expect(result).toBeInstanceOf(Subscriptions);
-      expect(result.customerId).toBeUndefined();
-      expect(result.isActive).toBeUndefined();
-    });
   });
 
   describe('setStatusInactive()', () => {
@@ -120,10 +134,9 @@ describe('Subscriptions Model', () => {
 
       await Subscriptions.setStatusInactive('sub_abc');
 
-      expect(pool.query).toHaveBeenCalledWith(
-        expect.stringContaining('is_active = false'),
-        ['sub_abc']
-      );
+      expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('is_active = false'), [
+        'sub_abc',
+      ]);
     });
 
     it('returns undefined', async () => {
