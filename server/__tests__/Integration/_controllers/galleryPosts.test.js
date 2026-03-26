@@ -18,21 +18,22 @@ describe('posts/ post details/ cloudinary routes', () => {
 
     expect(data.body).toBeInstanceOf(Array);
     expect(data.body.length).toBeGreaterThan(0);
-    console.log('data', data.body);
 
     // Check structure for each post.
     data.body.forEach((post) => {
       let displayName;
       let logoImageUrl;
+      let numImgs;
       post.display_name === null ? (displayName = null) : (displayName = expect.any(String));
       post.logo_image_url === null ? (logoImageUrl = null) : (logoImageUrl = expect.any(String));
+      post.num_imgs === null ? (numImgs = null) : (numImgs = expect.any(String));
       expect(post).toEqual({
         category: expect.any(String),
         created_at: expect.any(String),
         description: expect.any(String),
         id: expect.any(String),
         image_url: expect.any(String),
-        num_imgs: expect.any(String || null),
+        num_imgs: numImgs,
         price: expect.any(String),
         public_id: expect.any(String),
         quantity: 1,
