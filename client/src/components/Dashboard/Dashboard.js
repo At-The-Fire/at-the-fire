@@ -37,7 +37,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useAuthStore } from '../../stores/useAuthStore.js';
 import { getSellerAuctions, updateAuctionTracking } from '../../services/fetch-auctions.js';
 import { useAuctionEventsStore } from '../../stores/useAuctionEventsStore.js';
-import { getSellerPurchases, updatePurchaseTracking } from '../../services/fetch-purchases.js';
+import { usePurchaseStore } from '../../stores/usePurchaseStore.js';
+import { updatePurchaseTracking } from '../../services/fetch-purchases.js';
 import { getMyEarnings } from '../../services/fetch-payouts.js';
 import TrackingModal from '../shared/TrackingModal.js';
 import { getTrackingUrl } from '../../utils/tracking.js';
@@ -64,13 +65,17 @@ export default function Dashboard({ products, setProducts, customerId }) {
   const location = useLocation();
   const [dashboardView, setDashboardView] = useState(location.state?.view === 'auctions' ? 'auctions' : 'posts');
   const setPendingShipments = useAuctionEventsStore((s) => s.setPendingShipments);
-  const pendingShipmentsCount = useAuctionEventsStore((s) => s.pendingShipmentsCount);
+  const auctionPendingCount = useAuctionEventsStore((s) => s.pendingShipmentsCount);
+  const galleryPendingCount = usePurchaseStore((s) => s.pendingGalleryShipmentsCount);
+  const pendingShipmentsCount = auctionPendingCount + galleryPendingCount;
+  const sellerPurchases = usePurchaseStore((s) => s.sellerPurchases);
+  const fetchSellerPurchases = usePurchaseStore((s) => s.fetchSellerPurchases);
+  const updateTrackingInStore = usePurchaseStore((s) => s.updateTrackingInStore);
   const [sellerAuctions, setSellerAuctions] = useState([]);
   const [auctionsLoading, setAuctionsLoading] = useState(false);
   const [auctionFilter, setAuctionFilter] = useState('all');
 
   // Sales (seller tracking) state
-  const [sellerPurchases, setSellerPurchases] = useState([]);
   const [salesLoading, setSalesLoading] = useState(false);
   const [trackingModal, setTrackingModal] = useState({ open: false, type: null, id: null });
   const [trackingLoading, setTrackingLoading] = useState(false);
@@ -266,9 +271,9 @@ export default function Dashboard({ products, setProducts, customerId }) {
   useEffect(() => {
     if (dashboardView !== 'sales') return;
     setSalesLoading(true);
-    Promise.all([getSellerPurchases(), user ? getSellerAuctions() : Promise.resolve([])])
-      .then(([purchases, auctions]) => {
-        setSellerPurchases(Array.isArray(purchases) ? purchases : []);
+    fetchSellerPurchases();
+    (user ? getSellerAuctions() : Promise.resolve([]))
+      .then((auctions) => {
         const auctionList = Array.isArray(auctions) ? auctions : [];
         setSellerAuctions(auctionList);
         setPendingShipments(auctionList.filter((a) => a.winnerSub && !a.trackingNumber).length);
@@ -287,7 +292,7 @@ export default function Dashboard({ products, setProducts, customerId }) {
     try {
       if (trackingModal.type === 'purchase') {
         await updatePurchaseTracking(trackingModal.id, trackingNumber);
-        setSellerPurchases((prev) => prev.map((p) => (p.id === trackingModal.id ? { ...p, trackingNumber } : p)));
+        updateTrackingInStore(trackingModal.id, trackingNumber);
       } else {
         await updateAuctionTracking(trackingModal.id, trackingNumber);
         setSellerAuctions((prev) => {
