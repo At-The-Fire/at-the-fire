@@ -59,6 +59,8 @@ jobs:
           REDISCLOUD_URL: 'redis://redis:6379'
           CLOUDFRONT_DOMAIN: ${{ secrets.CLOUDFRONT_DOMAIN }}
           STRIPE_PRIVATE_KEY: ${{ secrets.STRIPE_PRIVATE_KEY }}
+          TEST_STRIPE_MONTHLY_PRICE_ID: ${{ secrets.TEST_STRIPE_MONTHLY_PRICE_ID }}
+          TEST_STRIPE_YEARLY_PRICE_ID: ${{ secrets.TEST_STRIPE_YEARLY_PRICE_ID }}
       - name: Clear Production Redis Cache
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
