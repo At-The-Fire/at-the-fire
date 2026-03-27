@@ -32,11 +32,11 @@ module.exports = class Subscriptions {
     subscriptionEndDate,
     trialStartDate,
     trialEndDate,
-    status
+    status,
   ) {
     const { rows } = await pool.query(
       `
-      INSERT INTO subscriptions (customer_id, subscription_id, is_active, interval, 
+      INSERT INTO subscriptions (customer_id, subscription_id, is_active, interval,
       subscription_start_date, subscription_end_date, trial_start_date, trial_end_date, status)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *
@@ -51,7 +51,7 @@ module.exports = class Subscriptions {
         trialStartDate,
         trialEndDate,
         status,
-      ]
+      ],
     );
     return new Subscriptions(rows[0]);
   }
@@ -61,7 +61,7 @@ module.exports = class Subscriptions {
       `SELECT *
       FROM subscriptions
       WHERE customer_id = $1`,
-      [customerId]
+      [customerId],
     );
 
     if (rows.length === 0) {
@@ -79,7 +79,7 @@ module.exports = class Subscriptions {
     subscriptionEndDate,
     trialStartDate,
     trialEndDate,
-    status
+    status,
   ) {
     const { rows } = await pool.query(
       `
@@ -99,21 +99,20 @@ module.exports = class Subscriptions {
         trialStartDate,
         trialEndDate,
         status,
-      ]
+      ],
     );
     return new Subscriptions(rows[0]);
   }
 
   static async cancelSubscriptionData(subscription_id, canceled_at, comment, feedback, reason) {
-    const { rows } = await pool.query(
+    await pool.query(
       `
       INSERT INTO cancellation_data (subscription_id, canceled_at, comment, feedback, reason)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING *
       `,
-      [subscription_id, canceled_at, comment, feedback, reason]
+      [subscription_id, canceled_at, comment, feedback, reason],
     );
-    return new Subscriptions(rows[0]);
   }
 
   static async setStatusInactive(subscriptionId) {
@@ -123,7 +122,7 @@ module.exports = class Subscriptions {
       SET is_active = false
       WHERE subscription_id = $1
       `,
-      [subscriptionId]
+      [subscriptionId],
     );
 
     return;
@@ -133,7 +132,7 @@ module.exports = class Subscriptions {
     const { rows } = await pool.query(
       `
   SELECT * FROM subscriptions
-    `
+    `,
     );
     if (!rows) {
       return null;
@@ -150,12 +149,12 @@ module.exports = class Subscriptions {
     subscriptionEndDate,
     trialStartDate,
     trialEndDate,
-    status
+    status,
   ) {
     const { rows } = await pool.query(
       `
       INSERT INTO subscriptions (
-        customer_id, subscription_id, is_active, interval, 
+        customer_id, subscription_id, is_active, interval,
         subscription_start_date, subscription_end_date, trial_start_date, trial_end_date, status
       )
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -180,7 +179,7 @@ module.exports = class Subscriptions {
         trialStartDate,
         trialEndDate,
         status,
-      ]
+      ],
     );
     return new Subscriptions(rows[0]);
   }

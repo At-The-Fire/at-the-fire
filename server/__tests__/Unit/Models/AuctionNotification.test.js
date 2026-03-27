@@ -118,45 +118,14 @@ describe('AuctionNotification Model', () => {
   });
 
   describe('markAsRead', () => {
-    it('marks all notifications as read for a user and returns updated notifications', async () => {
-      const mockRows = [
-        {
-          id: 1,
-          user_sub: 'sub_123',
-          auction_id: 10,
-          type: 'outbid',
-          created_at: '2024-01-01T00:00:00Z',
-          is_read: true,
-        },
-        {
-          id: 2,
-          user_sub: 'sub_123',
-          auction_id: 20,
-          type: 'outbid',
-          created_at: '2024-01-02T00:00:00Z',
-          is_read: true,
-        },
-      ];
+    it('calls pool.query with SET is_read = true for the given user', async () => {
+      pool.query.mockResolvedValueOnce({ rows: [] });
 
-      pool.query.mockResolvedValueOnce({ rows: mockRows });
+      await AuctionNotification.markAsRead('sub_123');
 
-      const results = await AuctionNotification.markAsRead('sub_123');
-
-      expect(results).toHaveLength(2);
-      expect(results[0]).toBeInstanceOf(AuctionNotification);
-      expect(results[0].isRead).toBe(true);
-      expect(results[1].isRead).toBe(true);
       expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('SET is_read = true'), [
         'sub_123',
       ]);
-    });
-
-    it('returns empty array when user has no notifications to mark', async () => {
-      pool.query.mockResolvedValueOnce({ rows: [] });
-
-      const results = await AuctionNotification.markAsRead('sub_notifications');
-
-      expect(results).toEqual([]);
     });
   });
 });

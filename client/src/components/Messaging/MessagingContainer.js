@@ -88,11 +88,13 @@ export default function MessagingContainer() {
     };
 
     handleSubParam();
+    // eslint-disable-next-line
   }, [sub, loading, conversations, setActiveConversationId, setMobileOpen, setSelectedConversation]);
 
   // fetch unread once on mount- if websocket event is not during session
   useEffect(() => {
     fetchUnreadCount();
+    // eslint-disable-next-line
   }, []);
 
   // fetch conversations when unreadCount changes

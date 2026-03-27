@@ -6,7 +6,7 @@
   "type": "commonjs",
   "scripts": {
     "test": "jest --verbose --runInBand --testLocationInResults --setupFiles dotenv/config --passWithNoTests",
-    "test:watch": "npm run test -- --watch",
+    "test:watch": "npm run test -- --watchAll",
     "start": "node -r dotenv/config server.js",
     "start:watch": "nodemon -r dotenv/config server.js",
     "setup-db": "node -r dotenv/config setup-db.js",
@@ -14,6 +14,7 @@
   },
   "jest": {
     "testEnvironment": "node",
+    "testPathIgnorePatterns": ["node_modules", "__tests__/_templates"],
     "reporters": [
       "default",
       [

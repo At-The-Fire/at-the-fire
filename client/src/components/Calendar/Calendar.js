@@ -52,6 +52,7 @@ export default function Calendar({ products }) {
     if (!isAuthenticated) {
       authenticateUser();
     }
+    // eslint-disable-next-line
   }, []);
 
   // --Functions to paginate next/previous for DESKTOP
@@ -120,6 +121,7 @@ export default function Calendar({ products }) {
         }
       }
     }
+    // eslint-disable-next-line
   }, [products, calendarMonths, isMobile]);
 
   useEffect(() => {
@@ -433,6 +435,7 @@ export default function Calendar({ products }) {
         hasShownToast.current = true;
       }
     }
+    // eslint-disable-next-line
   }, [quotaLoading, monthlyQuota, products]);
 
   useEffect(() => {

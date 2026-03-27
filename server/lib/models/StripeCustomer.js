@@ -201,30 +201,24 @@ module.exports = class StripeCustomer {
   }
 
   static async updateCustomerConfirmedStatus(customerId, confirmed) {
-    const { rows } = await pool.query(
+    await pool.query(
       `
       UPDATE stripe_customers
       SET confirmed = $2
       WHERE customer_id = $1
-      RETURNING *
       `,
       [customerId, confirmed],
     );
-
-    if (!rows[0]) return null;
-    return new StripeCustomer(rows[0]);
   }
 
   static async deleteCustomerData(sub) {
-    const { rows } = await pool.query(
+    await pool.query(
       `
     DELETE from stripe_customers
     WHERE aws_sub = $1
-    RETURNING *
     `,
       [sub],
     );
-    return new StripeCustomer(rows[0]);
   }
 
   static async getAllCustomers() {

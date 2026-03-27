@@ -324,10 +324,10 @@ describe('conversations tests', () => {
         .send({ participantSubs: [process.env.TEST_SUB_NO_PROFILE] });
 
       // Now send a message to conv1 — making it the most recently active conversation
-      await request(app)
-        .post('/api/v1/conversations/messages')
-        .set('Cookie', cookies)
-        .send({ conversationId: conv1.body.conversationId, content: 'Late message to older conversation' });
+      await request(app).post('/api/v1/conversations/messages').set('Cookie', cookies).send({
+        conversationId: conv1.body.conversationId,
+        content: 'Late message to older conversation',
+      });
 
       // conv1 should now be first since it has the most recent activity
       const response = await request(app).get('/api/v1/conversations').set('Cookie', cookies);
@@ -337,76 +337,6 @@ describe('conversations tests', () => {
       expect(response.body[1].id).toBe(conv2.body.conversationId);
     });
 
-    // needs investigating,
-    it.skip('should return conversations in correct chronological order', async () => {
-      const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
-        setupSubscribedUserMocks();
-
-      // First create two conversations with messages at different times
-      const conv1 = await request(app)
-        .post('/api/v1/conversations')
-        .set('Cookie', [
-          `accessToken=${subscribedUserAccessToken};`,
-          `idToken=${subscribedUserIdToken};`,
-          `refreshToken=${subscribedUserRefreshToken};`,
-        ])
-        .send({
-          participantSubs: [process.env.TEST_SUB_INCOMPLETE_PROFILE],
-        });
-
-      // Add a message to first conversation
-      await request(app)
-        .post('/api/v1/conversations/messages')
-        .set('Cookie', [
-          `accessToken=${subscribedUserAccessToken};`,
-          `idToken=${subscribedUserIdToken};`,
-          `refreshToken=${subscribedUserRefreshToken};`,
-        ])
-        .send({
-          conversationId: conv1.body.conversationId,
-          content: 'First conversation message',
-        });
-
-      // Create second conversation and message
-      const conv2 = await request(app)
-        .post('/api/v1/conversations')
-        .set('Cookie', [
-          `accessToken=${subscribedUserAccessToken};`,
-          `idToken=${subscribedUserIdToken};`,
-          `refreshToken=${subscribedUserRefreshToken};`,
-        ])
-        .send({
-          participantSubs: [process.env.TEST_SUB_NO_PROFILE],
-        });
-
-      await request(app)
-        .post('/api/v1/conversations/messages')
-        .set('Cookie', [
-          `accessToken=${subscribedUserAccessToken};`,
-          `idToken=${subscribedUserIdToken};`,
-          `refreshToken=${subscribedUserRefreshToken};`,
-        ])
-        .send({
-          conversationId: conv2.body.conversationId,
-          content: 'Second conversation message',
-        });
-
-      // Get all conversations
-      const response = await request(app)
-        .get('/api/v1/conversations')
-        .set('Cookie', [
-          `accessToken=${subscribedUserAccessToken};`,
-          `idToken=${subscribedUserIdToken};`,
-          `refreshToken=${subscribedUserRefreshToken};`,
-        ]);
-
-      expect(response.status).toBe(200);
-      expect(Array.isArray(response.body)).toBe(true);
-
-      // Most recent conversation should be first
-      expect(response.body[0].id).toBe(conv2.body.conversationId);
-      expect(response.body[1].id).toBe(conv1.body.conversationId);
-    });
 
     it('should return correct participant information for each conversation', async () => {
       const { subscribedUserAccessToken, subscribedUserIdToken, subscribedUserRefreshToken } =
@@ -696,7 +626,7 @@ describe('conversations tests', () => {
           `refreshToken=${subscribedUserRefreshToken};`,
         ]);
 
-      // Self messages shouldn't affect unread count
+      // Marking messages as read should decrease the unread count
       expect(afterMarkRead.body.unreadCount).toBeLessThan(beforeMarkRead.body.unreadCount);
     });
 

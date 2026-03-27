@@ -209,6 +209,7 @@ const InventoryTracking = ({ handleSaveSnapshot, tableData, setTableData, snapsh
     const aggregatedData = aggregateDataByTimeScale(snapshots, timeScale);
 
     setTableData(aggregatedData); // Update the table data with aggregated data
+    // eslint-disable-next-line
   }, [snapshots, timeScale, setTableData]);
 
   useEffect(() => {
@@ -234,6 +235,7 @@ const InventoryTracking = ({ handleSaveSnapshot, tableData, setTableData, snapsh
         setTableData(averagedData);
       }
     }
+    // eslint-disable-next-line
   }, [snapshots, timeScale, setTableData]);
 
   // check auth
@@ -241,6 +243,7 @@ const InventoryTracking = ({ handleSaveSnapshot, tableData, setTableData, snapsh
     if (!isAuthenticated) {
       authenticateUser();
     }
+    // eslint-disable-next-line
   }, []);
 
   // Extract unique categories from all snapshots

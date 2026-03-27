@@ -46,17 +46,13 @@ module.exports = class AuctionNotification {
   }
 
   static async markAsRead(userSub) {
-    const { rows } = await pool.query(
+    await pool.query(
       `
       UPDATE auction_notifications
       SET is_read = true
       WHERE user_sub = $1
-      RETURNING *
       `,
       [userSub],
     );
-
-    if (!rows.length) return [];
-    return rows.map((row) => new AuctionNotification(row));
   }
 };

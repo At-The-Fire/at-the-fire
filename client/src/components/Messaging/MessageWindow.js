@@ -50,6 +50,7 @@ export default function MessageWindow({ conversation, onSendMessage }) {
     };
 
     fetchMarkAsRead();
+    // eslint-disable-next-line
   }, [conversation, unreadCount]);
 
   // snap to bottom of conversation on open

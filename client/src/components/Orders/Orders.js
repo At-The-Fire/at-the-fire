@@ -42,6 +42,7 @@ export default function Orders() {
     if (!isAuthenticated) {
       authenticateUser();
     }
+    // eslint-disable-next-line
   }, []);
 
   const handleSubmit = async (orderData, formMode, rawItems) => {
