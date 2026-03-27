@@ -5,8 +5,7 @@ import { useAuthStore } from '../../stores/useAuthStore.js';
 function StripeReturn() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { isAuthenticated, loadingAuth, customerId, loadingCustomerId, authenticateUser } =
-    useAuthStore();
+  const { isAuthenticated, loadingAuth, customerId, loadingCustomerId, authenticateUser } = useAuthStore();
 
   const returnFromStripe = searchParams.get('return_from_stripe') === 'true';
 
@@ -14,6 +13,7 @@ function StripeReturn() {
     if (!isAuthenticated && returnFromStripe) {
       authenticateUser();
     }
+    // eslint-disable-next-line
   }, [returnFromStripe]);
 
   useEffect(() => {

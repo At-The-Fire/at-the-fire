@@ -87,6 +87,7 @@ const Analysis = ({ products }) => {
     if (!isAuthenticated) {
       authenticateUser();
     }
+    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
@@ -102,6 +103,7 @@ const Analysis = ({ products }) => {
     }
 
     return () => {};
+    // eslint-disable-next-line
   }, [monthlyQuota, products]);
 
   const options = {

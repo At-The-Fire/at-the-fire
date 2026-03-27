@@ -49,6 +49,7 @@ export default function NotFound() {
     if (!isAuthenticated) {
       authenticateUser();
     }
+    // eslint-disable-next-line
   }, []);
 
   return (
