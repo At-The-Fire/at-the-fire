@@ -112,9 +112,9 @@ _Base path: `/api/v1/quota-tracking/:productId/sales` — all routes require aut
 ## Auctions
 
 - **GET** `/api/v1/auctions` — Get all active auctions (public)
-- **GET** `/api/v1/auctions/seller/:sub` — Get seller's own auctions (auth required)
+- **GET** `/api/v1/auctions/seller` — Get seller's own auctions (auth required)
 - **GET** `/api/v1/auctions/results/:auctionId` — Get auction results (public)
-- **GET** `/api/v1/auctions/user-auctions/:sub` — Get user's active bids and won auctions (auth required)
+- **GET** `/api/v1/auctions/user-auctions` — Get user's active bids and won auctions (auth required)
 - **GET** `/api/v1/auctions/:id` — Get auction by ID (auth required)
 - **POST** `/api/v1/auctions/upload` — Upload auction images to S3 (auth required)
 - **POST** `/api/v1/auctions` — Create new auction (auth required)
