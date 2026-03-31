@@ -63,19 +63,20 @@ If Redis is enabled but the connection fails (expired Redis plan, wrong credenti
   ```js
   {
     id,
-      created_at,
-      title,
-      description,
-      image_url,
-      category,
-      price,
-      customer_id,
-      public_id,
-      num_imgs,
-      display_name,
-      logo_image_url,
-      sub,
-      sold;
+    created_at,
+    title,
+    description,
+    image_url,
+    category,
+    price,
+    seller_sub,   // also aliased as `sub`
+    public_id,
+    num_imgs,
+    quantity,
+    shipping_cost,
+    display_name,
+    logo_image_url,
+    sold;
   }
   ```
 

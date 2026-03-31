@@ -52,7 +52,7 @@ _Billing_
 ## 2. Relationships (Foreign Keys & Structure)
 
 - `cognito_users.sub` ↔ `stripe_customers.aws_sub` (1:1 or 1:0)
-- `gallery_posts.customer_id` ↔ `stripe_customers.customer_id` (N:1)
+- `gallery_posts.seller_sub` ↔ `cognito_users.sub` (N:1)
 - `posts_imgs.post_id` ↔ `gallery_posts.id` (N:1)
 - `followers.follower_id`/`followed_id` ↔ `cognito_users.sub` (M:N)
 - `likes.sub` ↔ `cognito_users.sub`, `likes.post_id` ↔ `gallery_posts.id`
@@ -70,7 +70,7 @@ _Billing_
 - `bids.auction_id` ↔ `auctions.id`, `bids.bidder_sub` ↔ `cognito_users.sub`
 - `auction_results.auction_id` ↔ `auctions.id` (1:1), `auction_results.winner_sub` ↔ `cognito_users.sub`
 - `auction_notifications.user_sub` ↔ `cognito_users.sub`, `auction_notifications.auction_id` ↔ `auctions.id`
-- `purchases.buyer_sub` ↔ `cognito_users.sub`, `purchases.seller_customer_id` ↔ `stripe_customers.customer_id`
+- `purchases.buyer_sub` ↔ `cognito_users.sub`, `purchases.seller_sub` ↔ `cognito_users.sub`
 
 ---
 
@@ -112,21 +112,21 @@ _Billing_
 
 - **User** (`cognito_users`)
   - ↳ **Business Profile** (`stripe_customers`)
-    - ↳ **Posts** (`gallery_posts`)
-      - ↳ **Images** (`posts_imgs`)
-      - ↳ **Likes**
-      - ↳ **Quota Tracking** (`quota_tracking`)
-        - ↳ **Product Sales** (`product_sales`)
     - ↳ **Orders**
     - ↳ **Quota Goals**
     - ↳ **Inventory Snapshots**
     - ↳ **Subscriptions**
       - ↳ **Invoices**
       - ↳ **Cancellation Data**
-    - ↳ **Auctions** (`auctions`)
-      - ↳ **Bids** (`bids`)
-      - ↳ **Auction Results** (`auction_results`)
-    - ↳ **Purchases** (`purchases`)
+    - ↳ **Quota Tracking** (`quota_tracking`)
+      - ↳ **Product Sales** (`product_sales`)
+  - ↳ **Posts** (`gallery_posts`) _(FK: seller_sub → cognito_users.sub)_
+    - ↳ **Images** (`posts_imgs`)
+    - ↳ **Likes**
+  - ↳ **Auctions** (`auctions`)
+    - ↳ **Bids** (`bids`)
+    - ↳ **Auction Results** (`auction_results`)
+  - ↳ **Purchases** (`purchases`) _(buyer_sub and seller_sub → cognito_users.sub)_
   - ↳ **Auction Notifications** (`auction_notifications`)
   - ↳ **Followers**
   - ↳ **Conversations**
@@ -141,7 +141,7 @@ _Billing_
 ```mermaid
 Diagram
   COGNITO_USERS ||--|| STRIPE_CUSTOMERS : "has"
-  STRIPE_CUSTOMERS ||--o{ GALLERY_POSTS : "owns"
+  COGNITO_USERS ||--o{ GALLERY_POSTS : "owns"
   GALLERY_POSTS ||--o{ POSTS_IMGS : "has"
   GALLERY_POSTS ||--o{ LIKES : "receives"
   COGNITO_USERS ||--o{ LIKES : "gives"
@@ -164,7 +164,7 @@ Diagram
   COGNITO_USERS ||--o{ AUCTION_NOTIFICATIONS : "receives"
   AUCTIONS ||--o{ AUCTION_NOTIFICATIONS : "triggers"
   COGNITO_USERS ||--o{ PURCHASES : "buys"
-  STRIPE_CUSTOMERS ||--o{ PURCHASES : "sells"
+  COGNITO_USERS ||--o{ PURCHASES : "sells"
 ```
 
 ---

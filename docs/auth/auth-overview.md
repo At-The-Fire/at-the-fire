@@ -74,12 +74,12 @@ Runs after `authorizeSubscription` on delete/update routes for posts and quota p
 
 ### `adminIdCheck` — `lib/middleware/adminIdCheck.js`
 
-Runs after `authorizeSubscription` on admin-only routes (`/api/v1/atf-operations`).
+Runs after `authenticateAWS` on admin-only routes (`/api/v1/atf-operations`).
 
 **Steps:**
-1. Reads `req.customerId` (set by `authorizeSubscription`).
-2. Compares to `ADMIN_ID` env var (or `TEST_STRIPE_CUSTOMER_ID_FULL_CUSTOMER` in test mode).
-3. Returns `403` if they don't match.
+1. Reads `req.userAWSSub` (set by `authenticateAWS`).
+2. Queries `cognito_users` for `is_admin` where `sub = req.userAWSSub`.
+3. Returns `403` if the user is not found or `is_admin` is false.
 
 ---
 

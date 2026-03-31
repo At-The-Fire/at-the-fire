@@ -1,0 +1,13 @@
+{
+	"servers": {
+		"whimsical-desktop": {
+			"type": "http",
+			"url": "http://localhost:21190/mcp"
+		},
+		"whimsical-mcp": {
+			"url": "http://localhost:21190/mcp",
+			"type": "http"
+		}
+	},
+	"inputs": []
+}
