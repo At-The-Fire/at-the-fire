@@ -7,6 +7,64 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '../../context/QueryContext.js';
 
 const REQUIRED_ADDRESS_FIELDS = ['fullName', 'line1', 'city', 'state', 'zip'];
+const US_STATES = new Set([
+  'AL',
+  'AK',
+  'AZ',
+  'AR',
+  'CA',
+  'CO',
+  'CT',
+  'DE',
+  'FL',
+  'GA',
+  'HI',
+  'ID',
+  'IL',
+  'IN',
+  'IA',
+  'KS',
+  'KY',
+  'LA',
+  'ME',
+  'MD',
+  'MA',
+  'MI',
+  'MN',
+  'MS',
+  'MO',
+  'MT',
+  'NE',
+  'NV',
+  'NH',
+  'NJ',
+  'NM',
+  'NY',
+  'NC',
+  'ND',
+  'OH',
+  'OK',
+  'OR',
+  'PA',
+  'RI',
+  'SC',
+  'SD',
+  'TN',
+  'TX',
+  'UT',
+  'VT',
+  'VA',
+  'WA',
+  'WV',
+  'WI',
+  'WY',
+  'DC',
+  'PR',
+  'VI',
+  'GU',
+  'AS',
+  'MP',
+]);
 const TOAST_OPTS = { theme: 'colored', draggable: true, draggablePercent: 60 };
 
 export default function Checkout() {
@@ -24,7 +82,6 @@ export default function Checkout() {
     city: '',
     state: '',
     zip: '',
-    country: 'US',
   });
 
   const handleAddressChange = (field) => (e) => {
@@ -32,26 +89,55 @@ export default function Checkout() {
   };
 
   const validateAddress = () => {
-    if (!address.fullName.trim()) {
-      toast.warn('Full name is required', TOAST_OPTS);
+    const name = address.fullName.trim();
+    if (name.length < 2) {
+      toast.warn('Please enter your full name', TOAST_OPTS);
       return false;
     }
-    if (!address.line1.trim()) {
-      toast.warn('Street address is required', TOAST_OPTS);
+    if (name.length > 100) {
+      toast.warn('Full name must be 100 characters or fewer', TOAST_OPTS);
       return false;
     }
-    if (!address.city.trim()) {
-      toast.warn('City is required', TOAST_OPTS);
+
+    const line1 = address.line1.trim();
+    if (line1.length < 5) {
+      toast.warn('Please enter a valid street address', TOAST_OPTS);
       return false;
     }
-    if (!address.state.trim()) {
-      toast.warn('State is required', TOAST_OPTS);
+    if (line1.length > 100) {
+      toast.warn('Street address must be 100 characters or fewer', TOAST_OPTS);
       return false;
     }
-    if (!address.zip.trim()) {
-      toast.warn('ZIP code is required', TOAST_OPTS);
+
+    if (address.line2.trim().length > 100) {
+      toast.warn('Address line 2 must be 100 characters or fewer', TOAST_OPTS);
       return false;
     }
+
+    const city = address.city.trim();
+    if (city.length < 2) {
+      toast.warn('Please enter a valid city', TOAST_OPTS);
+      return false;
+    }
+    if (city.length > 100) {
+      toast.warn('City must be 100 characters or fewer', TOAST_OPTS);
+      return false;
+    }
+    if (!/^[A-Za-z\s'\-.]+$/.test(city)) {
+      toast.warn('City name contains invalid characters', TOAST_OPTS);
+      return false;
+    }
+
+    if (!US_STATES.has(address.state.trim().toUpperCase())) {
+      toast.warn('Please enter a valid 2-letter US state code (e.g. CA)', TOAST_OPTS);
+      return false;
+    }
+
+    if (!/^\d{5}(-\d{4})?$/.test(address.zip.trim())) {
+      toast.warn('Please enter a valid ZIP code (e.g. 90210)', TOAST_OPTS);
+      return false;
+    }
+
     return true;
   };
 
@@ -63,9 +149,9 @@ export default function Checkout() {
         line1: address.line1.trim(),
         line2: address.line2.trim() || null,
         city: address.city.trim(),
-        state: address.state.trim(),
+        state: address.state.trim().toUpperCase(),
         zip: address.zip.trim(),
-        country: address.country.trim() || 'US',
+        country: 'US',
       };
       if (item.itemType === 'auction') {
         await confirmAuctionPurchase(intentId, item.auctionId, payment, shippingAddress);
@@ -153,6 +239,9 @@ export default function Checkout() {
         <Typography variant="h6" gutterBottom>
           Shipping Address
         </Typography>
+        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1.5 }}>
+          We currently only ship within the United States.
+        </Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
           <TextField
             label="Full Name"
@@ -161,6 +250,7 @@ export default function Checkout() {
             required
             fullWidth
             size="small"
+            inputProps={{ maxLength: 100 }}
           />
           <TextField
             label="Address Line 1"
@@ -169,6 +259,7 @@ export default function Checkout() {
             required
             fullWidth
             size="small"
+            inputProps={{ maxLength: 100 }}
           />
           <TextField
             label="Address Line 2 (optional)"
@@ -176,6 +267,7 @@ export default function Checkout() {
             onChange={handleAddressChange('line2')}
             fullWidth
             size="small"
+            inputProps={{ maxLength: 100 }}
           />
           <Box sx={{ display: 'flex', gap: 1.5 }}>
             <TextField
@@ -185,6 +277,7 @@ export default function Checkout() {
               required
               fullWidth
               size="small"
+              inputProps={{ maxLength: 100 }}
             />
             <TextField
               label="State"
@@ -196,23 +289,15 @@ export default function Checkout() {
               inputProps={{ maxLength: 2 }}
             />
           </Box>
-          <Box sx={{ display: 'flex', gap: 1.5 }}>
-            <TextField
-              label="ZIP Code"
-              value={address.zip}
-              onChange={handleAddressChange('zip')}
-              required
-              sx={{ width: '140px', flexShrink: 0 }}
-              size="small"
-            />
-            <TextField
-              label="Country"
-              value={address.country}
-              onChange={handleAddressChange('country')}
-              fullWidth
-              size="small"
-            />
-          </Box>
+          <TextField
+            label="ZIP Code"
+            value={address.zip}
+            onChange={handleAddressChange('zip')}
+            required
+            sx={{ width: '140px' }}
+            size="small"
+            inputProps={{ maxLength: 10 }}
+          />
         </Box>
       </Box>
 
