@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import './Auth.css';
 import { Box, Container, Paper, Button, Typography, useMediaQuery, Link } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
@@ -16,6 +16,7 @@ import PasswordChange from './AuthForms.js/PasswordChange.js';
 export default function Auth() {
   const { type } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const theme = useTheme();
   const {
     isAuthenticated,
@@ -83,12 +84,15 @@ export default function Auth() {
     }
 
     // Now we can safely navigate based on customerId
+    const from = location.state?.from;
+    const returnTo = from && !from.startsWith('/auth') ? from : null;
+
     if (customerId && admin === true) {
-      navigate('/at-the-bon-fire');
+      navigate(returnTo || '/at-the-bon-fire');
     } else if (customerId) {
-      navigate('/dashboard');
+      navigate(returnTo || '/dashboard');
     } else {
-      navigate(`/profile/${user}`);
+      navigate(returnTo || `/profile/${user}`);
     }
     //eslint-disable-next-line
   }, [isAuthenticated, user, loadingAuth, loadingCustomerId]);
