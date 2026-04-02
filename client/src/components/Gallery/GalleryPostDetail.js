@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Avatar, Box, Button, MenuItem, Select, Typography, Modal, IconButton, useMediaQuery } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
@@ -22,6 +22,7 @@ export default function GalleryPostDetail() {
   const [qty, setQty] = useState(1);
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   const theme = useTheme();
   const M = useMediaQuery(theme.breakpoints.down('sm'));
@@ -41,6 +42,10 @@ export default function GalleryPostDetail() {
   }, [isAuthenticated, error, authenticateUser, signingOut, checkTokenExpiry]);
 
   const handleBuyNow = () => {
+    if (!isAuthenticated) {
+      navigate('/auth/sign-in', { state: { from: location.pathname } });
+      return;
+    }
     navigate('/checkout', {
       state: {
         item: {
@@ -386,7 +391,7 @@ export default function GalleryPostDetail() {
         </Box>
         {!postDetail.sold && postDetail.price > 0 && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, ml: '1.5rem', mt: 1, mb: 1 }}>
-            <Select size="small" value={qty} onChange={(e) => setQty(e.target.value)} sx={{ minWidth: 70 }}>
+            <Select size="small" value={qty} onChange={(e) => setQty(e.target.value)} sx={{ minWidth: 70 }} disabled={!isAuthenticated}>
               {Array.from({ length: postDetail.quantity ?? 1 }, (_, i) => i + 1).map((n) => (
                 <MenuItem key={n} value={n}>
                   {n}
