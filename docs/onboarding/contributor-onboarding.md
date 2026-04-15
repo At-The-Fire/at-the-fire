@@ -123,19 +123,24 @@ Gallery and dashboard built: Cloudinary image uploads, full CRUD on posts, CSV d
 
 ### Major Problems That Took Forever to Solve
 
-**Auth infinite loop** *(mid-2023 → Jan 2025)*
+#### Auth infinite loop *(mid-2023 → Jan 2025)*
+
 The most persistent bug in the project. Appeared intermittently, often after 24+ hours. A `localStorage` listener watching for auth changes was triggered by AWS Cognito writing a `aws.cognito.test-ls` key on every page interaction. That fired `handleSignOut`, which caused a re-render loop. Removing the localStorage listener finally killed it.
 
-**Token expiration crashing the server**
+#### Token expiration crashing the server
+
 `jwt.verify` was being used in a synchronous pattern inside async middleware. Errors weren't propagating to the catch block, so expired tokens caused unhandled crashes. Took multiple refactors across several months before it was fully stable.
 
-**Profile avatar not updating across the app**
+#### Profile avatar not updating across the app
+
 Spent multiple sessions trying React Context patterns. The root issue was state not threading correctly through nested providers. Zustand solved it in one session once introduced.
 
-**Duplicate Stripe customers on re-subscribe**
+#### Duplicate Stripe customers on re-subscribe
+
 When a user canceled and tried to re-subscribe, a second Stripe Customer was being created. Fixed by calling the Stripe List API to search by billing email before creating a new customer.
 
-**Concurrent Cloudinary uploads breaking everything**
+#### Concurrent Cloudinary uploads breaking everything
+
 When the upload route was refactored for concurrency, `multer` config changed in a way that broke the `public_id` format. This cascaded into broken delete and edit flows and broke many tests that mocked `multer`.
 
 ---
@@ -157,13 +162,18 @@ When the upload route was refactored for concurrency, `multer` config changed in
 
 *Alphabetical by package. Click any name to jump to its entry.*
 
-**Services**
+### Services & Packages
+
+#### Services
+
 [AWS Cognito](#aws-cognito) · [Stripe](#stripe)
 
-**Backend packages**
+#### Backend packages
+
 [@aws-sdk/client-cognito-identity-provider](#aws-sdk-cognito-idp) · [@aws-sdk/client-s3](#aws-sdk-s3) · [amazon-cognito-identity-js](#amazon-cognito-identity-js) · [compression](#compression) · [crypto-js](#crypto-js) · [express-rate-limit](#express-rate-limit) · [helmet](#helmet) · [json2csv](#json2csv) · [jsonwebtoken + jwks-rsa](#jsonwebtoken--jwks-rsa) · [multer](#multer) · [node-cron](#node-cron) · [pg](#pg) · [redis](#redis) · [socket.io](#socketio-server) · [stripe](#stripe-sdk) · [validator](#validator)
 
-**Frontend packages**
+#### Frontend packages
+
 [@mui/material + @emotion](#mui) · [@mui/x-date-pickers](#mui-x-date-pickers) · [browser-image-compression](#browser-image-compression) · [chart.js + react-chartjs-2](#chartjs) · [date-fns](#date-fns) · [jwt-decode](#jwt-decode) · [lucide-react](#lucide-react) · [react-dropzone](#react-dropzone) · [react-modal](#react-modal) · [react-router-dom](#react-router-dom) · [react-swipeable](#react-swipeable) · [react-toastify](#react-toastify) · [socket.io-client](#socketio-client) · [zustand](#zustand)
 
 ---
