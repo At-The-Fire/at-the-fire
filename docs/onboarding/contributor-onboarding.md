@@ -158,7 +158,32 @@ When the upload route was refactored for concurrency, `multer` config changed in
 
 ---
 
-## Part 2: Tech Stack Reference
+## Part 2: Claude Code Setup
+
+This project is developed with Claude Code. The setup includes custom commands, agents, skills, and MCP tools beyond the defaults. See the full reference at [`docs/onboarding/claude-skills-reference.md`](./claude-skills-reference.md).
+
+### Quick start — install plugins
+
+Open Claude Code, go to `/plugins`, and install these from `claude-plugins-official`:
+
+- `code-review` · `code-simplifier` · `commit-commands` · `context7` · `frontend-design` · `playwright`
+
+Local MCPs (`google-docs`, `whimsical-desktop`) are configured in the project's `.claude.json` and appear automatically. Authenticate google-docs once via `/mcp` → google-docs → Enter to auth.
+
+### Key commands you'll actually use
+
+| Command | When |
+|---|---|
+| `/write-retro` | End of any work session — auto-writes the retro to the shared Google Doc |
+| `/commit-push-pr` | Commit + push + open PR in one step |
+| `/e2e-test local` | Run the full E2E checklist against your local dev server |
+| `/project-code-review` | Before a PR — full codebase review |
+
+You don't need to memorize these. Plain English works too — Claude picks up the right skill. The reference doc is there when you want to know what's available.
+
+---
+
+## Part 3: Tech Stack Reference
 
 *Alphabetical by package. Click any name to jump to its entry.*
 
