@@ -4,6 +4,6 @@
     "buildCommand": "npm run build"
   },
   "deploy": {
-    "startCommand": "npm start"
+    "startCommand": "pwd; ls -la . server; ls server/node_modules | head -5; ls node_modules | head -5; npm start"
   }
 }
