@@ -1,6 +1,6 @@
 .App {
   text-align: center;
-  height: calc('100dvh-90px');
+  height: calc(100dvh - 90px);
   width: 100dvw;
 }
 
